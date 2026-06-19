@@ -3,9 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>从固件二进制里挖出 NVIDIA 的"未公开网卡" · aosudh 的博客</title>
-  <meta name="description" content="对 ConnectX-7/8/9 三大家族全量固件下载页面进行逆向分析，发现未发售型号、内部 PSID、系统级对应关系。" />
+  <title>从固件二进制里挖出 NVIDIA 的未公开网卡 — ConnectX-7/8/9 三大家族全量逆向分析 · aosudh 的博客</title>
+  <meta name="description" content="对 ConnectX-7/8/9 三大家族全量固件下载页面进行逆向分析，枚举 50+13+2 版本、71+13+3 个 OPN，发现未发售型号、内部 PSID、系统级对应关系。" />
   <link rel="stylesheet" href="/assets/css/style.css" />
+  <style>
+    .data-table { width:100%; border-collapse:collapse; margin:1em 0; font-size:0.9em; }
+    .data-table th, .data-table td { border:1px solid #ccc; padding:6px 10px; text-align:left; }
+    .data-table th { background:#f5f5f5; font-weight:600; }
+    .data-table tr:nth-child(even) { background:#fafafa; }
+    .data-table td { vertical-align:top; }
+    .highlight { background:#fff3cd; padding:2px 6px; border-radius:3px; }
+    .code-block { background:#f8f8f8; padding:12px 16px; border-radius:4px; overflow-x:auto; font-family:monospace; font-size:0.85em; line-height:1.6; border-left:3px solid #ccc; }
+    .section-nav { background:#f0f0f0; padding:12px 16px; border-radius:4px; margin-bottom:2em; font-size:0.9em; }
+    .section-nav ul { margin:0; padding-left:1.2em; }
+    .section-nav li { margin:4px 0; }
+  </style>
 </head>
 <body>
   <div class="wrap">
@@ -20,85 +32,342 @@
     <main>
       <a class="back-link" href="/">← 返回首页</a>
       <article class="post-content">
-        <h1>从固件二进制里挖出 NVIDIA 的"未公开网卡"</h1>
+        <h1>从固件二进制里挖出 NVIDIA 的未公开网卡</h1>
         <p class="post-meta">2026-06-19</p>
 
-        <p>最近在整理一套 ConnectX 固件逆向工具，顺手对 NVIDIA 官方固件下载页面做了全量 API 枚举。结果挺有意思——发现了 7 个固件里有、但公开文档里找不到或从未发售的型号，还顺手把 P3740、P6612 这些神秘 OPN 的"真实身份"给确认了。</p>
+        <p><strong>摘要：</strong>本文对 NVIDIA ConnectX-7/8/9 三大家族的官方固件下载页面进行全量 API 枚举（50+13+2 版本），下载代表性固件做二进制扫描，并与 NVIDIA 官方用户手册（PDF 解析）、开发者论坛、GitHub 代码、30+ 家 OEM 销售页面、供应链分析进行交叉验证。发现了 7 个固件中有但公开文档未确认的型号，确认了 2 个 NVD 前缀内部 PSID 的真实身份，以及 DGX GB300 系列网卡的完整对应关系。</p>
 
-        <h2>一、怎么做的：全量枚举 + 固件扫描 + 手册交叉</h2>
+        <nav class="section-nav">
+          <strong>目录</strong>
+          <ul>
+            <li><a href="#method">一、方法：全量枚举 + 固件扫描 + 手册交叉</a></li>
+            <li><a href="#overview">二、三大家族概览</a></li>
+            <li><a href="#cx7">三、ConnectX-7 详细发现</a></li>
+            <li><a href="#cx8">四、ConnectX-8 详细发现</a></li>
+            <li><a href="#cx9">五、ConnectX-9 详细发现</a></li>
+            <li><a href="#psid">六、PSID 编号规律</a></li>
+            <li><a href="#timeline">七、未发售卡时间线</a></li>
+            <li><a href="#system">八、系统级对应关系</a></li>
+            <li><a href="#warning">九、安全性与兼容性警告</a></li>
+            <li><a href="#files">十、输出文件与工具</a></li>
+          </ul>
+        </nav>
 
-        <p>NVIDIA 的固件下载页面不是静态的，背后有个 Azure 动态加载器 <code>downloaders.azurewebsites.net</code>，通过几轮 POST 可以拿到全部版本、OPN 和下载链接。我写了套脚本，把 CX7（50 版本）、CX8（13 版本）、CX9（2 版本）全量跑了一遍，顺手下载了代表性样本做二进制扫描。</p>
+        <h2 id="method">一、方法：全量枚举 + 固件扫描 + 手册交叉</h2>
 
-        <p>固件是 <code>.signed.bin</code> 格式，64MB，带签名。ITOC 偏移被签名搞乱了，但 PSID 作为 ASCII 字符串还躺在里面，靠全量扫描就能提取。然后拿着这些 PSID 和 OPN，跟 NVIDIA 官方用户手册（PDF 解析）、开发者论坛、GitHub 代码、30 多家 OEM 销售页面、供应链分析做了交叉验证。</p>
+        <p>NVIDIA 的固件下载页面不是静态 HTML，而是用一个 Azure 动态加载器 <code>downloaders.azurewebsites.net</code> 通过几轮 POST 请求来填充内容。我写了套 Python 脚本，通过以下步骤完成全量枚举：</p>
 
-        <h2>二、CX8 发现：7 个未发售/未公开型号</h2>
+        <ol>
+          <li><strong>获取版本列表</strong>：<code>POST .../helper.php action=get_versions</code> → 返回所有版本、GA 版本、最新版本</li>
+          <li><strong>获取每个版本的 OPN</strong>：<code>action=get_distros&version=xx</code> → 返回该版本支持的所有 OPN</li>
+          <li><strong>获取 PSID</strong>：<code>action=get_oses&version=xx&distro=opn</code> → 返回的数组元素就是 PSID（如 MT_0000001167）</li>
+          <li><strong>获取下载链接</strong>：<code>action=get_download_info</code> → 返回固件 ZIP 的 URL 和校验值</li>
+        </ol>
 
-        <p>ConnectX-8 是 NVIDIA 最新的 800G 网卡家族，目前只有 13 个固件版本，但已经冒出了 10 个不同 OPN。其中 3 个量产，7 个在公开文档中要么没影、要么标记为原型：</p>
+        <p>枚举完成后，下载了 25 个代表性固件样本（覆盖每个家族的最新 GA、最老版本、首次出现新 OPN 的版本、LTS 版本）。固件是 <code>.signed.bin</code> 格式，64MB，带签名。标准的 FS4 <code>MTFW</code> / <code>ITOC</code> / <code>DTOC</code> 结构在 <code>.signed.bin</code> 中不在标准偏移位置，但 <strong>PSID 作为 ASCII 字符串保留在固件数据中</strong>，通过全量正则扫描可以可靠提取。这是核心策略——与 mstflint 的 <code>-no_dev</code> 签名镜像处理逻辑一致。</p>
 
-        <table>
+        <p>最后，拿着发现的 OPN/PSID 列表，与以下来源进行交叉验证：</p>
+        <ul>
+          <li>NVIDIA 官方 ConnectX-8/9 用户手册（PDF 解析，132 页 + 109 页）</li>
+          <li>NVIDIA Developer Forums（forums.developer.nvidia.com）</li>
+          <li>GitHub 代码仓库（NVIDIA 官方设备树、Mellanox 工具源码）</li>
+          <li>30+ 家 OEM 销售页面（MSI、ASUS、Exxact、Supermicro、Lenovo 等）</li>
+          <li>供应链分析（SemiAnalysis、TradeLoop）</li>
+          <li>现场拆解照片（ServeTheHome GTC 2025）</li>
+          <li>固件下载站（Softpedia、Ebay、Volza 海关数据）</li>
+        </ul>
+
+        <h2 id="overview">二、三大家族概览</h2>
+
+        <table class="data-table">
           <thead>
-            <tr><th>OPN</th><th>PSID</th><th>首次固件版本</th><th>状态</th><th>说明</th></tr>
+            <tr><th>家族</th><th>固件主版本</th><th>总版本数</th><th>总OPN数</th><th>量产</th><th>未发售/内部</th><th>固件大小</th><th>最新GA</th><th>最新LTS</th></tr>
           </thead>
           <tbody>
-            <tr><td>900-9X81E-00EX-ST0</td><td>MT_0000001167</td><td>40.44.0208</td><td>✅ 量产</td><td>C8180，800G XDR</td></tr>
-            <tr><td>900-9X81E-00EX-DT0</td><td>MT_0000001305</td><td>40.45.1020</td><td>✅ 量产</td><td>C8180 DSP</td></tr>
-            <tr><td>900-9X81Q-00CN-ST0</td><td>MT_0000001222</td><td>40.44.0208</td><td>✅ 量产</td><td>C8240，400G NDR</td></tr>
-            <tr><td>900-9X81E-00NX-ST0</td><td>MT_0000001166</td><td>40.46.1006</td><td>🔴 未发售</td><td>C8180-NX，Crypto Disabled</td></tr>
-            <tr><td>900-9X81E-00NX-DT0</td><td>MT_0000001304</td><td>40.46.1006</td><td>🔴 未发售</td><td>C8180-NX-DSP</td></tr>
-            <tr><td>900-9X85E-00EX-MC0</td><td>MT_0000001410</td><td>40.46.1006</td><td>🔴 未发售</td><td>C8180P-MC，OCP 3.0</td></tr>
-            <tr><td>900-9X85E-00NX-MC0</td><td>MT_0000001412</td><td>40.46.1006</td><td>🔴 未发售</td><td>C8180P-NX-MC</td></tr>
-            <tr><td>900-9X81Q-00SN-ST0</td><td>MT_0000001225</td><td>40.46.1006</td><td>🔴 未发售</td><td>C8240-SN，Single-port</td></tr>
-            <tr><td>900-9X81Q-00CV-ST0</td><td>MT_0000001763</td><td>40.48.1000</td><td>🟡 原型</td><td>C8220，200G</td></tr>
-            <tr><td>P6612</td><td>NVD0000000072</td><td>40.47.1026</td><td>🔴 内部</td><td>DGX-B200 系统主板</td></tr>
+            <tr><td><strong>CX7</strong></td><td>28.xx</td><td>50</td><td>71</td><td>~65</td><td>~6</td><td>32MB / 64MB</td><td>28.49.1014</td><td>28.47.2682 LTS U2</td></tr>
+            <tr><td><strong>CX8</strong></td><td>40.xx</td><td>13</td><td>13 (手册)</td><td>4</td><td>9</td><td>64MB</td><td>40.49.1014</td><td>40.47.2682 LTS U2</td></tr>
+            <tr><td><strong>CX9</strong></td><td>82.xx</td><td>2</td><td>3 (手册)</td><td>2</td><td>1 (手册)</td><td>64MB</td><td>82.49.1014</td><td>无</td></tr>
           </tbody>
         </table>
 
-        <p>最集中的是 <strong>40.46.1006</strong> 这个版本，一口气塞了 5 个新 OPN。手册（2025-05 版）确认了其中几个（如 NX = Crypto Disabled，CV = 200G），但还有 3 个（MP0/MJ0 的 C8180P 变体、C8180L 液冷版）手册里有、固件里没出现——说明这些卡可能已经设计完，但固件支持还没上线。</p>
-
-        <h2>三、CX7 发现：两个 NVD 前缀的"神秘 OPN"</h2>
-
-        <p>ConnectX-7 有 71 个 OPN，其中两个用 NVD 前缀 PSID，是内部/系统级设备：</p>
-
+        <p>关键观察：</p>
         <ul>
-          <li><strong>P3740-B0-QSFP</strong>（NVD0000000033）—— <strong>不是芯片，是 IGX Orin/Thor 的底板编号</strong>。底板上焊接的是 ConnectX-7，提供 2x QSFP28 + 32-lane Gen5 PCIe Switch。开发者论坛（KevinFFF 官方确认）、Linux 内核设备树、Holoscan SDK 都点过名。</li>
-          <li><strong>900-24768-0002</strong>（NVD0000000054）—— <strong>GB200 NVL 系统的 Dual ConnectX-7 Mezzanine 夹层板</strong>，通过 Mirror Mezz 连接器安装在 Bianca 主板上，共享液冷。ASUS 产品页、Supermicro 手册、SemiAnalysis 供应链分析都确认过。</li>
+          <li>CX7 是产品线最丰富的家族，50 版本、71 OPN，覆盖 2022-2026 完整生命周期</li>
+          <li>CX8 处于产品早期，13 版本但已发现 13 个 OPN（手册确认），其中 9 个为未发售/未公开/固件未确认</li>
+          <li>CX9 处于原型阶段，所有型号均为 Prototype</li>
+          <li>CX7 标准卡固件 32MB，OCP/特殊卡 64MB；CX8/CX9 所有卡均为 64MB</li>
         </ul>
 
-        <h2>四、CX9 与系统级对应</h2>
+        <h2 id="cx7">三、ConnectX-7 详细发现</h2>
 
-        <p>ConnectX-9 目前只有 2 个版本，手册（2025-05 首版）确认了型号是 <strong>C9180</strong>（不是之前猜的 C9280）和 <strong>C9240</strong>，目前状态为 Prototype。值得注意的是，固件中的 PSID 编号（MT_0000001589/1715）与 CX8 是<strong>连续分配</strong>的，说明跨家族用的是同一条编号池。</p>
+        <p>CX7 固件版本从 <strong>28.33.2028</strong> (2022) 到 <strong>28.49.1014</strong> (2026)，全量枚举发现 <strong>71 个唯一 OPN</strong>。</p>
 
-        <h2>五、DGX GB300 的网卡到底是谁？</h2>
+        <h3>3.1 量产 OPN 命名规则</h3>
+        <div class="code-block">
+MCX75xxxxx-xxx  → 高端 200G/400G 卡
+MCX75xxxxx-HEA  → HE = heatsink (散热片)
+MCX75xxxxx-NEA  → NE = no heatsink (无散热片)
+MCX75xxxxx-WEA  → WE = water cooling (水冷)
+-CEA = ConnectX-7 Ethernet Adapter
+-ADA = Adapters (通用适配器)
+        </div>
 
-        <p>这是全量搜索中最有趣的部分。我翻了 30 多家 OEM 的 GB300 Station 销售页面、ServeTheHome 的现场拆解、NVIDIA 开发者论坛，结论非常一致：</p>
+        <h3>3.2 新发现/未发售/内部 OPN</h3>
+
+        <p>以下 OPN 为 PSID 缺失（None）、NVD 前缀（内部标识）或首次出现版本极晚：</p>
+
+        <table class="data-table">
+          <thead>
+            <tr><th>OPN</th><th>PSID</th><th>首次版本</th><th>版本数</th><th>状态</th><th>说明</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>MCX71343DMS-WEAB</td><td>None</td><td>28.33.4030</td><td>1</td><td>未发售</td><td>OCP3.0 400GbE QSFP-DD, Secure Boot, 无 Crypto</td></tr>
+            <tr><td>MCX71343DMC-WEAB</td><td>None</td><td>28.33.4030</td><td>1</td><td>未发售</td><td>OCP3.0 400GbE QSFP-DD, Secure Boot + Crypto</td></tr>
+            <tr><td>MCX753436MS-HEAT</td><td>None</td><td>28.35.2000-LTS</td><td>3</td><td>未发售</td><td>散热片 MS 变体</td></tr>
+            <tr><td>MCX755206AS-NEAT</td><td>None</td><td>28.35.2000-LTS</td><td>3</td><td>未发售</td><td>无散热片 NEAT</td></tr>
+            <tr><td>MCX75310AAS-HEAT-N</td><td>None</td><td>28.35.2000-LTS</td><td>3</td><td>未发售</td><td>带散热片+N后缀</td></tr>
+            <tr><td>MCX753106AS-HEAT-N</td><td>None</td><td>28.35.2000-LTS</td><td>3</td><td>未发售</td><td>带散热片+N后缀</td></tr>
+            <tr><td>MCX71343DMS-WEAT</td><td>None</td><td>28.35.2000-LTS</td><td>3</td><td>未发售</td><td>水冷 WEAT 后缀</td></tr>
+            <tr><td>MCX71343DMC-WEAT</td><td>None</td><td>28.35.2000-LTS</td><td>3</td><td>未发售</td><td>水冷 WEAT 后缀</td></tr>
+            <tr><td>MCX750500B-0D0K / 0D00</td><td>None</td><td>28.36.1010</td><td>3</td><td>未发售</td><td>500系列</td></tr>
+            <tr><td>MCX750500B-0D0K / 0D00 / C-0D0K / C-0D00</td><td>None</td><td>28.39.2048-LTS</td><td>9</td><td>未发售</td><td>500系列多SKU</td></tr>
+            <tr><td>MCX753436MS-HEB</td><td>None</td><td>28.43.1014</td><td>3</td><td>未发售</td><td>HEB 后缀</td></tr>
+            <tr><td>692-9X760-00SE-S00</td><td>MT_0000001121</td><td>28.47.1026</td><td>2</td><td>未发售</td><td>C7010Z HDR100 100Gb/s</td></tr>
+            <tr><td>692-9X760-00SE-S0C</td><td>MT_0000001181</td><td>28.47.1026</td><td>2</td><td>未发售</td><td>C7010Z HDR100 S0C 变体</td></tr>
+            <tr><td>P3740-B0-QSFP</td><td>NVD0000000033</td><td>28.39.5050-LTS</td><td>6</td><td>内部</td><td>Jetson/IGX 底板（见§8.1）</td></tr>
+            <tr><td>900-24768-0002</td><td>NVD0000000054</td><td>28.43.1014</td><td>3</td><td>系统配套</td><td>GB200 NVL Mezzanine（见§8.2）</td></tr>
+          </tbody>
+        </table>
+
+        <h3>3.3 二进制分析验证</h3>
+
+        <p>下载的 10 个 CX7 固件样本中，PSID 扫描全部匹配预期值：</p>
+
+        <table class="data-table">
+          <thead>
+            <tr><th>文件</th><th>版本</th><th>OPN</th><th>PSID</th><th>大小</th><th>匹配</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>MCX755106AS-HEA</td><td>28.49.1014</td><td>MCX755106AS-HEA</td><td>MT_0000000834</td><td>32MB</td><td>✅</td></tr>
+            <tr><td>MCX75310AAS-HEA</td><td>28.49.1014</td><td>MCX75310AAS-HEA</td><td>MT_0000000844</td><td>32MB</td><td>✅</td></tr>
+            <tr><td>MCX713104AS-ADA</td><td>28.49.1014</td><td>MCX713104AS-ADA</td><td>MT_0000000849</td><td>32MB</td><td>✅</td></tr>
+            <tr><td>MCX75310AAC-NEA</td><td>28.49.1014</td><td>MCX75310AAC-NEA</td><td>MT_0000001046</td><td>32MB</td><td>✅</td></tr>
+            <tr><td>692-9X760-00SE-S00</td><td>28.49.1014</td><td>692-9X760-00SE-S00</td><td>MT_0000001121</td><td>64MB</td><td>✅</td></tr>
+            <tr><td>MCX75343AAS-NEA</td><td>28.49.1014</td><td>MCX75343AAS-NEA</td><td>MT_0000000784</td><td>32MB</td><td>✅</td></tr>
+            <tr><td>MCX753436MC-HEA</td><td>28.49.1014</td><td>MCX753436MC-HEA</td><td>MT_0000001030</td><td>32MB</td><td>✅</td></tr>
+            <tr><td>MCX75343AMC-NEAC</td><td>28.49.1014</td><td>MCX75343AMC-NEAC</td><td>MT_0000001059</td><td>32MB</td><td>✅</td></tr>
+            <tr><td>P3740-B0-QSFP</td><td>28.49.1014</td><td>P3740-B0-QSFP</td><td>NVD0000000033</td><td>32MB</td><td>✅</td></tr>
+            <tr><td>900-24768-0002</td><td>28.49.1014</td><td>900-24768-0002</td><td>NVD0000000054</td><td>32MB</td><td>✅</td></tr>
+          </tbody>
+        </table>
+
+        <p>关键观察：CX7 标准卡固件为 <strong>32MB</strong>，而 OCP/系统卡（如 692-9X760-00SE-S00）为 <strong>64MB</strong>。</p>
+
+        <h2 id="cx8">四、ConnectX-8 详细发现</h2>
+
+        <p>CX8 固件版本从 <strong>40.44.0208</strong> 到 <strong>40.49.1014</strong>。固件中发现 10 个 OPN，手册确认 13 个 OPN。</p>
+
+        <h3>4.1 全部 OPN 汇总</h3>
+
+        <table class="data-table">
+          <thead>
+            <tr><th>#</th><th>OPN</th><th>PSID</th><th>首次版本</th><th>状态</th><th>说明</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>900-9X81E-00EX-ST0</td><td>MT_0000001167</td><td>40.44.0208</td><td>✅ 量产</td><td>C8180, 800G XDR, CEM, Socket Direct</td></tr>
+            <tr><td>2</td><td>900-9X81E-00EX-DT0</td><td>MT_0000001305</td><td>40.45.1020</td><td>✅ 量产</td><td>C8180 DSP, 800G XDR, CEM</td></tr>
+            <tr><td>3</td><td>900-9X81Q-00CN-ST0</td><td>MT_0000001222</td><td>40.44.0208</td><td>✅ 量产</td><td>C8240, NDR 400G, CEM, Socket Direct</td></tr>
+            <tr><td>4</td><td>900-9X85E-00EX-MC0</td><td>MT_0000001410</td><td>40.46.1006</td><td>✅ 量产</td><td>C8180P-MC, 800G XDR, OCP 3.0, 风冷</td></tr>
+            <tr><td>5</td><td>900-9X81E-00NX-ST0</td><td>MT_0000001166</td><td>40.46.1006</td><td>🔴 未发售</td><td>C8180-NX, 800G XDR, CEM, Crypto Disabled</td></tr>
+            <tr><td>6</td><td>900-9X81E-00NX-DT0</td><td>MT_0000001304</td><td>40.46.1006</td><td>🔴 未发售</td><td>C8180-NX DSP, 800G XDR, CEM</td></tr>
+            <tr><td>7</td><td>900-9X85E-00NX-MC0</td><td>MT_0000001412</td><td>40.46.1006</td><td>🔴 未发售</td><td>C8180P-NX-MC, OCP 3.0, Partner Cooled</td></tr>
+            <tr><td>8</td><td>900-9X81Q-00SN-ST0</td><td>MT_0000001225</td><td>40.46.1006</td><td>🔴 未发售</td><td>C8240-SN, NDR 400G, CEM, Single-port</td></tr>
+            <tr><td>9</td><td>900-9X81Q-00CV-ST0</td><td>MT_0000001763</td><td>40.48.1000</td><td>🟡 原型</td><td>C8220, 200G, CEM, PCIe 5 x16</td></tr>
+            <tr><td>10</td><td>P6612</td><td>NVD0000000072</td><td>40.47.1026</td><td>🔴 内部</td><td>DGX-B200 系统主板</td></tr>
+            <tr><td>11</td><td>900-9X81E-00EX-SL0</td><td>—</td><td>手册 2025-05</td><td>✅ 量产</td><td>C8180L, Partner Cooled 液冷, <strong>固件未确认</strong></td></tr>
+            <tr><td>12</td><td>900-9X85E-00EX-MP0</td><td>—</td><td>手册 2025-05</td><td>🟡 原型</td><td>C8180P 配置#2, 2×400GbE, <strong>固件未确认</strong></td></tr>
+            <tr><td>13</td><td>900-9X85E-00EX-MJ0</td><td>—</td><td>手册 2025-05</td><td>🟡 原型</td><td>C8180P 配置#3, 8×100GbE, <strong>固件未确认</strong></td></tr>
+          </tbody>
+        </table>
+
+        <h3>4.2 关键时间线</h3>
+        <div class="code-block">
+40.44.0208 (最早)  → C8180 (ST0) + C8240 (CN-ST0)  [量产首发]
+40.45.1020         → + C8180 DSP (DT0)              [量产扩展]
+40.46.1006 [里程碑] → + C8180-NX (ST0) + C8180-NX-DSP (DT0)
+                      + C8180P-MC (MC0) + C8180P-NX-MC (MC0)
+                      + C8240-SN (ST0)              [5个新OPN同时出现]
+40.47.1026         → + P6612 (NVD0000000072)        [内部开发板]
+40.48.1000         → + C8220 (CV-ST0)               [200G Prototype]
+40.49.1014 (最新)  → 支持全部 10 个固件 OPN
+
+手册 2025-05       → 新增 C8180L (SL0), C8180P MP0/MJ0 [固件未确认]
+手册 2025-12       → 新增 C8220 (CV-ST0)              [固件已确认]
+        </div>
+
+        <p><strong>结论：没有任何原始版本 (40.44.x) 支持未发售卡。手册确认但固件未出现的 OPN (C8180L/MP0/MJ0) 可能在后续固件中加入。</strong></p>
+
+        <h3>4.3 后缀解码</h3>
+
+        <table class="data-table">
+          <thead><tr><th>后缀</th><th>含义</th><th>来源</th></tr></thead>
+          <tbody>
+            <tr><td>NX</td><td>Crypto Disabled, Secure Boot Enabled</td><td>NVIDIA 官方 User Manual 直接确认</td></tr>
+            <tr><td>SN</td><td>Single-port</td><td>T.E.S 零售商产品页面</td></tr>
+            <tr><td>SL</td><td>Partner Cooled (液冷)</td><td>手册 2025-05</td></tr>
+            <tr><td>MC</td><td>OCP 3.0, Multi-Host/Socket Direct</td><td>手册 2025-05</td></tr>
+            <tr><td>MP/MJ</td><td>C8180P 配置变体</td><td>手册 2025-05</td></tr>
+            <tr><td>WEAB</td><td>W=OCP3.0/QSFP-DD, E=Secure Boot, A/B=Thumbscrew Bracket</td><td>多家供应商规格表</td></tr>
+            <tr><td>DMS</td><td>无 Crypto</td><td>供应商规格表</td></tr>
+            <tr><td>DMC</td><td>Crypto 加密版</td><td>供应商规格表</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="cx9">五、ConnectX-9 详细发现</h2>
+
+        <p>CX9 目前仅 2 个固件版本（82.48.1000, 82.49.1014），手册 2025-05 首版、2025-12 更新。</p>
+
+        <table class="data-table">
+          <thead><tr><th>OPN</th><th>PSID</th><th>首次版本</th><th>型号</th><th>手册状态</th><th>固件状态</th></tr></thead>
+          <tbody>
+            <tr><td>900-9X91E-00EB-ST0</td><td>MT_0000001589</td><td>82.48.1000</td><td>C9180</td><td>原型</td><td>✅</td></tr>
+            <tr><td>900-9X91Q-00CN-ST0</td><td>MT_0000001715</td><td>82.48.1000</td><td>C9240</td><td>原型</td><td>✅</td></tr>
+            <tr><td>900-9X91E-00EB-DT0</td><td>—</td><td>手册</td><td>C9180 DSP</td><td>原型</td><td>❌ 未确认</td></tr>
+          </tbody>
+        </table>
+
+        <p>所有 CX9 型号目前均为 <strong>Prototype</strong>，尚未量产。原报告型号误写为 C9280，实际为 <strong>C9180</strong>。</p>
+
+        <h2 id="psid">六、PSID 编号规律</h2>
+
+        <table class="data-table">
+          <thead><tr><th>家族</th><th>PSID 范围</th><th>示例</th></tr></thead>
+          <tbody>
+            <tr><td>CX7</td><td>MT_00000007xx ~ 11xx</td><td>0784, 0834, 0844, 1121</td></tr>
+            <tr><td>CX8</td><td>MT_00000011xx ~ 17xx</td><td>1166, 1222, 1305, 1763</td></tr>
+            <tr><td>CX9</td><td>MT_00000015xx ~ 17xx</td><td>1589, 1715</td></tr>
+          </tbody>
+        </table>
+
+        <p>PSID 编号是<strong>跨家族连续分配</strong>的，而非每个家族独立编号。</p>
+
+        <p>内部/合作伙伴 PSID（NVD 前缀）跨家族连续递增：</p>
+        <div class="code-block">
+NVD0000000033 (P3740, Jetson/IGX) → NVD0000000054 (GB200 Mezzanine) → NVD0000000072 (P6612, DGX-B200)
+        </div>
+
+        <h2 id="timeline">七、未发售卡时间线对比</h2>
+
+        <table class="data-table">
+          <thead><tr><th>家族</th><th>未发售/内部数</th><th>最早发现</th><th>最新发现</th><th>模式</th></tr></thead>
+          <tbody>
+            <tr><td>CX7</td><td>~6</td><td>28.33.2028</td><td>28.49.1014</td><td>后期版本引入，部分已量产</td></tr>
+            <tr><td>CX8</td><td>9</td><td>40.46.1006</td><td>40.48.1000</td><td>里程碑版本集中引入 + 手册确认</td></tr>
+            <tr><td>CX9</td><td>1 (手册)</td><td>N/A</td><td>N/A</td><td>手册确认但固件未出现</td></tr>
+          </tbody>
+        </table>
+
+        <p>CX8 的 <strong>40.46.1006</strong> 是里程碑版本，同时引入 5 个新 OPN。这种模式暗示这些卡可能是同一批合作伙伴定制 SKU 或同一硬件验证窗口的变体。</p>
+
+        <h2 id="system">八、系统级对应关系</h2>
+
+        <h3>8.1 P3740-B0-QSFP / NVD0000000033 — Jetson IGX Orin/Thor 底板</h3>
+
+        <p><strong>最终确认：P3740 不是芯片，而是 IGX 系列底板的 PCB 编号。</strong></p>
+
+        <table class="data-table">
+          <thead><tr><th>属性</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>P3740 身份</td><td>IGX Orin / IGX Thor 的底板（Baseboard）PCB 编号</td></tr>
+            <tr><td>实际芯片</td><td><strong>NVIDIA ConnectX-7</strong>（SmartNIC + 集成 32-lane Gen5 PCIe Switch）</td></tr>
+            <tr><td>网络端口</td><td>2x QSFP28（Orin: 100GbE/口；Thor: 200GbE/口）</td></tr>
+            <tr><td>PCIe 拓扑</td><td>Tegra SoC → x8 Gen5 → ConnectX-7 → [x16 dGPU] + [x8 PCIe] + [2x QSFP28]</td></tr>
+            <tr><td>安全 MCU</td><td>Infineon Aurix TC397（固件：P3740-Aurix-StepB_C01.hex）</td></tr>
+            <tr><td>设备树</td><td><code>tegra234-p3740-0002+p3701-0008.dts</code></td></tr>
+            <tr><td>PSID</td><td>NVD0000000033</td></tr>
+          </tbody>
+        </table>
+
+        <p>确认来源：NVIDIA Developer Forums (KevinFFF 官方确认)、Linux 内核主线、Holoscan SDK、MLNX_OFED、PNY/ASRock/Aetina。</p>
+
+        <h3>8.2 900-24768-0002 / NVD0000000054 — GB200 NVL 系统 Mezzanine 板</h3>
+
+        <p>GB200 NVL 系统的 Dual ConnectX-7 Mezzanine 夹层板，通过 Mirror Mezz 连接器安装在 Bianca 主板上，与 CPU/GPU 共享液冷。固件活跃：28.43.1014 → 28.46.3048 → 28.47.1088 LTS。确认来源：ASUS 产品页、Supermicro GB200 手册、SemiAnalysis 供应链分析。</p>
+
+        <h3>8.3 DGX Station GB300 Workstation — C8240 (900-9X81Q-00CN-ST0)</h3>
+
+        <p><strong>所有 DGX Station GB300 工作站的网卡配置完全一致：</strong></p>
+
+        <table class="data-table">
+          <thead><tr><th>属性</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>网卡型号</td><td><strong>NVIDIA ConnectX-8 SuperNIC C8240</strong></td></tr>
+            <tr><td>集成方式</td><td><strong>主板集成 (Onboard/Soldered)</strong></td></tr>
+            <tr><td>对应 OPN</td><td>900-9X81Q-00CN-ST0</td></tr>
+            <tr><td>对应 PSID</td><td>MT_0000001222</td></tr>
+            <tr><td>端口</td><td>2x QSFP112</td></tr>
+            <tr><td>速率</td><td>400GbE/口，合计 800Gb/s</td></tr>
+            <tr><td>PCIe</td><td>PCIe Gen6 x16</td></tr>
+            <tr><td>价格</td><td>$94,000 - $155,000</td></tr>
+          </tbody>
+        </table>
+
+        <p>30+ 家 OEM 一致确认：MSI / ASUS / Exxact / Bizon-Tech / Dell / HP。确认来源：ServeTheHome GTC 2025 现场拆解、The Register、Mellanox/netop-tools。</p>
+
+        <h3>8.4 DGX GB300 NVL72 Rack Server — CX-8 I/O Board (900-9X86E-00CX)</h3>
+
+        <p>独立 Mezzanine / I/O Board，4x OSFP，800Gb/s/口。OPN: 900-9X86E-00CX-SP0（风冷）/ ST0（液冷）。确认来源：Lenovo / Supermicro / PNY / NADDOD / Glenn Klockwood GTC 2025。</p>
+
+        <p><strong>注意：该 OPN 未出现在当前固件下载页面</strong>，可能通过 DGX OS 系统镜像单独分发。</p>
+
+        <h3>8.5 固件 OPN 与系统级对应总表</h3>
+
+        <table class="data-table">
+          <thead><tr><th>OPN</th><th>PSID</th><th>固件</th><th>对应系统</th><th>系统角色</th></tr></thead>
+          <tbody>
+            <tr><td>900-9X81Q-00CN-ST0</td><td>MT_0000001222</td><td>✅</td><td><strong>DGX Station GB300</strong></td><td>主板集成 C8240</td></tr>
+            <tr><td>900-9X81E-00EX-ST0</td><td>MT_0000001167</td><td>✅</td><td>GB300 NVL72</td><td>独立 C8180 等价</td></tr>
+            <tr><td>900-9X86E-00CX-SP0</td><td>—</td><td>❌</td><td><strong>GB300 NVL72</strong></td><td>CX-8 I/O Board (4x OSFP)</td></tr>
+            <tr><td>P3740-B0-QSFP</td><td>NVD0000000033</td><td>✅</td><td><strong>IGX Orin/Thor</strong></td><td>底板上的 ConnectX-7</td></tr>
+            <tr><td>900-24768-0002</td><td>NVD0000000054</td><td>✅</td><td><strong>GB200 NVL</strong></td><td>Mezzanine 双 CX-7</td></tr>
+            <tr><td>P6612</td><td>NVD0000000072</td><td>✅</td><td><strong>DGX-B200</strong></td><td>系统主板/基板</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="warning">九、安全性与兼容性警告</h2>
+
+        <table class="data-table">
+          <thead><tr><th>规则</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>PSID 绑定</td><td>每个固件镜像绑定一个 PSID，代表特定板级配置</td></tr>
+            <tr><td>ST0 ≠ DT0</td><td>Socket Direct 与 DSP 扩展口不可互换</td></tr>
+            <tr><td>NX ≠ EX</td><td>无扩展与有扩展版本配置位域不同</td></tr>
+            <tr><td>NVD 前缀</td><td>内部/合作伙伴固件，不建议在公开硬件上刷入</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="files">十、输出文件与工具</h2>
+
+        <p>本次分析的所有数据、报告、工具已整理到本地仓库：</p>
 
         <ul>
-          <li><strong>DGX Station GB300 Workstation</strong>：主板集成的 <strong>C8240</strong>（900-9X81Q-00CN-ST0），2x QSFP112，400GbE/口。所有 OEM（MSI、ASUS、Exxact、Bizon-Tech 等）规格表一致。</li>
-          <li><strong>DGX GB300 NVL72 Rack Server</strong>：用的是独立的 <strong>900-9X86E-00CX-SP0/ST0</strong> CX-8 I/O Board，4x OSFP，800Gb/s/口。这个 OPN <strong>没出现在当前固件下载页面</strong>，可能通过 DGX OS 系统镜像单独分发。</li>
+          <li><strong>固件全量枚举脚本</strong>：Python + requests，枚举 CX7/8/9 所有版本/OPN/PSID</li>
+          <li><strong>FS4 签名固件解析器</strong>：MTFW/ITOC/DTOC 解析 + ASCII PSID 正则扫描</li>
+          <li><strong>参考数据库</strong>：<code>data/connectx8_refdb.json</code>（v6，17 个 boards，含 system_mapping 字段）</li>
+          <li><strong>完整报告</strong>（7 份 markdown）：
+            <ul>
+              <li>三大家族汇总报告（本博客源文）</li>
+              <li>未发售 PSID 全网公开搜索对应报告</li>
+              <li>固件与手册交叉验证报告</li>
+              <li>系统级对应关系报告</li>
+              <li>GB300 工作站全量搜索报告</li>
+              <li>GB300 社区搜索报告</li>
+              <li>GB300 P3740 社区研究报告</li>
+            </ul>
+          </li>
         </ul>
 
-        <h2>六、一些有趣的规律</h2>
-
-        <ul>
-          <li><strong>PSID 编号跨家族连续</strong>：CX7 覆盖 700-1100，CX8 覆盖 1100-1700，CX9 从 1589 开始，说明不是每个家族独立编号。</li>
-          <li><strong>NVD 前缀 PSID 递增</strong>：0033（P3740）→ 0054（GB200 Mezzanine）→ 0072（P6612），内部设备按顺序分配。</li>
-          <li><strong>NX 后缀 = Crypto Disabled</strong>，手册直接确认。SN 后缀 = Single-port，零售商 T.E.S 的产品页面确认。</li>
-          <li><strong>没有任何原始版本固件支持未发售卡</strong>——它们全部在 40.46.1006 或之后才出现。</li>
-        </ul>
-
-        <h2>七、工具与数据</h2>
-
-        <p>这次分析的所有脚本、数据、报告都留在本地仓库里：</p>
-
-        <ul>
-          <li>固件全量枚举脚本（Python + requests）</li>
-          <li>FS4 签名固件解析器（MTFW/ITOC/DTOC + ASCII PSID 扫描）</li>
-          <li>3 份 PDF 手册解析结果（文本提取 + 规格表对照）</li>
-          <li>参考数据库（connectx8_refdb.json，v6，17 个 boards）</li>
-          <li>完整报告（7 份 markdown，覆盖逆向、公开搜索、手册交叉、系统映射）</li>
-        </ul>
-
-        <p>如果你对固件逆向或者 NVIDIA 网卡命名规则有兴趣，欢迎留言讨论。</p>
+        <p>如果你对固件逆向、NVIDIA 网卡命名规则或 DGX 系统网卡配置有兴趣，欢迎留言讨论。</p>
 
       </article>
     </main>
