@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NVIDIA Jetson / Tegra 编号与料号全量对照 · 我的博客</title>
+  <meta name="description" content="把 Jetson 各代核心板、底板、开发套件的 Pxxxx 编号、SKU 后缀与量产料号一次理清，附设备上自查方法与设备树实证的模组×底板组合。" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <style>
+    /* 文章内表格样式——仅作用于本页，用中性灰 + currentColor，浅色/深色模式都适配，不动全局 style.css */
+    .post-content .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1.1rem 0; }
+    .post-content table { border-collapse: collapse; width: 100%; font-size: 0.86rem; line-height: 1.45; }
+    .post-content caption { caption-side: top; text-align: left; font-weight: 700; font-size: 0.98rem; padding: 0 0 0.45rem; opacity: 0.95; }
+    .post-content th, .post-content td { border: 1px solid rgba(128,128,128,0.32); padding: 0.45rem 0.6rem; text-align: left; vertical-align: top; }
+    .post-content thead th { background: rgba(128,128,128,0.14); font-weight: 600; white-space: nowrap; }
+    .post-content tbody td:first-child { white-space: nowrap; font-weight: 600; }
+    .post-content .legend { opacity: 0.75; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="site-header">
+      <a class="site-title" href="/">我的博客</a>
+      <nav class="site-nav">
+        <a href="/">首页</a>
+        <a href="/about.html">关于</a>
+      </nav>
+    </header>
+
+    <main>
+      <a class="back-link" href="/">← 返回首页</a>
+      <article class="post-content">
+        <h1>NVIDIA Jetson / Tegra 编号与料号全量对照</h1>
+        <p class="post-meta">2026-06-20</p>
+
+        <p>玩 Jetson 的人迟早会被那一串 <code>Pxxxx</code> 编号搞晕：同一个号既可能是核心板，也可能是底板甚至整机；后面再挂个四位后缀又区分显存和工业级。这篇把<strong>主线 Linux 内核设备树、NVIDIA 官方手册与数据手册、官方下游 BSP、以及厂商量产料号</strong>交叉核对后，整理成一份从 TK1 到 Thor 的完整对照，并给出在设备上自查型号的方法。</p>
+
+        <h2>先学会读懂一串号</h2>
+
+        <p>Tegra/Jetson 的编号其实有规律，拆开看就不乱了：</p>
+
+        <p><code>Pxxxx</code> 是<strong>板卡设计号（board design ID）</strong>，它本身不区分定位——可能是核心板（SOM）、底板（carrier），也可能是开发套件整机。真正区分配置的是后面那串 <code>Pxxxx-yyyy</code>：四位后缀 <code>yyyy</code> 是 <strong>SKU</strong>，写在模组 EEPROM 里，用来区分显存容量、工业级、存储介质等。比如 <code>P3767</code> 这一个设计号下就挂了五个 SKU（Orin NX 16G/8G、Orin Nano 8G/4G、以及开发套件 SD 卡版）。</p>
+
+        <p>判断「哪个核心板配哪个底板」最硬的依据是设备树文件名，它的命名规则是 <code>tegra&lt;SoC&gt;-p&lt;底板&gt;-&lt;sku&gt;+p&lt;核心板&gt;-&lt;sku&gt;.dts</code>。举个真实例子：</p>
+
+        <pre><code>tegra234-p3737-0000+p3701-0004.dts
+   │        │            └─ 核心板 P3701-0004 = AGX Orin 32GB
+   │        └─ 底板 P3737-0000 = AGX Orin 参考底板
+   └─ SoC tegra234 = Orin</code></pre>
+
+        <p>几个 SoC 代号对应到产品代：<code>tegra210</code> = Maxwell X1（TX1/Nano）、<code>tegra186</code> = Parker（TX2）、<code>tegra194</code> = Xavier、<code>tegra234</code> = Orin、<code>tegra264</code> = Thor。</p>
+
+        <p>跟 P 号并行的还有一套<strong>量产订货料号</strong>：<code>699-Lxxxxx-yyyy-zzz</code> 是裸模组，<code>900-xxxxx</code> 是带散热的模组，<code>945-xxxxx</code> / <code>900-</code> 是开发套件整机。另外烧录脚本里会出现 <code>chipsku</code>（如 7023、7323），与模组 SKU 一一对应，下面表里一并列出。</p>
+
+        <h2>在设备上怎么自查</h2>
+
+        <p>拿到一块板子想确认到底是什么型号，最快的几条命令：</p>
+
+        <pre><code>cat /proc/device-tree/nvidia,dtsfilename      # 最直接：含 底板+核心板 组合名
+cat /sys/firmware/devicetree/base/model       # 人类可读型号
+cat /proc/device-tree/nvidia,boardids         # board id 列表
+sudo i2cdump -y &lt;bus&gt; 0x50                     # 直接读模组 EEPROM 的 board SKU
+sudo pip install jetson-stats &amp;&amp; jtop         # 自动解析以上全部（jtop / jetson_release）</code></pre>
+
+        <h2>各代核心板（SOM）</h2>
+
+        <p>核心板也就是系统级模组（System-on-Module），是真正承载算力的部分。下面按代分组，含 SKU 后缀、显存、GPU 与标称算力、可订货的量产料号。<span class="legend">（算力为官方标称值；标「→」的是 Orin 系列经软件升级后的 Super Mode 数值。）</span></p>
+
+        <div class="table-scroll">
+        <table>
+          <caption>Tegra264 · Jetson Thor（JetPack 7）</caption>
+          <thead>
+            <tr><th>PN</th><th>产品</th><th>显存</th><th>GPU / 算力（标称）</th><th>量产料号</th><th>JetPack</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>P3834-0008</td><td>Jetson Thor (T5000)</td><td>128GB LPDDR5X · 256-bit · 273 GB/s</td><td>Blackwell 2560 CUDA / 96 Tensor · 14C Neoverse-V3AE · 2070 FP4 / 1035 FP8 TFLOPS · 40–130W · MIG / PVA v3</td><td>900-13834-0080-000</td><td>JP7</td></tr>
+            <tr><td>P3834（T4000 SKU）</td><td>Jetson Thor (T4000)</td><td>64GB LPDDR5X</td><td>低配版 · 约 1200 TFLOPS（资料仍为初步）</td><td>—</td><td>JP7</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <div class="table-scroll">
+        <table>
+          <caption>Tegra234 · Jetson AGX Orin（JetPack 5/6）</caption>
+          <thead>
+            <tr><th>PN</th><th>产品</th><th>显存</th><th>GPU / 算力（标称）</th><th>量产料号</th><th>chipsku</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>P3701-0000</td><td>AGX Orin（早期 / 开发套件 32GB 模组）</td><td>32GB LPDDR5 · 204.8 GB/s</td><td>Ampere 1792 CUDA / 56 Tensor</td><td>—</td><td>7023</td></tr>
+            <tr><td>P3701-0004</td><td>AGX Orin 32GB</td><td>32GB LPDDR5 · 204.8 GB/s</td><td>1792 CUDA / 56 Tensor · 200 TOPS (INT8)</td><td>—</td><td>7223</td></tr>
+            <tr><td>P3701-0005</td><td>AGX Orin 64GB</td><td>64GB LPDDR5 · 204.8 GB/s</td><td>2048 CUDA / 64 Tensor · 275 TOPS (INT8 稀疏) · 15–60W</td><td>900-13701-0050-000</td><td>7023</td></tr>
+            <tr><td>P3701-0008</td><td>AGX Orin Industrial 64GB</td><td>64GB LPDDR5 + ECC</td><td>2048 CUDA / 64 Tensor · 工业级 -40~85℃ / 10yr · 最高 75W</td><td>—</td><td>7023</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <div class="table-scroll">
+        <table>
+          <caption>Tegra234 · Jetson Orin NX / Orin Nano（同一 SO-DIMM 形态）</caption>
+          <thead>
+            <tr><th>PN</th><th>产品</th><th>显存</th><th>GPU / 算力（标称）</th><th>量产料号</th><th>chipsku</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>P3767-0000</td><td>Orin NX 16GB</td><td>16GB LPDDR5</td><td>Ampere 1024 CUDA / 32 Tensor · 100 → 157 TOPS (Super) · 10–40W</td><td>900-13767-0000-000</td><td>7323</td></tr>
+            <tr><td>P3767-0001</td><td>Orin NX 8GB</td><td>8GB LPDDR5</td><td>1024 CUDA · 70 → 117 TOPS (Super)</td><td>—</td><td>7423</td></tr>
+            <tr><td>P3767-0003</td><td>Orin Nano 8GB</td><td>8GB LPDDR5</td><td>1024 CUDA · 40 → 67 TOPS (Super) · 7–25W · 带宽 68 → 102 GB/s</td><td>—</td><td>7523</td></tr>
+            <tr><td>P3767-0004</td><td>Orin Nano 4GB</td><td>4GB LPDDR5</td><td>512 CUDA · 20 → 34 TOPS (Super)</td><td>—</td><td>7623</td></tr>
+            <tr><td>P3767-0005</td><td>Orin Nano 8GB（开发套件 SD 卡版）</td><td>8GB LPDDR5</td><td>配置同 -0003 · SD 卡启动 · Orin Nano Super 套件用</td><td>—</td><td>7523</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <div class="table-scroll">
+        <table>
+          <caption>Tegra194 · Jetson Xavier（JetPack 4/5）</caption>
+          <thead>
+            <tr><th>PN</th><th>产品</th><th>显存</th><th>GPU / 关键规格</th><th>JetPack</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>P2888-0001</td><td>AGX Xavier 16GB（「原始」版）</td><td>16GB LPDDR4x</td><td>Volta 512 CUDA / 64 Tensor · 约 30 TOPS</td><td>JP4/5</td></tr>
+            <tr><td>P2888-0004 / -0003</td><td>AGX Xavier 32GB</td><td>32GB LPDDR4x</td><td>约 32 TOPS</td><td>JP4/5</td></tr>
+            <tr><td>P2888-0005</td><td>AGX Xavier 64GB</td><td>64GB LPDDR4x</td><td>Volta 512 CUDA</td><td>JP4/5</td></tr>
+            <tr><td>P2888-0006</td><td>AGX Xavier 8GB</td><td>8GB LPDDR4x</td><td>低功耗版</td><td>JP4/5</td></tr>
+            <tr><td>P2888-0008</td><td>AGX Xavier Industrial 32GB</td><td>32GB + ECC</td><td>双 Cortex-R5 锁步 · GPU / DRAM ECC · 10yr</td><td>JP4/5</td></tr>
+            <tr><td>P3668-0000</td><td>Xavier NX（开发套件版，microSD）</td><td>8GB LPDDR4x</td><td>Volta 384 CUDA / 48 Tensor · 约 21 TOPS</td><td>JP4/5</td></tr>
+            <tr><td>P3668-0001</td><td>Xavier NX 8GB（eMMC，量产）</td><td>8GB LPDDR4x</td><td>约 21 TOPS</td><td>JP4/5</td></tr>
+            <tr><td>P3668-0003</td><td>Xavier NX 16GB</td><td>16GB LPDDR4x</td><td>Volta 384 CUDA</td><td>JP4/5</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <div class="table-scroll">
+        <table>
+          <caption>Tegra210 · Jetson TX1 / Nano（JetPack 3/4，均已 EOL）</caption>
+          <thead>
+            <tr><th>PN</th><th>产品</th><th>显存</th><th>GPU / 算力</th><th>JetPack</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>P2180-1000</td><td>Jetson TX1</td><td>4GB LPDDR4</td><td>Maxwell 256 CUDA · 约 1 TFLOPS FP16</td><td>JP3/4 (EOL)</td></tr>
+            <tr><td>P3448-0000</td><td>Jetson Nano 4GB（microSD 开发模组）</td><td>4GB LPDDR4</td><td>Maxwell 128 CUDA · 472 GFLOPS FP16</td><td>JP4 (EOL)</td></tr>
+            <tr><td>P3448-0002</td><td>Jetson Nano 4GB 量产（16Gb eMMC）</td><td>4GB LPDDR4</td><td>同上</td><td>JP4 (EOL)</td></tr>
+            <tr><td>P3448-0003</td><td>Jetson Nano 2GB</td><td>2GB LPDDR4</td><td>Maxwell 128 CUDA</td><td>JP4 (EOL)</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <div class="table-scroll">
+        <table>
+          <caption>Tegra186 · Jetson TX2（JetPack 4，已 EOL）</caption>
+          <thead>
+            <tr><th>PN</th><th>产品</th><th>显存</th><th>GPU / 关键规格</th><th>JetPack</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>P3310-1000</td><td>Jetson TX2</td><td>8GB LPDDR4</td><td>Pascal 256 CUDA · 约 1.33 TFLOPS FP16</td><td>JP4 (EOL)</td></tr>
+            <tr><td>P3489-0888</td><td>Jetson TX2 4GB</td><td>4GB LPDDR4</td><td>Pascal 256 CUDA</td><td>JP4 (EOL)</td></tr>
+            <tr><td>P3489-0000</td><td>Jetson TX2i（工业级）</td><td>8GB LPDDR4 + ECC</td><td>-40~85℃ / 10yr · 20W</td><td>JP4 (EOL)</td></tr>
+            <tr><td>P3636-0001</td><td>Jetson TX2 NX</td><td>4GB LPDDR4</td><td>Pascal 256 CUDA · NX 形态</td><td>JP4 (EOL)</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <p>再往前还有 <strong>Jetson TK1</strong>（Tegra124，Kepler 192 CUDA，2GB DDR3L），board id 记为 <code>R375-0001</code>，早已退市，这里只作收尾提一句。</p>
+
+        <h2>底板（Carrier Board）</h2>
+
+        <p>底板提供供电、接口和扩展，核心板插上去才是一台完整设备。同一块底板常常能带多种核心板——这也是 P 号容易让人误解的地方。</p>
+
+        <div class="table-scroll">
+        <table>
+          <caption>NVIDIA 官方参考底板</caption>
+          <thead>
+            <tr><th>设计号</th><th>名称 / 用途</th><th>适配核心板</th><th>代</th><th>备注</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>P4071</td><td>AGX Thor 开发套件参考底板</td><td>P3834</td><td>Thor</td><td>套件标配；官方自定义底板移植模板</td></tr>
+            <tr><td>P3971</td><td>Thor 参考 / 早期底板</td><td>P3834</td><td>Thor</td><td>见主线内核 tegra264-p3971-0089+p3834-0008</td></tr>
+            <tr><td>P3737</td><td>AGX Orin 参考底板</td><td>P3701（全 SKU）</td><td>Orin</td><td>开发套件底板；工业模组 P3701-0008 亦挂此板</td></tr>
+            <tr><td>P3740</td><td>AGX Orin 工业 / 服务器参考底板</td><td>P3701-0008</td><td>Orin</td><td>tegra234-p3740-0002+p3701-0008</td></tr>
+            <tr><td>P3768</td><td>Orin Nano / Orin NX 参考底板</td><td>P3767（全 SKU）</td><td>Orin</td><td>Super 模式需 HV 电源轨</td></tr>
+            <tr><td>P3509</td><td>Xavier NX / TX2 NX 开发套件底板</td><td>P3668 · P3636 · P3767-0000</td><td>Xavier / Orin</td><td>一板多模组；JP6 BSP 支持挂 Orin NX 16G</td></tr>
+            <tr><td>P2822</td><td>AGX Xavier 底板</td><td>P2888</td><td>Xavier</td><td>—</td></tr>
+            <tr><td>P2597</td><td>TX1 / TX2 开发套件底板</td><td>P2180 · P3310</td><td>TX1 / TX2</td><td>两代共用同款 PCB</td></tr>
+            <tr><td>P3449</td><td>Jetson Nano 开发套件底板</td><td>P3448</td><td>Nano</td><td>A02 旧版 / B01 新版（双 CSI）</td></tr>
+            <tr><td>P3541</td><td>Jetson Nano 2GB 套件底板</td><td>P3448-0003</td><td>Nano</td><td>—</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <h2>开发套件整机</h2>
+
+        <p>开发套件 = 非量产规格的核心板 + 参考底板，用来开发调试，不可直接用于量产。下表的 945-/900- 是已核到原始出处的量产料号。</p>
+
+        <div class="table-scroll">
+        <table>
+          <caption>Developer Kit 整机</caption>
+          <thead>
+            <tr><th>套件</th><th>board id</th><th>量产料号</th><th>模组</th><th>底板</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Jetson AGX Thor Developer Kit</td><td>—</td><td>945-14070-0080-000（另 -0085 = Compute Carrier 版）</td><td>P3834-0008 (T5000)</td><td>P4071</td></tr>
+            <tr><td>Jetson AGX Orin Developer Kit</td><td>P3730-0000</td><td>见 Download Center</td><td>P3701-0000（早期 32G）→ 现 64G</td><td>P3737-0000</td></tr>
+            <tr><td>Jetson Orin Nano (Super) Developer Kit</td><td>—</td><td>见 Download Center</td><td>P3767-0005</td><td>P3768-0000</td></tr>
+            <tr><td>Jetson AGX Xavier Developer Kit</td><td>P2972-0000</td><td>945-82972-0040-000 (32G) / -0000-000 (16G)</td><td>P2888</td><td>P2822</td></tr>
+            <tr><td>Jetson Xavier NX Developer Kit</td><td>(P3509)</td><td>—</td><td>P3668-0000 (microSD)</td><td>P3509-0000</td></tr>
+            <tr><td>Jetson Nano Developer Kit</td><td>P3450-0000</td><td>945-13450-0000-100 (B01) / -000 (A02)</td><td>P3448</td><td>P3449</td></tr>
+            <tr><td>Jetson TX2 Developer Kit</td><td>P2771-0000</td><td>—</td><td>P3310</td><td>P2597</td></tr>
+            <tr><td>Jetson TX1 Developer Kit</td><td>P2371-0000</td><td>—</td><td>P2180</td><td>P2597</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <h2>模组 × 底板：设备树里实证的组合</h2>
+
+        <p>下面这些组合不是推测，而是直接来自主线 Linux 内核 <code>arch/arm64/boot/dts/nvidia</code> 的设备树文件名，以及 NVIDIA 官方下游 BSP（OE4T meta-tegra）的机型配置。其中 <code>P3509-A02</code> 那条尤其值得注意——它证明 Xavier NX 时代的那块底板，在 JetPack 6 下也能带 Orin NX 16GB 模组。</p>
+
+        <div class="table-scroll">
+        <table>
+          <caption>设备树 / BSP 实证组合</caption>
+          <thead>
+            <tr><th>来源</th><th>DTS / 机型名</th><th>核心板</th><th>底板</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>内核</td><td>tegra210-p2371-0000 / -2180</td><td>P2180 (TX1)</td><td>P2597（P2371 套件）</td></tr>
+            <tr><td>内核</td><td>tegra210-p3450-0000</td><td>P3448 (Nano)</td><td>P3449（P3450 套件）</td></tr>
+            <tr><td>内核</td><td>tegra210-p3541-0000</td><td>P3448-0003 (Nano 2GB)</td><td>P3541</td></tr>
+            <tr><td>内核</td><td>tegra186-p2771-0000</td><td>P3310 (TX2)</td><td>P2597（P2771 套件）</td></tr>
+            <tr><td>内核</td><td>tegra186-p3509-0000+p3636-0001</td><td>P3636-0001 (TX2 NX)</td><td>P3509-0000</td></tr>
+            <tr><td>内核</td><td>tegra194-p2972-0000</td><td>P2888 (AGX Xavier)</td><td>P2822（P2972 套件）</td></tr>
+            <tr><td>内核</td><td>tegra194-p3509-0000+p3668-0000</td><td>P3668-0000 (Xavier NX microSD)</td><td>P3509-0000</td></tr>
+            <tr><td>内核</td><td>tegra194-p3509-0000+p3668-0001</td><td>P3668-0001 (Xavier NX 8GB)</td><td>P3509-0000</td></tr>
+            <tr><td>内核</td><td>tegra234-p3737-0000+p3701-0000</td><td>P3701-0000 (AGX Orin)</td><td>P3737-0000</td></tr>
+            <tr><td>内核</td><td>tegra234-p3737-0000+p3701-0008</td><td>P3701-0008 (AGX Orin Ind.)</td><td>P3737-0000</td></tr>
+            <tr><td>内核</td><td>tegra234-p3740-0002+p3701-0008</td><td>P3701-0008 (AGX Orin Ind.)</td><td>P3740-0002（服务器）</td></tr>
+            <tr><td>内核</td><td>tegra234-p3768-0000+p3767-0000</td><td>P3767-0000 (Orin NX 16G)</td><td>P3768-0000</td></tr>
+            <tr><td>内核</td><td>tegra234-p3768-0000+p3767-0005</td><td>P3767-0005 (Orin Nano SD)</td><td>P3768-0000</td></tr>
+            <tr><td>内核</td><td>tegra264-p3971-0089+p3834-0008</td><td>P3834-0008 (Thor T5000)</td><td>P3971-0089</td></tr>
+            <tr><td>内核</td><td>tegra264-p4071-0000+p3834-0008</td><td>P3834-0008 (Thor T5000)</td><td>P4071-0000</td></tr>
+            <tr><td>BSP</td><td>p3509-a02-p3767-0000</td><td>P3767-0000 (Orin NX 16G)</td><td>P3509-A02 ★跨代复用</td></tr>
+            <tr><td>BSP</td><td>p3737-0000-p3701-0004</td><td>P3701-0004 (AGX Orin 32G)</td><td>P3737-0000</td></tr>
+            <tr><td>BSP</td><td>p3737-0000-p3701-0005</td><td>P3701-0005 (AGX Orin 64G)</td><td>P3737-0000</td></tr>
+            <tr><td>BSP</td><td>p3768-0000-p3767-0001</td><td>P3767-0001 (Orin NX 8G)</td><td>P3768-0000</td></tr>
+            <tr><td>BSP</td><td>p3768-0000-p3767-0003</td><td>P3767-0003 (Orin Nano 8G)</td><td>P3768-0000</td></tr>
+            <tr><td>BSP</td><td>p3768-0000-p3767-0004</td><td>P3767-0004 (Orin Nano 4G)</td><td>P3768-0000</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <h2>容易混进来的「非 Jetson」Tegra 板</h2>
+
+        <p>搜 P 号时经常会撞上一些同代 Tegra 但根本不是 Jetson 的板子，列出来避免误判：</p>
+
+        <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>P 号</th><th>SoC</th><th>用途（非 Jetson 产品线）</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>P2595</td><td>tegra210</td><td>任天堂 Switch（Tegra X1）— jetson-stats DB 记为 p2595-0000-A0</td></tr>
+            <tr><td>P2571</td><td>tegra210</td><td>NVIDIA SHIELD Android TV（Tegra X1）</td></tr>
+            <tr><td>P2530 / P2894</td><td>tegra210</td><td>Tegra X1 参考 / 车载板（tegra210-p2894-0050-a08）</td></tr>
+            <tr><td>P3904</td><td>—</td><td>NVIDIA Clara AGX（医疗，Jetson 相邻产品线）</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <h2>几个容易踩的坑</h2>
+
+        <blockquote>
+          <p><strong>P 号 ≠ 唯一产品。</strong>Orin NX 与 Orin Nano 共用 P3767；TX1/TX2 共用 P2597 底板；P3509 先后带过 TX2 NX、Xavier NX 和 Orin NX。判型一定要看四位 SKU 后缀，光看 P 号会认错。</p>
+        </blockquote>
+
+        <p>另外几点：<code>jetson-stats</code> 的型号库非常好用，但个别标注有出入（比如把 P3701-0002 标成 IGX、Thor 的 CUDA 版本写成 11.0），具体规格还是以 NVIDIA 官方文档为准。主线内核只收录了一部分组合，NVIDIA 下游 L4T 和 meta-tegra 里还有更多工业/参考底板（如 P3740 系列），本文已尽量合并。最后，真正的「长尾」其实是第三方底板——Connect Tech、Auvidea、Seeed 等给同一颗 SOM 配的底板各有自己的 PN，数量远超 NVIDIA 官方底板，做边缘部署选型时这部分才是大头。</p>
+
+        <h2>数据来源与方法</h2>
+
+        <p>这份对照不是凭记忆写的，而是四类来源交叉核对的结果：<strong>(1)</strong> 主线 Linux 内核 <code>arch/arm64/boot/dts/nvidia</code> 目录的设备树文件名（模组×底板组合的最硬证据）；<strong>(2)</strong> NVIDIA Jetson Linux Developer Guide、Jetson FAQ 与各模组数据手册（SKU、chipsku、算力、工业级差异）；<strong>(3)</strong> NVIDIA 官方下游 BSP 层 OE4T meta-tegra 的机型配置（补主线没有的组合）；<strong>(4)</strong> Connect Tech 等厂商的量产料号页（坐实 900-/945- 编号）。表中标「见 Download Center」的量产料号，是没有逐一核到一手出处、未予编造的项；算力列是官方标称值，已注明「标称」。</p>
+
+        <p>如果你手头有带 token 的环境，可以用 GitHub <code>search/code</code> 按 SoC 逐代把每个 P 号在内核与 L4T 里的引用做一次真正的全库扫描，会比这里更全；或者直接 clone NVIDIA 的 <code>Linux_for_Tegra/source</code>，翻 <code>hardware/nvidia/platform/</code> 下的设备树目录树，那是工业/参考底板长尾最完整的地方。</p>
+
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <span>© 2026 我的博客</span>
+      <span>由 <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a> 托管</span>
+    </footer>
+  </div>
+</body>
+</html>
