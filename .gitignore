@@ -1,0 +1,12 @@
+# 本地笔记 / 不上传到仓库的内容
+提交与网站结构说明.md
+README.md
+posts/building-this-site.html
+
+# Claude Code 本地预览配置
+.claude/
+
+# 系统 / 编辑器杂项
+.DS_Store
+Thumbs.db
+*.log
