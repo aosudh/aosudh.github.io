@@ -230,7 +230,7 @@ sudo pip install jetson-stats &amp;&amp; jtop         # 自动解析以上全部
             <tr><td>内核</td><td>tegra194-p3509-0000+p3668-0001</td><td>P3668-0001 (Xavier NX 8GB)</td><td>P3509-0000</td></tr>
             <tr><td>内核</td><td>tegra234-p3737-0000+p3701-0000</td><td>P3701-0000 (AGX Orin)</td><td>P3737-0000</td></tr>
             <tr><td>内核</td><td>tegra234-p3737-0000+p3701-0008</td><td>P3701-0008 (AGX Orin Ind.)</td><td>P3737-0000</td></tr>
-            <tr><td>内核</td><td>tegra234-p3740-0002+p3701-0008</td><td>P3701-0008 (AGX Orin Ind.)</td><td>P3740-0002（服务器）</td></tr>
+            <tr><td>内核</td><td>tegra234-p3740-0002+p3701-0008</td><td>P3701-0008 (AGX Orin Ind.)</td><td>P3740-0002（IGX Orin 底板，见下文）</td></tr>
             <tr><td>内核</td><td>tegra234-p3768-0000+p3767-0000</td><td>P3767-0000 (Orin NX 16G)</td><td>P3768-0000</td></tr>
             <tr><td>内核</td><td>tegra234-p3768-0000+p3767-0005</td><td>P3767-0005 (Orin Nano SD)</td><td>P3768-0000</td></tr>
             <tr><td>内核</td><td>tegra264-p3971-0089+p3834-0008</td><td>P3834-0008 (Thor T5000)</td><td>P3971-0089</td></tr>
@@ -262,6 +262,215 @@ sudo pip install jetson-stats &amp;&amp; jtop         # 自动解析以上全部
           </tbody>
         </table>
         </div>
+
+        <hr>
+
+        <h2>延伸：DRIVE / IGX / Holoscan —— Jetson 之外的同源平台</h2>
+
+        <p>同一颗 Tegra SoC，NVIDIA 还做了三条与 Jetson 并行的产品线：车规的 <strong>DRIVE AGX</strong>、工业医疗的 <strong>IGX</strong>，以及它们承载的 <strong>Holoscan</strong> 软件（前身 Clara AGX / Clara Holoscan）。读它们的号之前，先记三条与 Jetson 不同的规律：</p>
+
+        <ul>
+          <li><strong>只有第一代 DRIVE AGX Xavier / Pegasus（E3550）是 SoC 直焊的整板</strong>（Pegasus 把双 Xavier + 双 Turing GPU 全焊在一块板上，没有可插拔模组）。<strong>从 DRIVE AGX Orin 起又回到「核心板（SOM）＋底板」两段式</strong>，而且模组直接沿用 Jetson 的 <code>P3701</code>（Orin）/ <code>P3834</code>（Thor）家族，只换 DRIVE 专属 SKU 与底板。</li>
+          <li><strong>板号前缀不同。</strong>Jetson 全用 <code>P</code>；DRIVE 第一代整板用 <code>E</code>（E3550），Orin/Thor 的底板改用 <code>P</code>（P3710 / P3960）。</li>
+          <li><strong>量产料号多一个 <code>940-</code> 前缀。</strong>原文的 <code>699-/900-/945-</code> 都是 Jetson；<strong>DRIVE 与 IGX 的开发套件整机统一是 <code>940-</code></strong>。</li>
+        </ul>
+
+        <p><strong>一条贯穿全文的线索：同一颗模组会跨产品线复用。</strong>最典型的是 <code>P3701</code> 这颗 Orin 模组——它同时出现在 Jetson AGX Orin（配底板 P3737）、IGX Orin（配 P3740）和 DRIVE AGX Orin（配 P3710）上，只是 SKU、底板与软件栈不同。设备树命名两边不同：Jetson 用「底板＋模组」组合名（<code>tegra234-p3737-0000+p3701-0000.dts</code>），DRIVE 把模组放进 include、顶层只用底板名（<code>tegra234-p3710-0010-a01-linux-driveav-gos.dts</code>）。Thor 一代同理走两段式（Jetson Thor = P3834 + P4071；DRIVE Thor = Thor 模组 + P3960）。</p>
+
+        <div class="table-scroll">
+        <table>
+          <caption>量产料号前缀速查（在 699-/900-/945- 之外新增 940-）</caption>
+          <thead>
+            <tr><th>前缀</th><th>含义</th><th>实例</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>699-</td><td>Jetson 裸模组；DRIVE 第一代（E3550）用于整板</td><td>E3550 整板 699-63350-0001-5xx</td></tr>
+            <tr><td>900-</td><td>Jetson 带散热模组</td><td>900-13701-0050-000（AGX Orin 64G）</td></tr>
+            <tr><td>945-</td><td>Jetson 开发套件整机</td><td>945-14070-0080-000（Jetson Thor 套件）</td></tr>
+            <tr><td>940-</td><td><strong>DRIVE / IGX 平台开发套件整机（新）</strong></td><td>DRIVE Orin 940-63710 · DRIVE Thor 940-63960 · IGX Orin 940-23840 · IGX Thor 940-25840</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <h3>DRIVE AGX Xavier / Pegasus（板号 E3550，tegra194）</h3>
+
+        <p>DRIVE 侧的 Xavier 平台板号是 <code>E3550</code>，Xavier DevKit 与 Pegasus DevKit 共用同一块板，靠 SKU 区分。已是停更产品（末版 DRIVE OS 5.2.6）。</p>
+
+        <div class="table-scroll">
+        <table>
+          <caption>Tegra194 · DRIVE AGX Xavier / Pegasus（DRIVE OS）</caption>
+          <thead>
+            <tr><th>项</th><th>值</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>结构</td><td>SoC 直焊整板（DRIVE 唯一一代如此，无可插拔模组）</td></tr>
+            <tr><td>平台板号</td><td>E3550（双 Xavier 开发板；Xavier DevKit 与 Pegasus DevKit 共用）</td></tr>
+            <tr><td>SKU 区分</td><td>Xavier DevKit = SKU 2000（2× Xavier）；Pegasus DevKit = SKU 2200（2× Xavier + 2× Turing GPU，320 TOPS）</td></tr>
+            <tr><td>整板料号</td><td>699-63350-0001-5xx <span class="legend">（实物板标签；-500/-501 为修订）</span></td></tr>
+            <tr><td>单 Xavier 变体</td><td>P3479（恢复设备仅 x1；E3550 为 x1+x2 双颗）</td></tr>
+            <tr><td>Xavier 计算核</td><td>烧录目标里以 <code>p2888-t194</code> 指代 Xavier CVM</td></tr>
+            <tr><td>设备树</td><td><code>tegra194-e3550-0001-A.dtsi</code>、显示 <code>tegra194-display-e3550-0001-b01-A/B.dtsi</code>（DRIVE OS BSP，t19x/automotive）</td></tr>
+            <tr><td>末版软件</td><td>DRIVE OS 5.2.6 / DriveWorks 4.0（Xavier/Pegasus XT 已停更）</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <h3>DRIVE AGX Orin（P3710 / P3663，tegra234）</h3>
+
+        <p>从这一代起 DRIVE 回到两段式：<strong>P3701 Orin 模组（DRIVE/工业 SKU）+ P3710 底板</strong>，模组与 Jetson AGX Orin、IGX Orin 同族。与 Jetson 的差异在 SKU、SoC 分级、ASIL 安全与软件栈（DRIVE OS vs JetPack），NVIDIA 官方明确「不能拿 Jetson 数据手册当 DRIVE 用」。</p>
+
+        <div class="table-scroll">
+        <table>
+          <caption>Tegra234 · DRIVE AGX Orin</caption>
+          <thead>
+            <tr><th>项</th><th>值</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>结构</td><td>核心板（SOM）+ 底板 两段式（模组与 Jetson 同族）</td></tr>
+            <tr><td>核心板（SOM）</td><td>P3701 Orin 模组的 DRIVE/工业 SKU——<code>P3701-0002</code>（32GB Micron LPDDR5 + ECC，见 BCT 文件 <code>tegra234-mb1-bct-p3701-0002-…-ecc</code>）</td></tr>
+            <tr><td>底板（carrier）</td><td>P3710；板名 p3710-10-a01 / a03 / a04，量产 p3710-10-s05</td></tr>
+            <tr><td>整机料号</td><td>940-63710-0010-100 / 200 / 300（区域版）、-D00 / -C00（修订）</td></tr>
+            <tr><td>设备树</td><td><code>tegra234-p3710-0010-a01-linux-driveav-gos.dts</code>（顶层只含底板名，模组经 include；非 Jetson 的 +p3701 组合名）</td></tr>
+            <tr><td>量产单 Orin 板</td><td>P3663（板名 p3663-a01，偏量产/ECU）<span class="legend">；P3710 双 Orin、P3663 单 Orin 系据烧录文档推断</span></td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <h3>DRIVE AGX Thor（板号 P3960，tegra264）</h3>
+
+        <p>最新车规平台，2025 下半年量产，同为两段式：<strong>Thor 模组（P3834 家族）+ P3960 底板</strong>。SoC 与 Jetson Thor 同为 Tegra264（14× Neoverse-V3AE + Blackwell）；Jetson Thor 是 P3834 模组 + P4071 底板，DRIVE Thor 则换成 P3960 底板。</p>
+
+        <div class="table-scroll">
+        <table>
+          <caption>Tegra264 · DRIVE AGX Thor（2025 GA）</caption>
+          <thead>
+            <tr><th>项</th><th>值</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>结构</td><td>核心板（SOM）+ 底板 两段式</td></tr>
+            <tr><td>SoC</td><td>Tegra264 / T264，14× Arm Neoverse-V3AE + Blackwell GPU（主线内核 Linux 6.17 起支持）</td></tr>
+            <tr><td>核心板（SOM）</td><td>Thor 模组（P3834 家族；Jetson Thor 为 P3834-0008，id 7026）<span class="legend">；DRIVE 专属 SKU 未单独查到</span></td></tr>
+            <tr><td>底板（carrier）</td><td>P3960（板名 p3960-0010 等）</td></tr>
+            <tr><td>整机料号</td><td>SKU 10（台架）940-63960-0010-000；SKU 12（车内）940-63960-0012-000</td></tr>
+            <tr><td>设备树</td><td>…/t264/automotive/kernel-dts/p3960/ 下 <code>tegra264-p3960-*.dtsi</code>（sound / nvscic2c-pcie / pmic 等）</td></tr>
+            <tr><td>上市 / 出口</td><td>2025 下半年 GA（9 月发货）；ECCN 4A994</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <h3>Holoscan / Clara AGX 谱系</h3>
+
+        <p>这条线最容易混：<strong>「Holoscan」如今是软件 SDK，它的硬件就是 IGX（见下）；Clara AGX 则是 Xavier 时代的祖先。</strong>改名与换代脉络如下。</p>
+
+        <div class="table-scroll">
+        <table>
+          <caption>从 Clara AGX 到 IGX：改名与换代时间线</caption>
+          <thead>
+            <tr><th>时间</th><th>名称</th><th>硬件 / 变化</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>2020</td><td>Clara AGX Developer Kit</td><td>Jetson AGX Xavier 模组（P2888）+ Quadro RTX 6000 + ConnectX-6</td></tr>
+            <tr><td>2021–22</td><td>Clara Holoscan Developer Kit</td><td>Orin + RTX A6000——此名后并入 IGX Orin</td></tr>
+            <tr><td>2022.03</td><td>Clara Holoscan MGX</td><td>医疗量产平台，Orin Industrial + 选配 dGPU/NIC，10 年支持</td></tr>
+            <tr><td>2022.09</td><td>改名 IGX</td><td>「Clara Holoscan Developer Kit」→「IGX Orin Developer Kit」</td></tr>
+            <tr><td>2024.06</td><td>「Clara Holoscan」→「NVIDIA Holoscan」</td><td>去掉 Clara，扩到通用传感处理</td></tr>
+            <tr><td>2025.10</td><td>IGX Thor</td><td>接班 IGX Orin（≈8× 算力）</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <div class="table-scroll">
+        <table>
+          <caption>Clara AGX Developer Kit 规格（官方用户指南 v2.0）</caption>
+          <thead>
+            <tr><th>项</th><th>值</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>核心板</td><td>AGX Xavier 32GB 模组（P2888 家族；8 核 Carmel）</td></tr>
+            <tr><td>内存</td><td>32GB 256-bit LPDDR4x · 136.5 GB/s</td></tr>
+            <tr><td>独显 dGPU</td><td>Quadro RTX 6000（Turing，24GB GDDR6，4608 CUDA / 576 Tensor）</td></tr>
+            <tr><td>网卡</td><td>ConnectX-6（MT28908；板载 PCIe Switch）</td></tr>
+            <tr><td>存储</td><td>250GB 可拆 SSD（SATA M.2）</td></tr>
+            <tr><td>扩展</td><td>PCIe x8→Xavier、PCIe x8→RTX6000（物理 x16 槽）</td></tr>
+            <tr><td>电源 / 尺寸</td><td>750W · 227×149×332 mm</td></tr>
+            <tr><td>底板设计号</td><td>官方用户指南未印 Pxxxx；社区型号库（jetson-stats）记作 <code>P3904</code> <span class="legend">（与上文「非 Jetson」表呼应）</span></td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <h3>IGX Orin Developer Kit（P3740 + P3701-0008，tegra234）</h3>
+
+        <p>IGX Orin 直接复用 Jetson AGX Orin Industrial 模组，配 IGX 专用底板 P3740，集成 ConnectX-7 与 BMC。</p>
+
+        <div class="table-scroll">
+        <table>
+          <caption>IGX Orin Developer Kit 规格（用户指南 v1.0 + 产品简介）</caption>
+          <thead>
+            <tr><th>项</th><th>值</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>整机料号</td><td>940-23840-0000-000（Cordless）/ -0001-000（NA/TW/CN/JP）/ -0002-000（EU/UK）</td></tr>
+            <tr><td>核心板</td><td>「NVIDIA IGX Orin Industrial Module」= Jetson AGX Orin Industrial 模组 P3701-0008（board id 7023）</td></tr>
+            <tr><td>底板</td><td>P3740-0002（IGX 专用）</td></tr>
+            <tr><td>iGPU</td><td>Ampere 2048 CUDA / 64 Tensor · INT8 up to 248 TOPS</td></tr>
+            <tr><td>CPU</td><td>12 核 Arm Cortex-A78AE</td></tr>
+            <tr><td>内存</td><td>64GB 256-bit LPDDR5 · 3200 MHz <span class="legend">（用户指南表格误标 LPDDR6，以产品简介为准）</span></td></tr>
+            <tr><td>存储</td><td>500GB NVMe SSD + 64GB eMMC + 64MB QSPI NOR + 8MB 安全 Flash</td></tr>
+            <tr><td>独显（可选）</td><td>RTX A6000（48GB）或 RTX 6000 Ada</td></tr>
+            <tr><td>集成网卡</td><td>ConnectX-7（32 lane PCIe Gen5 + 集成 Switch，2×100GbE QSFP28）</td></tr>
+            <tr><td>BMC / MCU</td><td>Aspeed AST2600（OpenBMC）/ Infineon Aurix TC397</td></tr>
+            <tr><td>设备树 / 烧录名</td><td><code>tegra234-p3740-0002+p3701-0008.dts</code>（主线内核）；BSP 烧录目标 <code>igx-orin-devkit</code></td></tr>
+            <tr><td>电源 / 尺寸</td><td>uATX 最高 850W · 262.7×382.7×151.2 mm</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <blockquote>
+          <p><strong>三重实证「IGX Orin 模组 = P3701-0008」：</strong>① 进恢复模式时主机 <code>lsusb</code> 显示 <code>ID 0955:7023 NVIDIA Corp. APX</code>——<code>0955</code> 是 NVIDIA 的 USB VID，<code>7023</code> 正是 AGX Orin Industrial 的 board id；② 主线内核设备树 <code>tegra234-p3740-0002+p3701-0008</code>；③ 产品简介规格与 AGX Orin Industrial 64GB 完全吻合。另：其 BMC 主机名是 <code>mgx-3809</code>——<code>mgx</code> 正是当年 Clara Holoscan <strong>MGX</strong> 的化石。</p>
+        </blockquote>
+
+        <h3>IGX Thor Developer Kit（T7000，2025.10 接班）</h3>
+
+        <div class="table-scroll">
+        <table>
+          <caption>Tegra264 · IGX Thor（Blackwell）</caption>
+          <thead>
+            <tr><th>项</th><th>值</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>整机料号</td><td>940-25840-0001-000（与 IGX Orin 的 940-23840 平行）</td></tr>
+            <tr><td>板 / SoC</td><td>IGX T7000 板，Blackwell iGPU（2560 CUDA）+ 14× Neoverse-V3AE</td></tr>
+            <tr><td>网络 / 独显</td><td>ConnectX-7（QSFP112，2×200GbE / 400GbE）；独显 RTX 6000 PRO Blackwell</td></tr>
+            <tr><td>算力</td><td>up to 5581 FP4 TFLOPS（≈8× IGX Orin iGPU）</td></tr>
+            <tr><td>另有</td><td>IGX Thor Developer Kit Mini（T5000）</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <h3>新平台的设备树 / 板号实证</h3>
+
+        <div class="table-scroll">
+        <table>
+          <caption>DRIVE / IGX / Clara 的设备树实证</caption>
+          <thead>
+            <tr><th>平台</th><th>DTS / 板名</th><th>板（及模组）</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>DRIVE Xavier/Pegasus</td><td>tegra194-e3550-0001-A.dtsi</td><td>E3550 整板（SoC 直焊）</td></tr>
+            <tr><td>DRIVE Orin（开发套件）</td><td>tegra234-p3710-0010-a01-linux-driveav-gos.dts</td><td>底板 P3710 + 模组 P3701-0002</td></tr>
+            <tr><td>DRIVE Orin（量产单 Orin）</td><td>t234-p3663-a01-*.dts</td><td>P3663</td></tr>
+            <tr><td>DRIVE Thor</td><td>tegra264-p3960-*.dtsi</td><td>底板 P3960 + Thor 模组（P3834 家族）</td></tr>
+            <tr><td>IGX Orin</td><td>tegra234-p3740-0002+p3701-0008.dts</td><td>P3740 + P3701-0008</td></tr>
+            <tr><td>Clara AGX</td><td>tegra194-p2888-0001-p2822-0000（Xavier 基底）</td><td>P2888 模组（底板另算）</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <blockquote>
+          <p><strong>本节信息缺口（诚实标注，未编造）：</strong>① DRIVE Xavier/Pegasus 的官方量产 NVPN——只有论坛实物标签 699-63350-0001-5xx，NVIDIA 把精确料号挡在 NVClassification@nvidia.com 之后；② Clara AGX 底板设计号——连官方用户指南都未印（社区记作 P3904）；③ P3663、以及 DRIVE Thor 模组的完整量产料号/SKU 未公开；④「P3710 双 Orin / P3663 单 Orin」系据烧录文档「default Orin A」推断，非数据手册明文；⑤「940- = DRIVE/IGX 整机」前缀系多个料号归纳。</p>
+        </blockquote>
+
+        <p><strong>本节数据来源：</strong>DRIVE OS《Setting Up the E3550 Platform》与《DRIVE Platform Supported Boards》、NVIDIA DRIVE AGX FAQ、DRIVE AGX Thor / Orin Platform for Developers PDF、IGX Orin Developer Kit Product Brief（2024-12-11）、Holoscan 仓库的 Clara AGX 与 IGX Orin 用户指南（nvidia-holoscan/holoscan-docs）、主线 Linux 内核 IGX Orin 支持补丁（作者 NVIDIA Shubhi Garg）、以及 NVIDIA 开发者论坛 DRIVE / IGX 板块的官方回帖。每条料号均标注「官方／论坛实物／推断」三类证据，未核到一手出处者已显式说明，未编造。</p>
 
         <h2>几个容易踩的坑</h2>
 
