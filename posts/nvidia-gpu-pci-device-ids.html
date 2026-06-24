@@ -27,6 +27,10 @@
     .post-content .toc ul { margin: 0; padding: 0; list-style: none; columns: 2; column-gap: 1.4rem; }
     .post-content .toc li { margin: 0.2rem 0; break-inside: avoid; font-size: 0.9rem; }
     @media (max-width: 560px) { .post-content .toc ul { columns: 1; } }
+    /* 宽表：突破正文 680px 列宽，居中展开到近视口宽度——宽屏可一屏看全、免左右滑动；
+       窄屏仍保留横向滚动作兜底。 */
+    .post-content .table-scroll.wide { width: min(95vw, 1500px); margin-left: 50%; transform: translateX(-50%); }
+    .post-content .table-scroll.wide table { font-size: 0.85rem; }
   </style>
 </head>
 <body>
@@ -94,7 +98,7 @@
           <li><strong>开放驱动</strong>：<code>✓</code> = 在 NVIDIA 开放内核模块的设备列表里；"—" = 只在 pci.ids、不在开放驱动列表（多为中国 SKU、数据中心变体、保留/下一代）。</li>
         </ul>
 
-        <div class="table-scroll" id="sec-smmap">
+        <div class="table-scroll wide" id="sec-smmap">
 <table>
 <caption>架构 × SM / Compute Capability 速查</caption>
 <thead><tr><th>架构</th><th>芯片</th><th>SM</th><th>Compute Capability</th><th>代表产品</th><th>备注</th></tr></thead>
@@ -116,7 +120,7 @@
 
         <h2 id="sec-ampere">三、Ampere（150 个 ID · sm_80 / 86 / 87）</h2>
         <p>三个 SM 等级并存：<strong>GA100</strong> 数据中心（sm_80，A100 / A30，HBM2e + FP64）、<strong>GA102–107</strong> 消费与专业卡（sm_86，RTX 30 系列 / RTX A 系列 / A40 / A10 / A16）、<strong>GA10B（Orin）</strong> 车载与嵌入式 iGPU（sm_87，Tegra）。表中还能看到 1 个 NVSwitch、3 个 Bridge/Root、4 个 HD Audio 功能，以及大量没有公开 SKU 映射的 CSP / 内部变体。</p>
-        <div class="table-scroll">
+        <div class="table-scroll wide">
 <table>
 <caption>Ampere · 150 个 device ID（10DE:xxxx）</caption>
 <thead><tr><th>ID</th><th>芯片</th><th>SM</th><th>功能</th><th>pci.ids 名称</th><th>产品名（官方 / 社区）</th><th>说明 / 推断</th><th>开放驱动</th></tr></thead>
@@ -277,7 +281,7 @@
 
         <h2 id="sec-ada">四、Ada Lovelace（67 个 ID · sm_89）</h2>
         <p>单一 SM 等级 <strong>sm_89</strong>（AD102–107）：RTX 40 系列、RTX 6000 Ada，以及 L40 / L40S / L4 / L20 等推理卡——FP8 Transformer Engine 的首发代。表中含 5 个板载 HD Audio 功能。</p>
-        <div class="table-scroll">
+        <div class="table-scroll wide">
 <table>
 <caption>Ada Lovelace · 67 个 device ID（10DE:xxxx）</caption>
 <thead><tr><th>ID</th><th>芯片</th><th>SM</th><th>功能</th><th>pci.ids 名称</th><th>产品名（官方 / 社区）</th><th>说明 / 推断</th><th>开放驱动</th></tr></thead>
@@ -355,7 +359,7 @@
 
         <h2 id="sec-hopper">五、Hopper（29 个 ID · sm_90）</h2>
         <p><strong>GH100</strong> 单芯片（sm_90，含 CUTLASS 用的 sm_90a 变体）：H100 / H200 / GH200，以及中国特供的 H800 / H20 / H20-3e / H20 NVL16。数据中心训练主力，含 1 个 NVSwitch。可以看到不少 H20 系列在 pci.ids 里有名、却不在开放驱动列表内（中国 SKU 的典型特征）。</p>
-        <div class="table-scroll">
+        <div class="table-scroll wide">
 <table>
 <caption>Hopper · 29 个 device ID（10DE:xxxx）</caption>
 <thead><tr><th>ID</th><th>芯片</th><th>SM</th><th>功能</th><th>pci.ids 名称</th><th>产品名（官方 / 社区）</th><th>说明 / 推断</th><th>开放驱动</th></tr></thead>
@@ -395,7 +399,7 @@
 
         <h2 id="sec-blackwell">六、Blackwell（84 个 ID · sm_100 / 103 / 110 / 120 / 121）</h2>
         <p>一个代号、五个 SM——这是 Blackwell 最容易混的地方：<strong>数据中心 GB100 / GB102</strong>（sm_100，B100 / B200 / GB200 NVL72）、<strong>Blackwell Ultra GB110 / 112 / 120</strong>（sm_103，B300 / GB300 NVL72）、<strong>Thor 机器人 SoC</strong>（sm_110，从 sm_101 改名）、<strong>消费 GB202–207</strong>（sm_120，RTX 50 系列 / RTX PRO 6000；注意它走 Ampere 式 <code>mma.sync</code>、不是 tcgen05）、<strong>DGX Spark / GB10</strong>（sm_121）。同段 ID 里还混有 Bridge/Root 与 HD Audio 功能。</p>
-        <div class="table-scroll">
+        <div class="table-scroll wide">
 <table>
 <caption>Blackwell · 84 个 device ID（10DE:xxxx）</caption>
 <thead><tr><th>ID</th><th>芯片</th><th>SM</th><th>功能</th><th>pci.ids 名称</th><th>产品名（官方 / 社区）</th><th>说明 / 推断</th><th>开放驱动</th></tr></thead>
@@ -490,7 +494,7 @@
 
         <h2 id="sec-rubin">七、Rubin（2 个 ID · 下一代）</h2>
         <p>截至 2026-06-24，pci.ids 里只有两个 Rubin device ID——<strong>GR100（3040）</strong>与 <strong>GR102（30C0）</strong>，均为数据中心 reticle-limited 裸 die，SM 预计 <code>sm_13x</code>（CUDA 13.3 尚未公开，待定）。R100 / R200 的 GPU 封装 = 2× GR die。消费级 GR20x 与 Rubin CPX（长上下文 prefill）GR21x 的 device ID 尚未发布，会在临近发售时扩充。</p>
-        <div class="table-scroll">
+        <div class="table-scroll wide">
 <table>
 <caption>Rubin · 2 个 device ID（10DE:xxxx）</caption>
 <thead><tr><th>ID</th><th>芯片</th><th>SM</th><th>功能</th><th>pci.ids 名称</th><th>产品名（官方 / 社区）</th><th>说明 / 推断</th><th>开放驱动</th></tr></thead>
