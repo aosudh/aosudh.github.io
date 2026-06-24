@@ -32,6 +32,12 @@
 
         <!-- ↓↓↓ 新增文章：复制下面这个 <li> 块，改链接/标题/日期/摘要即可 ↓↓↓ -->
         <li class="post-item">
+          <a class="post-link" href="/posts/nvidia-gpu-pci-device-ids.html">NVIDIA GPU PCI Device ID 全量对照：Ampere → Rubin</a>
+          <p class="post-meta">2026-06-24</p>
+          <p class="post-summary">把 lspci 里的 10DE:xxxx 翻译成芯片 / 架构 / 产品：整理从 Ampere 到刚出现的 Rubin 共 332 个 NVIDIA GPU PCI device ID，交叉核对 pci.ids、开源内核模块 README、nouveau 与 CUDA 文档，逐条标注芯片、SM / Compute Capability、功能、官方与社区产品名，以及是否在开放驱动列表内。附 SM/CC 速查与 Rubin 代号路线图。</p>
+        </li>
+
+        <li class="post-item">
           <a class="post-link" href="/posts/blackwell-next-cxl-dvsec.html">Blackwell-Next CXL DVSEC：代码考据与最终结论</a>
           <p class="post-meta">2026-06-24</p>
           <p class="post-summary">从微信一句"Blackwell-Next"出发，全树核查这个 NVIDIA 代号在 Linux 内核源码里的唯一落地点——nvgrace-gpu 驱动新增的 CXL DVSEC 显存就绪探测路径，逐段拆解代码，并就"VR200 是否从 PCIe+C2C 变成 CXL+C2C、提升缓存一致性"给出结论：传输层始终是 NVLink-C2C，变的只是 GPU 内存暴露接口从私有走向 CXL 标准化。</p>

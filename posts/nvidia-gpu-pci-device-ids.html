@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NVIDIA GPU PCI Device ID 全量对照：Ampere → Rubin · 我的博客</title>
+  <meta name="description" content="把 lspci 里的 10DE:xxxx 翻译成芯片 / 架构 / 产品：整理 Ampere 到 Rubin 共 332 个 NVIDIA GPU PCI device ID，交叉核对 pci.ids、开源内核模块、nouveau 与 CUDA 文档，标注芯片、SM / Compute Capability、官方与社区产品名及是否在开放驱动内。" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <style>
+    /* 文章内表格样式——仅作用于本页。device-id 表列多，故用较小字号 + 横向滚动容器；
+       首列（device id）短，nowrap + 等宽更易扫读；名称/说明等长列默认换行。 */
+    .post-content .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1.1rem 0; }
+    .post-content table { border-collapse: collapse; width: 100%; font-size: 0.8rem; line-height: 1.45; }
+    .post-content caption { caption-side: top; text-align: left; font-weight: 700; font-size: 0.98rem; padding: 0.2rem 0 0.5rem; opacity: 0.95; }
+    .post-content th, .post-content td { border: 1px solid rgba(128,128,128,0.32); padding: 0.4rem 0.55rem; text-align: left; vertical-align: top; }
+    .post-content thead th { background: rgba(128,128,128,0.14); font-weight: 600; white-space: nowrap; }
+    .post-content tbody td:first-child { white-space: nowrap; font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .post-content tbody td:nth-child(2) { white-space: nowrap; }
+    .post-content .legend { opacity: 0.7; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="site-header">
+      <a class="site-title" href="/">我的博客</a>
+      <nav class="site-nav">
+        <a href="/">首页</a>
+        <a href="/about.html">关于</a>
+      </nav>
+    </header>
+
+    <main>
+      <a class="back-link" href="/">← 返回首页</a>
+      <article class="post-content">
+        <h1>NVIDIA GPU PCI Device ID 全量对照：Ampere → Rubin</h1>
+        <p class="post-meta">2026-06-24</p>
+
+        <blockquote>
+          <p>把 <code>lspci</code> 里那串 <code>10de:xxxx</code> 翻译成"到底是哪颗芯片、哪代架构、哪个产品"。本文整理了从 Ampere 到刚刚出现的 Rubin 共 <strong>332 个</strong> NVIDIA GPU PCI device ID，交叉核对 pci.ids、NVIDIA 开源内核模块 README、nouveau 与 CUDA 文档，标注芯片、SM / Compute Capability、功能、官方与社区产品名，以及是否在开放驱动列表内。</p>
+        </blockquote>
+
+        <h2>一、为什么需要这张表</h2>
+
+        <p><code>lspci -nn</code> 只会告诉你 <code>10de:2901</code> 这种 <code>vendor:device</code> 组合——<code>10de</code> 是 NVIDIA，后面四位才是具体设备。但要从这四位 hex 反推"这是哪颗 die、属于哪代架构、对应哪款上市产品"，并不直观：同一颗 die 会派生出一堆 device ID（裸卡、HGX 模组、中国特供 SKU、CSP 内部变体、保留/未发布 ID），而且同一段 ID 空间里还混着<strong>板载 HD Audio、NVSwitch、Bridge/Root</strong> 等"不是 GPU"的功能。这张表就是把这些全部摊开、逐条对应。</p>
+
+        <p>数据来自 <strong>pci.ids（v2026.06.24）</strong> 与 <strong>NVIDIA 开源内核模块（open-gpu-kernel-modules）的 README</strong> 两个权威来源合并，再用 nouveau 代号、CUDA 文档与社区数据库（TechPowerUp / DeviceHunt 等）交叉核对（详见文末"数据来源与方法"）。总量分布：</p>
+
+        <ul>
+          <li><strong>Ampere</strong> 150 个（sm_80 / 86 / 87）</li>
+          <li><strong>Ada Lovelace</strong> 67 个（sm_89）</li>
+          <li><strong>Hopper</strong> 29 个（sm_90）</li>
+          <li><strong>Blackwell</strong> 84 个（sm_100 / 103 / 110 / 120 / 121）</li>
+          <li><strong>Rubin（下一代）</strong> 2 个（GR100 / GR102，sm_13x 待定）</li>
+        </ul>
+
+        <h2>二、怎么读这张表</h2>
+
+        <p>每代一张表，列含义如下：</p>
+
+        <ul>
+          <li><strong>ID</strong>：device ID 的低四位 hex（完整写法是 <code>10DE:&lt;ID&gt;</code>）。</li>
+          <li><strong>芯片 / SM</strong>：物理 die 代号（如 GA102）与其 streaming-multiprocessor 架构等级；SM 与 Compute Capability 一一对应，速查见下表。</li>
+          <li><strong>功能</strong>：绝大多数是 <code>GPU</code>；<strong>加粗</strong>的是同一 ID 空间里的非 GPU 功能（HD Audio / NVSwitch / Bridge-Root）。</li>
+          <li><strong>pci.ids 名称</strong>：来自 pci.ids 的完整名（含方括号变体），<strong>恒有值</strong>，是最稳的描述字段。</li>
+          <li><strong>产品名（官方 / 社区）</strong>：优先取 NVIDIA 开放内核模块 README 里的权威营销名；该列没有时退而取社区/第三方数据库的名字并标注"<span class="legend">(社区)</span>"（置信度低于官方）；都没有则为"—"。</li>
+          <li><strong>说明 / 推断</strong>：用于保留 / 内部 / 中国 SKU / 下一代等条目的背景与推断；<span class="legend">[ES 工程样品]</span> 表示工程样片 ID。</li>
+          <li><strong>开放驱动</strong>：<code>✓</code> = 在 NVIDIA 开放内核模块的设备列表里；"—" = 只在 pci.ids、不在开放驱动列表（多为中国 SKU、数据中心变体、保留/下一代）。</li>
+        </ul>
+
+        <div class="table-scroll">
+<table>
+<caption>架构 × SM / Compute Capability 速查</caption>
+<thead><tr><th>架构</th><th>芯片</th><th>SM</th><th>Compute Capability</th><th>代表产品</th><th>备注</th></tr></thead>
+<tbody>
+<tr><td>Ampere</td><td>GA100</td><td>sm_80</td><td>8.0</td><td>A100, A30, A100X, A30X, CMP 170HX</td><td>HBM2e datacenter; FP64</td></tr>
+<tr><td>Ampere</td><td>GA102/103/104/106/107</td><td>sm_86</td><td>8.6</td><td>RTX 30 series, RTX A-series, A40/A10/A16</td><td>2x FP32/SM vs sm_80</td></tr>
+<tr><td>Ampere</td><td>GA10B (Orin)</td><td>sm_87</td><td>8.7</td><td>Jetson AGX Orin, DRIVE Orin</td><td>Tegra/automotive iGPU only</td></tr>
+<tr><td>Ada Lovelace</td><td>AD102/103/104/106/107</td><td>sm_89</td><td>8.9</td><td>RTX 40 series, RTX 6000 Ada, L40/L40S/L4/L20</td><td>FP8 Transformer Engine</td></tr>
+<tr><td>Hopper</td><td>GH100</td><td>sm_90</td><td>9.0</td><td>H100, H200, H800, H20, H20-3e, GH200</td><td>tcgen05/WGMMA, TMA; sm_90a for CUTLASS</td></tr>
+<tr><td>Blackwell (DC)</td><td>GB100 / GB102</td><td>sm_100</td><td>10.0</td><td>B100, B200, GB200 NVL72</td><td>TMEM, tcgen05, 2-SM MMA; sm_100a/100f</td></tr>
+<tr><td>Blackwell Ultra (DC)</td><td>GB110 / GB112 / GB120</td><td>sm_103</td><td>10.3</td><td>B300, GB300 NVL72</td><td>sm_103a/103f; same 10.x family as sm_100</td></tr>
+<tr><td>Blackwell (Thor)</td><td>Thor T5000 (GB10B)</td><td>sm_110</td><td>11.0</td><td>Jetson AGX Thor, DRIVE Thor</td><td>Renamed from sm_101; robotics SoC</td></tr>
+<tr><td>Blackwell (consumer)</td><td>GB202/203/205/206/207</td><td>sm_120</td><td>12.0</td><td>RTX 50 series, RTX PRO 6000 Blackwell</td><td>mma.sync (Ampere-style), NOT tcgen05; FP4/FP6</td></tr>
+<tr><td>Blackwell (Spark)</td><td>GB10 / GB20B</td><td>sm_121</td><td>12.1</td><td>DGX Spark, GB10 Grace-Blackwell</td><td>sm_121a; ISA distinct from datacenter sm_100</td></tr>
+<tr><td>Rubin (DC) - NEXT GEN</td><td>GR100 / GR102</td><td>sm_13x (TBD)</td><td>TBD (not in public CUDA yet)</td><td>R100/R200, VR200 NVL72 (2026-2027)</td><td>R100 pkg = 2x reticle-limited GR-die; HBM4, NVLink 6</td></tr>
+</tbody>
+</table>
+</div>
+
+        <h2>三、Ampere（150 个 ID · sm_80 / 86 / 87）</h2>
+        <p>三个 SM 等级并存：<strong>GA100</strong> 数据中心（sm_80，A100 / A30，HBM2e + FP64）、<strong>GA102–107</strong> 消费与专业卡（sm_86，RTX 30 系列 / RTX A 系列 / A40 / A10 / A16）、<strong>GA10B（Orin）</strong> 车载与嵌入式 iGPU（sm_87，Tegra）。表中还能看到 1 个 NVSwitch、3 个 Bridge/Root、4 个 HD Audio 功能，以及大量没有公开 SKU 映射的 CSP / 内部变体。</p>
+        <div class="table-scroll">
+<table>
+<caption>Ampere · 150 个 device ID（10DE:xxxx）</caption>
+<thead><tr><th>ID</th><th>芯片</th><th>SM</th><th>功能</th><th>pci.ids 名称</th><th>产品名（官方 / 社区）</th><th>说明 / 推断</th><th>开放驱动</th></tr></thead>
+<tbody>
+<tr><td>1AF1</td><td>GA100</td><td>sm_80</td><td><strong>NVSwitch</strong></td><td>GA100 [A100 NVSwitch]</td><td><span class="legend">—</span></td><td>On-board / on-system NVSwitch fabric switch (not a GPU die)</td><td><span class="legend">—</span></td></tr>
+<tr><td>2080</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100</td><td><span class="legend">—</span></td><td>GA100 (A100-class) internal/CSP variant — no public SKU mapping</td><td><span class="legend">—</span></td></tr>
+<tr><td>2081</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100</td><td><span class="legend">—</span></td><td>GA100 (A100-class) internal/CSP variant — no public SKU mapping</td><td><span class="legend">—</span></td></tr>
+<tr><td>2082</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [CMP 170HX]</td><td>CMP 170HX (crypto-mining) <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>20B0</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [A100 SXM4 40GB]</td><td>NVIDIA A100-PG509-200 / NVIDIA A100-SXM4-40GB</td><td></td><td>✓</td></tr>
+<tr><td>20B1</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [A100 PCIe 40GB]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>20B2</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [A100 SXM4 80GB]</td><td>NVIDIA A100-SXM4-80GB / NVIDIA PG509-210</td><td></td><td>✓</td></tr>
+<tr><td>20B3</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [A100-SXM-64GB]</td><td>NVIDIA A100-SXM-64GB</td><td></td><td>✓</td></tr>
+<tr><td>20B4</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100</td><td><span class="legend">—</span></td><td>GA100 (A100-class) internal/CSP variant — no public SKU mapping</td><td><span class="legend">—</span></td></tr>
+<tr><td>20B5</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [A100 PCIe 80GB]</td><td>NVIDIA A100 80GB PCIe</td><td></td><td>✓</td></tr>
+<tr><td>20B6</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100GL [PG506-232]</td><td>NVIDIA PG506-232</td><td></td><td>✓</td></tr>
+<tr><td>20B7</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100GL [A30 PCIe]</td><td>NVIDIA A30</td><td></td><td>✓</td></tr>
+<tr><td>20B8</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [A100X]</td><td>A100X (converged w/ BlueField-3) <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>20B9</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [A30X]</td><td>A30X (converged w/ BlueField-3) <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>20BB</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [DRIVE A100 PROD]</td><td>DRIVE A100 (automotive) <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>20BD</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [A800 SXM4 40GB]</td><td>NVIDIA A800-SXM4-40GB</td><td></td><td>✓</td></tr>
+<tr><td>20BE</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [GRID A100A]</td><td>GRID A100A (vGPU) <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>20BF</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [GRID A100B]</td><td>GRID A100B (vGPU) <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>20C0</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [Initial DevID]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>20C2</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [CMP 170HX]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>20F0</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [A100-PG506-207]</td><td>A100 (PG506-207 SKU) <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>20F1</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [A100 PCIe 40GB]</td><td>NVIDIA A100-PCIE-40GB</td><td></td><td>✓</td></tr>
+<tr><td>20F2</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [A100-PG506-217]</td><td>A100 (PG506-217 SKU) <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>20F3</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [A800-SXM4-80GB]</td><td>NVIDIA A800-SXM4-80GB</td><td></td><td>✓</td></tr>
+<tr><td>20F5</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [A800 80GB PCIe]</td><td>NVIDIA A800 80GB PCIe / NVIDIA A800 80GB PCIe LC</td><td></td><td>✓</td></tr>
+<tr><td>20F6</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [A800 40GB PCIe]</td><td>NVIDIA A800 40GB Active</td><td></td><td>✓</td></tr>
+<tr><td>20FD</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [AX800 Converged Accelerator]</td><td>NVIDIA AX800</td><td></td><td>✓</td></tr>
+<tr><td>20FE</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100 [INT SKU]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>20FF</td><td>GA100</td><td>sm_80</td><td>GPU</td><td>GA100</td><td><span class="legend">—</span></td><td>GA100 (A100-class) internal/CSP variant — no public SKU mapping</td><td><span class="legend">—</span></td></tr>
+<tr><td>1AEF</td><td>GA102</td><td>sm_86</td><td><strong>HD Audio</strong></td><td>GA102 High Definition Audio Controller</td><td><span class="legend">—</span></td><td>On-board HD Audio function of the GPU board (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>2200</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102</td><td><span class="legend">—</span></td><td>Internal/engineering variant — no public marketing name</td><td><span class="legend">—</span></td></tr>
+<tr><td>2203</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102 [GeForce RTX 3090 Ti]</td><td>NVIDIA GeForce RTX 3090 Ti</td><td></td><td>✓</td></tr>
+<tr><td>2204</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102 [GeForce RTX 3090]</td><td>NVIDIA GeForce RTX 3090</td><td></td><td>✓</td></tr>
+<tr><td>2205</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102 [GeForce RTX 3080 Ti 20GB]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2206</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102 [GeForce RTX 3080]</td><td>NVIDIA GeForce RTX 3080</td><td></td><td>✓</td></tr>
+<tr><td>2207</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102 [GeForce RTX 3070 Ti]</td><td>NVIDIA GeForce RTX 3070 Ti</td><td></td><td>✓</td></tr>
+<tr><td>2208</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102 [GeForce RTX 3080 Ti]</td><td>NVIDIA GeForce RTX 3080 Ti</td><td></td><td>✓</td></tr>
+<tr><td>220A</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102 [GeForce RTX 3080 12GB]</td><td>NVIDIA GeForce RTX 3080</td><td></td><td>✓</td></tr>
+<tr><td>220D</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102 [CMP 90HX]</td><td>NVIDIA CMP 90HX</td><td></td><td>✓</td></tr>
+<tr><td>2216</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102 [GeForce RTX 3080 Lite Hash Rate]</td><td>NVIDIA GeForce RTX 3080</td><td></td><td>✓</td></tr>
+<tr><td>222B</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102 [GeForce RTX 3090 Engineering Sample]</td><td><span class="legend">—</span></td><td><span class="legend">[ES 工程样品]</span></td><td><span class="legend">—</span></td></tr>
+<tr><td>222F</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102 [GeForce RTX 3080 11GB / 12GB Engineering Sample]</td><td><span class="legend">—</span></td><td><span class="legend">[ES 工程样品]</span></td><td><span class="legend">—</span></td></tr>
+<tr><td>2230</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102GL [RTX A6000]</td><td>NVIDIA RTX A6000</td><td></td><td>✓</td></tr>
+<tr><td>2231</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102GL [RTX A5000]</td><td>NVIDIA RTX A5000</td><td></td><td>✓</td></tr>
+<tr><td>2232</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102GL [RTX A4500]</td><td>NVIDIA RTX A4500</td><td></td><td>✓</td></tr>
+<tr><td>2233</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102GL [RTX A5500]</td><td>NVIDIA RTX A5500</td><td></td><td>✓</td></tr>
+<tr><td>2235</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102GL [A40]</td><td>NVIDIA A40</td><td></td><td>✓</td></tr>
+<tr><td>2236</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102GL [A10]</td><td>NVIDIA A10</td><td></td><td>✓</td></tr>
+<tr><td>2237</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102GL [A10G]</td><td>NVIDIA A10G</td><td></td><td>✓</td></tr>
+<tr><td>2238</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102GL [A10M]</td><td>NVIDIA A10M</td><td></td><td>✓</td></tr>
+<tr><td>223F</td><td>GA102</td><td>sm_86</td><td>GPU</td><td>GA102GL</td><td><span class="legend">—</span></td><td>Internal/engineering variant — no public marketing name</td><td><span class="legend">—</span></td></tr>
+<tr><td>228B</td><td>GA104</td><td>sm_86</td><td><strong>HD Audio</strong></td><td>GA104 High Definition Audio Controller</td><td><span class="legend">—</span></td><td>On-board HD Audio function of the GPU board (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>228E</td><td>GA106</td><td>sm_86</td><td><strong>HD Audio</strong></td><td>GA106 High Definition Audio Controller</td><td><span class="legend">—</span></td><td>On-board HD Audio function of the GPU board (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>2291</td><td>GA107</td><td>sm_86</td><td><strong>HD Audio</strong></td><td>GA107 High Definition Audio Controller</td><td><span class="legend">—</span></td><td>On-board HD Audio function of the GPU board (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>2414</td><td>GA103</td><td>sm_86</td><td>GPU</td><td>GA103 [GeForce RTX 3060 Ti]</td><td>NVIDIA GeForce RTX 3060 Ti</td><td></td><td>✓</td></tr>
+<tr><td>2420</td><td>GA103</td><td>sm_86</td><td>GPU</td><td>GA103M [GeForce RTX 3080 Ti Mobile]</td><td>NVIDIA GeForce RTX 3080 Ti Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2438</td><td>GA103</td><td>sm_86</td><td>GPU</td><td>GA103GLM [RTX A5500 Laptop GPU]</td><td>NVIDIA RTX A5500 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2460</td><td>GA103</td><td>sm_86</td><td>GPU</td><td>GA103M [GeForce RTX 3080 Ti Laptop GPU]</td><td>NVIDIA GeForce RTX 3080 Ti Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2480</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [Reserved Dev ID A]</td><td><span class="legend">—</span></td><td>Reserved/internal dev ID — not publicly mapped to a shipping product</td><td><span class="legend">—</span></td></tr>
+<tr><td>2482</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [GeForce RTX 3070 Ti]</td><td>NVIDIA GeForce RTX 3070 Ti</td><td></td><td>✓</td></tr>
+<tr><td>2483</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104</td><td><span class="legend">—</span></td><td>Internal/engineering variant — no public marketing name</td><td><span class="legend">—</span></td></tr>
+<tr><td>2484</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [GeForce RTX 3070]</td><td>NVIDIA GeForce RTX 3070</td><td></td><td>✓</td></tr>
+<tr><td>2486</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [GeForce RTX 3060 Ti]</td><td>NVIDIA GeForce RTX 3060 Ti</td><td></td><td>✓</td></tr>
+<tr><td>2487</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [GeForce RTX 3060]</td><td>NVIDIA GeForce RTX 3060</td><td></td><td>✓</td></tr>
+<tr><td>2488</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [GeForce RTX 3070 Lite Hash Rate]</td><td>NVIDIA GeForce RTX 3070</td><td></td><td>✓</td></tr>
+<tr><td>2489</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [GeForce RTX 3060 Ti Lite Hash Rate]</td><td>NVIDIA GeForce RTX 3060 Ti</td><td></td><td>✓</td></tr>
+<tr><td>248A</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [CMP 70HX]</td><td>NVIDIA CMP 70HX</td><td></td><td>✓</td></tr>
+<tr><td>248C</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [GeForce RTX 3070 Ti]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>248D</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [GeForce RTX 3070]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>248E</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [GeForce RTX 3060 Ti]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>249C</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104M [GeForce RTX 3080 Mobile / Max-Q 8GB/16GB]</td><td>NVIDIA GeForce RTX 3060 Laptop GPU / NVIDIA GeForce RTX 3080 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>249D</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104M [GeForce RTX 3070 Mobile / Max-Q]</td><td>NVIDIA GeForce RTX 3070 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>249F</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104M</td><td><span class="legend">—</span></td><td>Internal/engineering variant — no public marketing name</td><td><span class="legend">—</span></td></tr>
+<tr><td>24A0</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [Geforce RTX 3070 Ti Laptop GPU]</td><td>NVIDIA GeForce RTX 3060 Laptop GPU / NVIDIA GeForce RTX 3070 Ti Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>24A4</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104M</td><td><span class="legend">—</span></td><td>Internal/engineering variant — no public marketing name</td><td><span class="legend">—</span></td></tr>
+<tr><td>24AC</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [GeForce RTX 30x0 Engineering Sample]</td><td><span class="legend">—</span></td><td><span class="legend">[ES 工程样品]</span></td><td><span class="legend">—</span></td></tr>
+<tr><td>24AD</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [GeForce RTX 3060 Engineering Sample]</td><td><span class="legend">—</span></td><td><span class="legend">[ES 工程样品]</span></td><td><span class="legend">—</span></td></tr>
+<tr><td>24AF</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [GeForce RTX 3070 Engineering Sample]</td><td><span class="legend">—</span></td><td><span class="legend">[ES 工程样品]</span></td><td><span class="legend">—</span></td></tr>
+<tr><td>24B0</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104GL [RTX A4000]</td><td>NVIDIA RTX A4000</td><td></td><td>✓</td></tr>
+<tr><td>24B1</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104GL [RTX A4000H]</td><td>NVIDIA RTX A4000H</td><td></td><td>✓</td></tr>
+<tr><td>24B6</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104GLM [RTX A5000 Mobile]</td><td>NVIDIA RTX A5000 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>24B7</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104GLM [RTX A4000 Mobile]</td><td>NVIDIA RTX A4000 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>24B8</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104GLM [RTX A3000 Mobile]</td><td>NVIDIA RTX A3000 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>24B9</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104GLM [RTX A3000 12GB Laptop GPU]</td><td>NVIDIA RTX A3000 12GB Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>24BA</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104GLM [RTX A4500 Laptop GPU]</td><td>NVIDIA RTX A4500 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>24BB</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104GLM [RTX A3000 Laptop GPU]</td><td>NVIDIA RTX A3000 12GB Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>24BF</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [GeForce RTX 3070 Engineering Sample]</td><td><span class="legend">—</span></td><td><span class="legend">[ES 工程样品]</span></td><td><span class="legend">—</span></td></tr>
+<tr><td>24C0</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [Initial Dev ID B]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>24C7</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [GeForce RTX 3060 8GB]</td><td>NVIDIA GeForce RTX 3060</td><td></td><td>✓</td></tr>
+<tr><td>24C8</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [GeForce RTX 3070 GDDR6X]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>24C9</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [GeForce RTX 3060 Ti GDDR6X]</td><td>NVIDIA GeForce RTX 3060 Ti</td><td></td><td>✓</td></tr>
+<tr><td>24DC</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104M [GeForce RTX 3080 Mobile / Max-Q 8GB/16GB]</td><td>NVIDIA GeForce RTX 3080 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>24DD</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104M [GeForce RTX 3070 Mobile / Max-Q]</td><td>NVIDIA GeForce RTX 3070 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>24DF</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104M</td><td><span class="legend">—</span></td><td>Internal/engineering variant — no public marketing name</td><td><span class="legend">—</span></td></tr>
+<tr><td>24E0</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104M [Geforce RTX 3070 Ti Laptop GPU]</td><td>NVIDIA GeForce RTX 3070 Ti Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>24FA</td><td>GA104</td><td>sm_86</td><td>GPU</td><td>GA104 [RTX A4500 Embedded GPU]</td><td>NVIDIA RTX A4500 Embedded GPU</td><td></td><td>✓</td></tr>
+<tr><td>2501</td><td>GA106</td><td>sm_86</td><td>GPU</td><td>GA106 [GeForce RTX 3060]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2503</td><td>GA106</td><td>sm_86</td><td>GPU</td><td>GA106 [GeForce RTX 3060]</td><td>NVIDIA GeForce RTX 3060</td><td></td><td>✓</td></tr>
+<tr><td>2504</td><td>GA106</td><td>sm_86</td><td>GPU</td><td>GA106 [GeForce RTX 3060 Lite Hash Rate]</td><td>NVIDIA GeForce RTX 3060</td><td></td><td>✓</td></tr>
+<tr><td>2505</td><td>GA106</td><td>sm_86</td><td>GPU</td><td>GA106</td><td><span class="legend">—</span></td><td>Internal/engineering variant — no public marketing name</td><td><span class="legend">—</span></td></tr>
+<tr><td>2507</td><td>GA106</td><td>sm_86</td><td>GPU</td><td>GA106 [Geforce RTX 3050]</td><td>NVIDIA GeForce RTX 3050</td><td></td><td>✓</td></tr>
+<tr><td>2508</td><td>GA106</td><td>sm_86</td><td>GPU</td><td>GA106 [GeForce RTX 3050 OEM]</td><td>NVIDIA GeForce RTX 3050 OEM</td><td></td><td>✓</td></tr>
+<tr><td>2509</td><td>GA106</td><td>sm_86</td><td>GPU</td><td>GA106 [GeForce RTX 3060 12GB Rev. 2]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2520</td><td>GA106</td><td>sm_86</td><td>GPU</td><td>GA106M [GeForce RTX 3060 Mobile / Max-Q]</td><td>NVIDIA GeForce RTX 3060 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2521</td><td>GA106</td><td>sm_86</td><td>GPU</td><td>GA106M [GeForce RTX 3060 Laptop GPU]</td><td>NVIDIA GeForce RTX 3060 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2523</td><td>GA106</td><td>sm_86</td><td>GPU</td><td>GA106M [GeForce RTX 3050 Ti Mobile / Max-Q]</td><td>NVIDIA GeForce RTX 3050 Ti Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>252F</td><td>GA106</td><td>sm_86</td><td>GPU</td><td>GA106 [GeForce RTX 3060 Engineering Sample]</td><td><span class="legend">—</span></td><td><span class="legend">[ES 工程样品]</span></td><td><span class="legend">—</span></td></tr>
+<tr><td>2531</td><td>GA106</td><td>sm_86</td><td>GPU</td><td>GA106 [RTX A2000]</td><td>NVIDIA RTX A2000</td><td></td><td>✓</td></tr>
+<tr><td>2544</td><td>GA106</td><td>sm_86</td><td>GPU</td><td>GA106 [GeForce RTX 3060]</td><td>NVIDIA GeForce RTX 3060</td><td></td><td>✓</td></tr>
+<tr><td>2560</td><td>GA106</td><td>sm_86</td><td>GPU</td><td>GA106M [GeForce RTX 3060 Mobile / Max-Q]</td><td>NVIDIA GeForce RTX 3060 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2561</td><td>GA106</td><td>sm_86</td><td>GPU</td><td>GA106M [GeForce RTX 3060 Laptop GPU]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2563</td><td>GA106</td><td>sm_86</td><td>GPU</td><td>GA106M [GeForce RTX 3050 Ti Mobile / Max-Q]</td><td>NVIDIA GeForce RTX 3050 Ti Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2571</td><td>GA106</td><td>sm_86</td><td>GPU</td><td>GA106 [RTX A2000 12GB]</td><td>NVIDIA RTX A2000 12GB</td><td></td><td>✓</td></tr>
+<tr><td>2582</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107 [GeForce RTX 3050 8GB]</td><td>NVIDIA GeForce RTX 3050</td><td></td><td>✓</td></tr>
+<tr><td>2583</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107 [GeForce RTX 3050 4GB]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2584</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107 [GeForce RTX 3050 6GB]</td><td>NVIDIA GeForce RTX 3050</td><td></td><td>✓</td></tr>
+<tr><td>25A0</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107M [GeForce RTX 3050 Ti Mobile]</td><td>NVIDIA GeForce RTX 3050 Ti Laptop GPU / NVIDIA GeForce RTX 3050Ti Laptop GPU / NVIDIA GeForce RTX 3060 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>25A2</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107M [GeForce RTX 3050 Mobile]</td><td>NVIDIA GeForce RTX 3050 Laptop GPU / NVIDIA GeForce RTX 3050 Ti Laptop GPU / NVIDIA GeForce RTX 3060 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>25A3</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107</td><td><span class="legend">—</span></td><td>Internal/engineering variant — no public marketing name</td><td><span class="legend">—</span></td></tr>
+<tr><td>25A4</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107</td><td><span class="legend">—</span></td><td>Internal/engineering variant — no public marketing name</td><td><span class="legend">—</span></td></tr>
+<tr><td>25A5</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107M [GeForce RTX 3050 Mobile]</td><td>NVIDIA GeForce RTX 3050 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>25A6</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107M [GeForce MX570]</td><td>NVIDIA GeForce MX570</td><td></td><td>✓</td></tr>
+<tr><td>25A7</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107M [GeForce MX570]</td><td>NVIDIA GeForce RTX 2050</td><td></td><td>✓</td></tr>
+<tr><td>25A9</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107M [GeForce RTX 2050]</td><td>NVIDIA GeForce RTX 2050</td><td></td><td>✓</td></tr>
+<tr><td>25AA</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107M [GeForce MX570 A]</td><td>NVIDIA GeForce MX570 A</td><td></td><td>✓</td></tr>
+<tr><td>25AB</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107M [GeForce RTX 3050 4GB Laptop GPU]</td><td>NVIDIA GeForce RTX 3050 4GB Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>25AC</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107BM / GN20-P0-R-K2 [GeForce RTX 3050 6GB Laptop GPU]</td><td>NVIDIA GeForce RTX 3050 6GB Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>25AD</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107 [GeForce RTX 2050]</td><td>NVIDIA GeForce RTX 2050</td><td></td><td>✓</td></tr>
+<tr><td>25AF</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107 [GeForce RTX 3050 Engineering Sample]</td><td><span class="legend">—</span></td><td><span class="legend">[ES 工程样品]</span></td><td><span class="legend">—</span></td></tr>
+<tr><td>25B0</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107GL [RTX A1000]</td><td>NVIDIA RTX A1000</td><td></td><td>✓</td></tr>
+<tr><td>25B2</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107GL [RTX A400]</td><td>NVIDIA RTX A400</td><td></td><td>✓</td></tr>
+<tr><td>25B5</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107GLM [RTX A4 Mobile]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>25B6</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107GL [A2 / A16]</td><td>NVIDIA A16 / NVIDIA A2</td><td></td><td>✓</td></tr>
+<tr><td>25B8</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107GLM [RTX A2000 Mobile]</td><td>NVIDIA RTX A2000 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>25B9</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107GLM [RTX A1000 Laptop GPU]</td><td>NVIDIA RTX A1000 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>25BA</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107GLM [RTX A2000 8GB Laptop GPU]</td><td>NVIDIA RTX A2000 8GB Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>25BB</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107GLM [RTX A500 Laptop GPU]</td><td>NVIDIA RTX A500 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>25BC</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107GLM [RTX A1000 6GB Laptop GPU]</td><td>NVIDIA RTX A1000 6GB Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>25BD</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107GLM [RTX A500 Laptop GPU]</td><td>NVIDIA RTX A500 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>25E0</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107BM [GeForce RTX 3050 Ti Mobile]</td><td>NVIDIA GeForce RTX 3050 Ti Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>25E2</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107BM [GeForce RTX 3050 Mobile]</td><td>NVIDIA GeForce RTX 3050 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>25E5</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107BM [GeForce RTX 3050 Mobile]</td><td>NVIDIA GeForce RTX 3050 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>25EC</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107BM / GN20-P0-R-K2 [GeForce RTX 3050 6GB Laptop GPU]</td><td>NVIDIA GeForce RTX 3050 6GB Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>25ED</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107 [GeForce RTX 2050]</td><td>NVIDIA GeForce RTX 2050</td><td></td><td>✓</td></tr>
+<tr><td>25F9</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107 [RTX A1000 Embedded GPU]</td><td>NVIDIA RTX A1000 Embedded GPU</td><td></td><td>✓</td></tr>
+<tr><td>25FA</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107 [RTX A2000 Embedded GPU]</td><td>NVIDIA RTX A2000 Embedded GPU</td><td></td><td>✓</td></tr>
+<tr><td>25FB</td><td>GA107</td><td>sm_86</td><td>GPU</td><td>GA107 [RTX A500 Embedded GPU]</td><td>NVIDIA RTX A500 Embedded GPU</td><td></td><td>✓</td></tr>
+<tr><td>229A</td><td>GA10B(Orin)</td><td>sm_87</td><td><strong>Bridge/Root</strong></td><td>Orin PCIe x8 Root Complex</td><td><span class="legend">—</span></td><td>PCIe bridge / root-port function on the GPU board or host SoC (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>229C</td><td>GA10B(Orin)</td><td>sm_87</td><td><strong>Bridge/Root</strong></td><td>Orin PCIe x4/x8 Endpoint/Root Complex</td><td><span class="legend">—</span></td><td>PCIe bridge / root-port function on the GPU board or host SoC (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>229E</td><td>GA10B(Orin)</td><td>sm_87</td><td><strong>Bridge/Root</strong></td><td>Orin PCIe x1 Root Complex</td><td><span class="legend">—</span></td><td>PCIe bridge / root-port function on the GPU board or host SoC (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+</tbody>
+</table>
+</div>
+
+        <h2>四、Ada Lovelace（67 个 ID · sm_89）</h2>
+        <p>单一 SM 等级 <strong>sm_89</strong>（AD102–107）：RTX 40 系列、RTX 6000 Ada，以及 L40 / L40S / L4 / L20 等推理卡——FP8 Transformer Engine 的首发代。表中含 5 个板载 HD Audio 功能。</p>
+        <div class="table-scroll">
+<table>
+<caption>Ada Lovelace · 67 个 device ID（10DE:xxxx）</caption>
+<thead><tr><th>ID</th><th>芯片</th><th>SM</th><th>功能</th><th>pci.ids 名称</th><th>产品名（官方 / 社区）</th><th>说明 / 推断</th><th>开放驱动</th></tr></thead>
+<tbody>
+<tr><td>22BA</td><td>AD102</td><td>sm_89</td><td><strong>HD Audio</strong></td><td>AD102 High Definition Audio Controller</td><td><span class="legend">—</span></td><td>On-board HD Audio function of the GPU board (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>22BB</td><td>AD103</td><td>sm_89</td><td><strong>HD Audio</strong></td><td>AD103 High Definition Audio Controller</td><td><span class="legend">—</span></td><td>On-board HD Audio function of the GPU board (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>22BC</td><td>AD104</td><td>sm_89</td><td><strong>HD Audio</strong></td><td>AD104 High Definition Audio Controller</td><td><span class="legend">—</span></td><td>On-board HD Audio function of the GPU board (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>22BD</td><td>AD106</td><td>sm_89</td><td><strong>HD Audio</strong></td><td>AD106M High Definition Audio Controller</td><td><span class="legend">—</span></td><td>On-board HD Audio function of the GPU board (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>22BE</td><td>AD107</td><td>sm_89</td><td><strong>HD Audio</strong></td><td>AD107 High Definition Audio Controller</td><td><span class="legend">—</span></td><td>On-board HD Audio function of the GPU board (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>2681</td><td>AD102</td><td>sm_89</td><td>GPU</td><td>AD102 [RTX TITAN Ada]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2684</td><td>AD102</td><td>sm_89</td><td>GPU</td><td>AD102 [GeForce RTX 4090]</td><td>NVIDIA GeForce RTX 4090</td><td></td><td>✓</td></tr>
+<tr><td>2685</td><td>AD102</td><td>sm_89</td><td>GPU</td><td>AD102 [GeForce RTX 4090 D]</td><td>NVIDIA GeForce RTX 4090 D</td><td></td><td>✓</td></tr>
+<tr><td>2689</td><td>AD102</td><td>sm_89</td><td>GPU</td><td>AD102 [GeForce RTX 4070 Ti SUPER]</td><td>NVIDIA GeForce RTX 4070 Ti SUPER</td><td></td><td>✓</td></tr>
+<tr><td>26AF</td><td>AD102</td><td>sm_89</td><td>GPU</td><td>AD102 [PG137]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>26B1</td><td>AD102</td><td>sm_89</td><td>GPU</td><td>AD102GL [RTX 6000 Ada Generation]</td><td>NVIDIA RTX 6000 Ada Generation</td><td></td><td>✓</td></tr>
+<tr><td>26B2</td><td>AD102</td><td>sm_89</td><td>GPU</td><td>AD102GL [RTX 5000 Ada Generation]</td><td>NVIDIA RTX 5000 Ada Generation</td><td></td><td>✓</td></tr>
+<tr><td>26B3</td><td>AD102</td><td>sm_89</td><td>GPU</td><td>AD102GL [RTX 5880 Ada Generation]</td><td>NVIDIA RTX 5880 Ada Generation</td><td></td><td>✓</td></tr>
+<tr><td>26B5</td><td>AD102</td><td>sm_89</td><td>GPU</td><td>AD102GL [L40]</td><td>NVIDIA L40</td><td></td><td>✓</td></tr>
+<tr><td>26B7</td><td>AD102</td><td>sm_89</td><td>GPU</td><td>AD102GL [L20]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>26B8</td><td>AD102</td><td>sm_89</td><td>GPU</td><td>AD102GL [L40G]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>26B9</td><td>AD102</td><td>sm_89</td><td>GPU</td><td>AD102GL [L40S]</td><td>NVIDIA L40S</td><td></td><td>✓</td></tr>
+<tr><td>26BA</td><td>AD102</td><td>sm_89</td><td>GPU</td><td>AD102GL [L20]</td><td>NVIDIA L20</td><td></td><td>✓</td></tr>
+<tr><td>26BB</td><td>AD102</td><td>sm_89</td><td>GPU</td><td>AD102GL [L30]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>26F5</td><td>AD102</td><td>sm_89</td><td>GPU</td><td>AD102GL [L40 CNX]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2702</td><td>AD103</td><td>sm_89</td><td>GPU</td><td>AD103 [GeForce RTX 4080 SUPER]</td><td>NVIDIA GeForce RTX 4080 SUPER</td><td></td><td>✓</td></tr>
+<tr><td>2703</td><td>AD103</td><td>sm_89</td><td>GPU</td><td>AD103 [GeForce RTX 4080 SUPER]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2704</td><td>AD103</td><td>sm_89</td><td>GPU</td><td>AD103 [GeForce RTX 4080]</td><td>NVIDIA GeForce RTX 4080</td><td></td><td>✓</td></tr>
+<tr><td>2705</td><td>AD103</td><td>sm_89</td><td>GPU</td><td>AD103 [GeForce RTX 4070 Ti SUPER]</td><td>NVIDIA GeForce RTX 4070 Ti SUPER</td><td></td><td>✓</td></tr>
+<tr><td>2709</td><td>AD103</td><td>sm_89</td><td>GPU</td><td>AD103 [GeForce RTX 4070]</td><td>NVIDIA GeForce RTX 4070</td><td></td><td>✓</td></tr>
+<tr><td>2717</td><td>AD103</td><td>sm_89</td><td>GPU</td><td>AD103M / GN21-X11 [GeForce RTX 4090 Laptop GPU]</td><td>NVIDIA GeForce RTX 4090 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2730</td><td>AD103</td><td>sm_89</td><td>GPU</td><td>AD103GLM [RTX 5000 Ada Generation Laptop GPU]</td><td>NVIDIA RTX 5000 Ada Generation Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2757</td><td>AD103</td><td>sm_89</td><td>GPU</td><td>AD103M / GN21-X11 [GeForce RTX 4090 Laptop GPU]</td><td>NVIDIA GeForce RTX 4090 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2770</td><td>AD103</td><td>sm_89</td><td>GPU</td><td>AD103GLM [RTX 5000 Ada Generation Embedded GPU]</td><td>NVIDIA RTX 5000 Ada Generation Embedded GPU</td><td></td><td>✓</td></tr>
+<tr><td>2782</td><td>AD104</td><td>sm_89</td><td>GPU</td><td>AD104 [GeForce RTX 4070 Ti]</td><td>NVIDIA GeForce RTX 4070 Ti</td><td></td><td>✓</td></tr>
+<tr><td>2783</td><td>AD104</td><td>sm_89</td><td>GPU</td><td>AD104 [GeForce RTX 4070 SUPER]</td><td>NVIDIA GeForce RTX 4070 SUPER</td><td></td><td>✓</td></tr>
+<tr><td>2785</td><td>AD104</td><td>sm_89</td><td>GPU</td><td>AD104 [AC AD104 20GB]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2786</td><td>AD104</td><td>sm_89</td><td>GPU</td><td>AD104 [GeForce RTX 4070]</td><td>NVIDIA GeForce RTX 4070</td><td></td><td>✓</td></tr>
+<tr><td>2788</td><td>AD104</td><td>sm_89</td><td>GPU</td><td>AD104 [GeForce RTX 4060 Ti]</td><td>NVIDIA GeForce RTX 4060 Ti</td><td></td><td>✓</td></tr>
+<tr><td>27A0</td><td>AD104</td><td>sm_89</td><td>GPU</td><td>AD104M [GeForce RTX 4080 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 4080 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>27B0</td><td>AD104</td><td>sm_89</td><td>GPU</td><td>AD104GL [RTX 4000 SFF Ada Generation]</td><td>NVIDIA RTX 4000 SFF Ada Generation</td><td></td><td>✓</td></tr>
+<tr><td>27B1</td><td>AD104</td><td>sm_89</td><td>GPU</td><td>AD104GL [RTX 4500 Ada Generation]</td><td>NVIDIA RTX 4500 Ada Generation</td><td></td><td>✓</td></tr>
+<tr><td>27B2</td><td>AD104</td><td>sm_89</td><td>GPU</td><td>AD104GL [RTX 4000 Ada Generation]</td><td>NVIDIA RTX 4000 Ada Generation</td><td></td><td>✓</td></tr>
+<tr><td>27B6</td><td>AD104</td><td>sm_89</td><td>GPU</td><td>AD104GL [L2]</td><td>NVIDIA L2</td><td></td><td>✓</td></tr>
+<tr><td>27B7</td><td>AD104</td><td>sm_89</td><td>GPU</td><td>AD104GL [L16]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>27B8</td><td>AD104</td><td>sm_89</td><td>GPU</td><td>AD104GL [L4]</td><td>NVIDIA L4</td><td></td><td>✓</td></tr>
+<tr><td>27BA</td><td>AD104</td><td>sm_89</td><td>GPU</td><td>AD104GLM [RTX 4000 Ada Generation Laptop GPU]</td><td>NVIDIA RTX 4000 Ada Generation Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>27BB</td><td>AD104</td><td>sm_89</td><td>GPU</td><td>AD104GLM [RTX 3500 Ada Generation Laptop GPU]</td><td>NVIDIA RTX 3500 Ada Generation Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>27E0</td><td>AD104</td><td>sm_89</td><td>GPU</td><td>AD104M [GeForce RTX 4080 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 4080 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>27FA</td><td>AD104</td><td>sm_89</td><td>GPU</td><td>AD104GLM [RTX 4000 Ada Generation Embedded GPU]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>27FB</td><td>AD104</td><td>sm_89</td><td>GPU</td><td>AD104GLM [RTX 3500 Ada Generation Embedded GPU]</td><td>NVIDIA RTX 3500 Ada Generation Embedded GPU</td><td></td><td>✓</td></tr>
+<tr><td>2803</td><td>AD106</td><td>sm_89</td><td>GPU</td><td>AD106 [GeForce RTX 4060 Ti]</td><td>NVIDIA GeForce RTX 4060 Ti</td><td></td><td>✓</td></tr>
+<tr><td>2805</td><td>AD106</td><td>sm_89</td><td>GPU</td><td>AD106 [GeForce RTX 4060 Ti 16GB]</td><td>NVIDIA GeForce RTX 4060 Ti</td><td></td><td>✓</td></tr>
+<tr><td>2808</td><td>AD106</td><td>sm_89</td><td>GPU</td><td>AD106 [GeForce RTX 4060]</td><td>NVIDIA GeForce RTX 4060</td><td></td><td>✓</td></tr>
+<tr><td>2820</td><td>AD106</td><td>sm_89</td><td>GPU</td><td>AD106M [GeForce RTX 4070 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 4070 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2822</td><td>AD106</td><td>sm_89</td><td>GPU</td><td>AD106M [GeForce RTX 3050 A Laptop GPU]</td><td>NVIDIA GeForce RTX 3050 A Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2838</td><td>AD106</td><td>sm_89</td><td>GPU</td><td>AD106GLM [RTX 3000 Ada Generation Laptop GPU]</td><td>NVIDIA RTX 3000 Ada Generation Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2860</td><td>AD106</td><td>sm_89</td><td>GPU</td><td>AD106M [GeForce RTX 4070 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 4070 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2878</td><td>AD106</td><td>sm_89</td><td>GPU</td><td>AD106GLM [RTX 3000 Ada Generation Embedded GPU]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2882</td><td>AD107</td><td>sm_89</td><td>GPU</td><td>AD107 [GeForce RTX 4060]</td><td>NVIDIA GeForce RTX 4060</td><td></td><td>✓</td></tr>
+<tr><td>28A0</td><td>AD107</td><td>sm_89</td><td>GPU</td><td>AD107M [GeForce RTX 4060 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 4060 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>28A1</td><td>AD107</td><td>sm_89</td><td>GPU</td><td>AD107M [GeForce RTX 4050 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 4050 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>28A3</td><td>AD107</td><td>sm_89</td><td>GPU</td><td>AD107M [GeForce RTX 3050 A Laptop GPU]</td><td>NVIDIA GeForce RTX 3050 A Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>28B0</td><td>AD107</td><td>sm_89</td><td>GPU</td><td>AD107GL [RTX 2000 / 2000E Ada Generation]</td><td>NVIDIA RTX 2000 Ada Generation / NVIDIA RTX 2000E Ada Generation</td><td></td><td>✓</td></tr>
+<tr><td>28B8</td><td>AD107</td><td>sm_89</td><td>GPU</td><td>AD107GLM [RTX 2000 Ada Generation Laptop GPU]</td><td>NVIDIA RTX 2000 Ada Generation Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>28B9</td><td>AD107</td><td>sm_89</td><td>GPU</td><td>AD107GLM [RTX 1000 Ada Generation Laptop GPU]</td><td>NVIDIA RTX 1000 Ada Generation Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>28BA</td><td>AD107</td><td>sm_89</td><td>GPU</td><td>AD107GLM [RTX 500 Ada Generation Laptop GPU]</td><td>NVIDIA RTX 500 Ada Generation Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>28BB</td><td>AD107</td><td>sm_89</td><td>GPU</td><td>AD107GLM [RTX 500 Ada Generation Laptop GPU]</td><td>NVIDIA RTX 500 Ada Generation Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>28E0</td><td>AD107</td><td>sm_89</td><td>GPU</td><td>AD107M [GeForce RTX 4060 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 4060 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>28E1</td><td>AD107</td><td>sm_89</td><td>GPU</td><td>AD107M [GeForce RTX 4050 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 4050 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>28E3</td><td>AD107</td><td>sm_89</td><td>GPU</td><td>AD107M [GeForce RTX 3050 A Laptop GPU]</td><td>NVIDIA GeForce RTX 3050 A Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>28F8</td><td>AD107</td><td>sm_89</td><td>GPU</td><td>AD107GLM [RTX 2000 Ada Generation Embedded GPU]</td><td>NVIDIA RTX 2000 Ada Generation Embedded GPU</td><td></td><td>✓</td></tr>
+</tbody>
+</table>
+</div>
+
+        <h2>五、Hopper（29 个 ID · sm_90）</h2>
+        <p><strong>GH100</strong> 单芯片（sm_90，含 CUTLASS 用的 sm_90a 变体）：H100 / H200 / GH200，以及中国特供的 H800 / H20 / H20-3e / H20 NVL16。数据中心训练主力，含 1 个 NVSwitch。可以看到不少 H20 系列在 pci.ids 里有名、却不在开放驱动列表内（中国 SKU 的典型特征）。</p>
+        <div class="table-scroll">
+<table>
+<caption>Hopper · 29 个 device ID（10DE:xxxx）</caption>
+<thead><tr><th>ID</th><th>芯片</th><th>SM</th><th>功能</th><th>pci.ids 名称</th><th>产品名（官方 / 社区）</th><th>说明 / 推断</th><th>开放驱动</th></tr></thead>
+<tbody>
+<tr><td>22A3</td><td>GH100</td><td>sm_90</td><td><strong>NVSwitch</strong></td><td>GH100 [H100 NVSwitch]</td><td><span class="legend">—</span></td><td>On-board / on-system NVSwitch fabric switch (not a GPU die)</td><td><span class="legend">—</span></td></tr>
+<tr><td>2302</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100</td><td><span class="legend">—</span></td><td>GH100 internal/CSP variant — no public SKU mapping</td><td><span class="legend">—</span></td></tr>
+<tr><td>230C</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H20 NVL16]</td><td>H20 NVL16 (China SKU) <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>230E</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H20 NVL16]</td><td>NVIDIA H20 NVL16</td><td></td><td>✓</td></tr>
+<tr><td>2313</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H100 CNX]</td><td>H100 CNX (Converged Accelerator) <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2321</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H100L 94GB]</td><td>NVIDIA H100 NVL</td><td></td><td>✓</td></tr>
+<tr><td>2322</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H800 PCIe]</td><td>NVIDIA H800 PCIe</td><td></td><td>✓</td></tr>
+<tr><td>2324</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H800]</td><td>NVIDIA H800</td><td></td><td>✓</td></tr>
+<tr><td>2328</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H20B]</td><td>H20B (China SKU) <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2329</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H20]</td><td>NVIDIA H20</td><td></td><td>✓</td></tr>
+<tr><td>232C</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H20 HBM3e]</td><td>NVIDIA H20-3e</td><td></td><td>✓</td></tr>
+<tr><td>2330</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H100 SXM5 80GB]</td><td>NVIDIA H100 80GB HBM3</td><td></td><td>✓</td></tr>
+<tr><td>2331</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H100 PCIe]</td><td>NVIDIA H100 PCIe</td><td></td><td>✓</td></tr>
+<tr><td>2335</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H200 SXM 141GB]</td><td>NVIDIA H200</td><td></td><td>✓</td></tr>
+<tr><td>2336</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H100]</td><td>H100 (PCIe variant, TPU-listed) <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2337</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H100 SXM5 64GB]</td><td>H100 SXM5 64GB (TPU-listed) <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2338</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H100 SXM5 96GB]</td><td>H100 SXM5 96GB (TPU-listed) <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2339</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H100 SXM5 94GB]</td><td>NVIDIA H100</td><td></td><td>✓</td></tr>
+<tr><td>233A</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H800L 94GB]</td><td>NVIDIA H800 NVL</td><td></td><td>✓</td></tr>
+<tr><td>233B</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H200 NVL]</td><td>NVIDIA H200 NVL</td><td></td><td>✓</td></tr>
+<tr><td>233D</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H100 96GB]</td><td>H100 96GB (TPU-listed) <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2342</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [GH200 120GB / 480GB]</td><td>NVIDIA GH200 120GB / NVIDIA GH200 480GB</td><td></td><td>✓</td></tr>
+<tr><td>2343</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100</td><td><span class="legend">—</span></td><td>GH100 internal/CSP variant — no public SKU mapping</td><td><span class="legend">—</span></td></tr>
+<tr><td>2345</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [GH100-88K-A1]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2348</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [GH200 144G HBM3e]</td><td>NVIDIA GH200 144G HBM3e</td><td></td><td>✓</td></tr>
+<tr><td>237E</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [H100 GH3]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>237F</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100 [Skinny Joe]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>23B0</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100</td><td><span class="legend">—</span></td><td>GH100 internal/CSP variant — no public SKU mapping</td><td><span class="legend">—</span></td></tr>
+<tr><td>23F0</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100</td><td><span class="legend">—</span></td><td>GH100 internal/CSP variant — no public SKU mapping</td><td><span class="legend">—</span></td></tr>
+</tbody>
+</table>
+</div>
+
+        <h2>六、Blackwell（84 个 ID · sm_100 / 103 / 110 / 120 / 121）</h2>
+        <p>一个代号、五个 SM——这是 Blackwell 最容易混的地方：<strong>数据中心 GB100 / GB102</strong>（sm_100，B100 / B200 / GB200 NVL72）、<strong>Blackwell Ultra GB110 / 112 / 120</strong>（sm_103，B300 / GB300 NVL72）、<strong>Thor 机器人 SoC</strong>（sm_110，从 sm_101 改名）、<strong>消费 GB202–207</strong>（sm_120，RTX 50 系列 / RTX PRO 6000；注意它走 Ampere 式 <code>mma.sync</code>、不是 tcgen05）、<strong>DGX Spark / GB10</strong>（sm_121）。同段 ID 里还混有 Bridge/Root 与 HD Audio 功能。</p>
+        <div class="table-scroll">
+<table>
+<caption>Blackwell · 84 个 device ID（10DE:xxxx）</caption>
+<thead><tr><th>ID</th><th>芯片</th><th>SM</th><th>功能</th><th>pci.ids 名称</th><th>产品名（官方 / 社区）</th><th>说明 / 推断</th><th>开放驱动</th></tr></thead>
+<tbody>
+<tr><td>2900</td><td>GB100</td><td>sm_100</td><td>GPU</td><td>GB100 [Reserved Dev ID A]</td><td><span class="legend">—</span></td><td>Reserved/internal dev ID — not publicly mapped to a shipping product</td><td><span class="legend">—</span></td></tr>
+<tr><td>2901</td><td>GB100</td><td>sm_100</td><td>GPU</td><td>GB100 [B200]</td><td>NVIDIA B200</td><td></td><td>✓</td></tr>
+<tr><td>2909</td><td>GB100</td><td>sm_100</td><td>GPU</td><td>GB100 [HGX B200 168GB]</td><td>NVIDIA B200</td><td></td><td>✓</td></tr>
+<tr><td>2920</td><td>GB100</td><td>sm_100</td><td>GPU</td><td>GB100 [TS4 / B100]</td><td>B100 (TS4 sample) <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2924</td><td>GB100</td><td>sm_100</td><td>GPU</td><td>GB100</td><td><span class="legend">—</span></td><td>Datacenter Blackwell internal/sample variant — no public SKU</td><td><span class="legend">—</span></td></tr>
+<tr><td>2925</td><td>GB100</td><td>sm_100</td><td>GPU</td><td>GB100</td><td><span class="legend">—</span></td><td>Datacenter Blackwell internal/sample variant — no public SKU</td><td><span class="legend">—</span></td></tr>
+<tr><td>293D</td><td>GB100</td><td>sm_100</td><td>GPU</td><td>GB100</td><td><span class="legend">—</span></td><td>Datacenter Blackwell internal/sample variant — no public SKU</td><td><span class="legend">—</span></td></tr>
+<tr><td>2940</td><td>GB100</td><td>sm_100</td><td>GPU</td><td>GB100 [Reserved Dev ID B]</td><td><span class="legend">—</span></td><td>Reserved/internal dev ID — not publicly mapped to a shipping product</td><td><span class="legend">—</span></td></tr>
+<tr><td>2941</td><td>GB100</td><td>sm_100</td><td>GPU</td><td>GB100 [HGX GB200]</td><td>NVIDIA GB200</td><td></td><td>✓</td></tr>
+<tr><td>297E</td><td>GB100</td><td>sm_100</td><td>GPU</td><td>GB100</td><td><span class="legend">—</span></td><td>Datacenter Blackwell internal/sample variant — no public SKU</td><td><span class="legend">—</span></td></tr>
+<tr><td>2980</td><td>GB102</td><td>sm_100</td><td>GPU</td><td>GB102 [Reserved Dev ID A]</td><td><span class="legend">—</span></td><td>Reserved/internal dev ID — not publicly mapped to a shipping product</td><td><span class="legend">—</span></td></tr>
+<tr><td>29BB</td><td>GB102</td><td>sm_100</td><td>GPU</td><td>GB102 [DRIVE P2021]</td><td>NVIDIA DRIVE P2021</td><td></td><td>✓</td></tr>
+<tr><td>29BC</td><td>GB102</td><td>sm_100</td><td>GPU</td><td>GB102 [B100]</td><td>B100 (GB102 variant) <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>29C0</td><td>GB102</td><td>sm_100</td><td>GPU</td><td>GB102 [Reserved Dev ID B]</td><td><span class="legend">—</span></td><td>Reserved/internal dev ID — not publicly mapped to a shipping product</td><td><span class="legend">—</span></td></tr>
+<tr><td>29F1</td><td>GB102</td><td>sm_100</td><td>GPU</td><td>GB102</td><td><span class="legend">—</span></td><td>Datacenter Blackwell internal/sample variant — no public SKU</td><td><span class="legend">—</span></td></tr>
+<tr><td>3180</td><td>GB110</td><td>sm_103</td><td>GPU</td><td>GB110 [Reserved Dev ID A]</td><td><span class="legend">—</span></td><td>Reserved/internal dev ID — not publicly mapped to a shipping product</td><td><span class="legend">—</span></td></tr>
+<tr><td>3182</td><td>GB110</td><td>sm_103</td><td>GPU</td><td>GB110 [B300 SXM6 AC]</td><td>NVIDIA B300 SXM6 AC</td><td></td><td>✓</td></tr>
+<tr><td>31A1</td><td>GB110</td><td>sm_103</td><td>GPU</td><td>GB110 [GB300 MaxQ]</td><td>GB300 Max-Q <span class="legend">(社区)</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>31C0</td><td>GB110</td><td>sm_103</td><td>GPU</td><td>GB110 [Reserved Dev ID B]</td><td><span class="legend">—</span></td><td>Reserved/internal dev ID — not publicly mapped to a shipping product</td><td><span class="legend">—</span></td></tr>
+<tr><td>31C2</td><td>GB110</td><td>sm_103</td><td>GPU</td><td>GB110 [GB300]</td><td>NVIDIA GB300</td><td></td><td>✓</td></tr>
+<tr><td>31C3</td><td>GB110</td><td>sm_103</td><td>GPU</td><td>GB110 [GB300]</td><td>NVIDIA GB300</td><td></td><td>✓</td></tr>
+<tr><td>31FE</td><td>GB110</td><td>sm_103</td><td>GPU</td><td>GB110</td><td><span class="legend">—</span></td><td>Blackwell-Ultra (B300/GB300 class) internal/sample variant — no public SKU</td><td><span class="legend">—</span></td></tr>
+<tr><td>3200</td><td>GB112</td><td>sm_103</td><td>GPU</td><td>GB112</td><td><span class="legend">—</span></td><td>Blackwell-Ultra (B300/GB300 class) internal/sample variant — no public SKU</td><td><span class="legend">—</span></td></tr>
+<tr><td>3224</td><td>GB112</td><td>sm_103</td><td>GPU</td><td>GB112</td><td><span class="legend">—</span></td><td>Blackwell-Ultra (B300/GB300 class) internal/sample variant — no public SKU</td><td><span class="legend">—</span></td></tr>
+<tr><td>323E</td><td>GB112</td><td>sm_103</td><td>GPU</td><td>GB112</td><td><span class="legend">—</span></td><td>Blackwell-Ultra (B300/GB300 class) internal/sample variant — no public SKU</td><td><span class="legend">—</span></td></tr>
+<tr><td>3340</td><td>GB120</td><td>sm_103</td><td>GPU</td><td>GB120</td><td><span class="legend">—</span></td><td>Blackwell-Ultra (B300/GB300 class) internal/sample variant — no public SKU</td><td><span class="legend">—</span></td></tr>
+<tr><td>22D8</td><td>THOR</td><td>sm_110</td><td><strong>Bridge/Root</strong></td><td>THOR Processor PCI Express Root Port</td><td><span class="legend">—</span></td><td>PCIe bridge / root-port function on the GPU board or host SoC (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>22E6</td><td>THOR</td><td>sm_110</td><td><strong>Bridge/Root</strong></td><td>THOR Processor PCI Express x16 Controller</td><td><span class="legend">—</span></td><td>PCIe bridge / root-port function on the GPU board or host SoC (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>2B00</td><td>THOR</td><td>sm_110</td><td>GPU</td><td>GB10B [Jetson AGX Thor]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>22E8</td><td>GB202</td><td>sm_120</td><td><strong>HD Audio</strong></td><td>GB202 High Definition Audio Controller</td><td><span class="legend">—</span></td><td>On-board HD Audio function of the GPU board (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>22E9</td><td>GB203</td><td>sm_120</td><td><strong>HD Audio</strong></td><td>GB203 High Definition Audio Controller</td><td><span class="legend">—</span></td><td>On-board HD Audio function of the GPU board (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>22EB</td><td>GB206</td><td>sm_120</td><td><strong>HD Audio</strong></td><td>GB206 High Definition Audio Controller</td><td><span class="legend">—</span></td><td>On-board HD Audio function of the GPU board (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>22EC</td><td>GB207</td><td>sm_120</td><td><strong>HD Audio</strong></td><td>GB207 High Definition Audio Controller</td><td><span class="legend">—</span></td><td>On-board HD Audio function of the GPU board (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>2B85</td><td>GB202</td><td>sm_120</td><td>GPU</td><td>GB202 [GeForce RTX 5090]</td><td>NVIDIA GeForce RTX 5090</td><td></td><td>✓</td></tr>
+<tr><td>2B87</td><td>GB202</td><td>sm_120</td><td>GPU</td><td>GB202 [GeForce RTX 5090 D]</td><td>NVIDIA GeForce RTX 5090 D</td><td></td><td>✓</td></tr>
+<tr><td>2B8C</td><td>GB202</td><td>sm_120</td><td>GPU</td><td>GB202 [GeForce RTX 5090 D V2]</td><td>NVIDIA GeForce RTX 5090 D v2</td><td></td><td>✓</td></tr>
+<tr><td>2BB1</td><td>GB202</td><td>sm_120</td><td>GPU</td><td>GB202GL [RTX PRO 6000 Blackwell Workstation Edition]</td><td>NVIDIA RTX PRO 6000 Blackwell Workstation Edition</td><td></td><td>✓</td></tr>
+<tr><td>2BB2</td><td>GB202</td><td>sm_120</td><td>GPU</td><td>GB202GL [RTX PRO 6000D Blackwell Workstation Edition]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2BB3</td><td>GB202</td><td>sm_120</td><td>GPU</td><td>GB202GL [RTX PRO 5000 Blackwell / RTX PRO 5000 72GB Blackwell]</td><td>NVIDIA RTX PRO 5000 72GB Blackwell / NVIDIA RTX PRO 5000 Blackwell</td><td></td><td>✓</td></tr>
+<tr><td>2BB4</td><td>GB202</td><td>sm_120</td><td>GPU</td><td>GB202GL [RTX PRO 6000 Blackwell Max-Q Workstation Edition]</td><td>NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition</td><td></td><td>✓</td></tr>
+<tr><td>2BB5</td><td>GB202</td><td>sm_120</td><td>GPU</td><td>GB202GL [RTX PRO 6000 Blackwell Server Edition]</td><td>NVIDIA RTX PRO 6000 Blackwell Server Edition</td><td></td><td>✓</td></tr>
+<tr><td>2BB9</td><td>GB202</td><td>sm_120</td><td>GPU</td><td>GB202GL [RTX 6000D]</td><td>NVIDIA RTX 6000D</td><td></td><td>✓</td></tr>
+<tr><td>2BBC</td><td>GB202</td><td>sm_120</td><td>GPU</td><td>GB202GL [RTX PRO 6000D Blackwell Max-Q Workstation Edition]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2C02</td><td>GB203</td><td>sm_120</td><td>GPU</td><td>GB203 [GeForce RTX 5080]</td><td>NVIDIA GeForce RTX 5080</td><td></td><td>✓</td></tr>
+<tr><td>2C05</td><td>GB203</td><td>sm_120</td><td>GPU</td><td>GB203 [GeForce RTX 5070 Ti]</td><td>NVIDIA GeForce RTX 5070 Ti</td><td></td><td>✓</td></tr>
+<tr><td>2C18</td><td>GB203</td><td>sm_120</td><td>GPU</td><td>GB203M / GN22 [GeForce RTX 5090 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 5090 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2C19</td><td>GB203</td><td>sm_120</td><td>GPU</td><td>GB203M / GN22 [GeForce RTX 5080 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 5080 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2C31</td><td>GB203</td><td>sm_120</td><td>GPU</td><td>GB203GL [RTX PRO 4500 Blackwell]</td><td>NVIDIA RTX PRO 4500 Blackwell</td><td></td><td>✓</td></tr>
+<tr><td>2C33</td><td>GB203</td><td>sm_120</td><td>GPU</td><td>GB203GL [RTX PRO 4000 Blackwell SFF Edition]</td><td>NVIDIA RTX PRO 4000 Blackwell SFF Edition</td><td></td><td>✓</td></tr>
+<tr><td>2C34</td><td>GB203</td><td>sm_120</td><td>GPU</td><td>GB203GL [RTX PRO 4000 Blackwell]</td><td>NVIDIA RTX PRO 4000 Blackwell</td><td></td><td>✓</td></tr>
+<tr><td>2C38</td><td>GB203</td><td>sm_120</td><td>GPU</td><td>GB203GLM [RTX PRO 5000 Blackwell Generation Laptop GPU]</td><td>NVIDIA RTX PRO 5000 Blackwell Generation Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2C39</td><td>GB203</td><td>sm_120</td><td>GPU</td><td>GB203GLM [RTX PRO 4000 Blackwell Generation Laptop GPU]</td><td>NVIDIA RTX PRO 4000 Blackwell Generation Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2C3A</td><td>GB203</td><td>sm_120</td><td>GPU</td><td>GB203GL [RTX PRO 4500 Blackwell Server Edition]</td><td>NVIDIA RTX PRO 4500 Blackwell Server Edition</td><td></td><td>✓</td></tr>
+<tr><td>2C58</td><td>GB203</td><td>sm_120</td><td>GPU</td><td>GB203M / GN22-X11 [GeForce RTX 5090 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 5090 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2C59</td><td>GB203</td><td>sm_120</td><td>GPU</td><td>GB203M / GN22-X9 [GeForce RTX 5080 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 5080 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2C77</td><td>GB203</td><td>sm_120</td><td>GPU</td><td>GB203GLM [RTX PRO 5000 Blackwell Embedded GPU]</td><td>NVIDIA RTX PRO 5000 Blackwell Embedded GPU</td><td></td><td>✓</td></tr>
+<tr><td>2C79</td><td>GB203</td><td>sm_120</td><td>GPU</td><td>GB203GLM [RTX PRO 4000 Blackwell Embedded GPU]</td><td>NVIDIA RTX PRO 4000 Blackwell Embedded GPU</td><td></td><td>✓</td></tr>
+<tr><td>2D04</td><td>GB206</td><td>sm_120</td><td>GPU</td><td>GB206 [GeForce RTX 5060 Ti]</td><td>NVIDIA GeForce RTX 5060 Ti</td><td></td><td>✓</td></tr>
+<tr><td>2D05</td><td>GB206</td><td>sm_120</td><td>GPU</td><td>GB206 [GeForce RTX 5060]</td><td>NVIDIA GeForce RTX 5060</td><td></td><td>✓</td></tr>
+<tr><td>2D18</td><td>GB206</td><td>sm_120</td><td>GPU</td><td>GB206M [GeForce RTX 5070 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 5070 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2D19</td><td>GB206</td><td>sm_120</td><td>GPU</td><td>GB206M [GeForce RTX 5060 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 5060 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2D30</td><td>GB206</td><td>sm_120</td><td>GPU</td><td>GB206GL [RTX PRO 2000 Blackwell]</td><td>NVIDIA RTX PRO 2000 Blackwell</td><td></td><td>✓</td></tr>
+<tr><td>2D39</td><td>GB206</td><td>sm_120</td><td>GPU</td><td>GB206GLM [RTX PRO 2000 Blackwell Generation Laptop GPU]</td><td>NVIDIA RTX PRO 2000 Blackwell Generation Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2D58</td><td>GB206</td><td>sm_120</td><td>GPU</td><td>GB206M [GeForce RTX 5070 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 5070 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2D59</td><td>GB206</td><td>sm_120</td><td>GPU</td><td>GB206M [GeForce RTX 5060 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 5060 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2D79</td><td>GB206</td><td>sm_120</td><td>GPU</td><td>GB206GLM [RTX PRO 2000 Blackwell Embedded GPU]</td><td>NVIDIA RTX PRO 2000 Blackwell Embedded GPU</td><td></td><td>✓</td></tr>
+<tr><td>2D83</td><td>GB207</td><td>sm_120</td><td>GPU</td><td>GB207 [GeForce RTX 5050]</td><td>NVIDIA GeForce RTX 5050</td><td></td><td>✓</td></tr>
+<tr><td>2D98</td><td>GB207</td><td>sm_120</td><td>GPU</td><td>GB207M [GeForce RTX 5050 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 5050 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2DB8</td><td>GB207</td><td>sm_120</td><td>GPU</td><td>GB207GLM [RTX PRO 1000 Blackwell Generation Laptop GPU]</td><td>NVIDIA RTX PRO 1000 Blackwell Generation Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2DB9</td><td>GB207</td><td>sm_120</td><td>GPU</td><td>GB207GLM [RTX PRO 500 Blackwell Generation Laptop GPU]</td><td>NVIDIA RTX PRO 500 Blackwell Generation Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2DD8</td><td>GB207</td><td>sm_120</td><td>GPU</td><td>GB207M [GeForce RTX 5050 Max-Q / Mobile]</td><td>NVIDIA GeForce RTX 5050 Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2DF9</td><td>GB207</td><td>sm_120</td><td>GPU</td><td>GB207GLM [RTX PRO 500 Blackwell Embedded GPU]</td><td>NVIDIA RTX PRO 500 Blackwell Embedded GPU</td><td></td><td>✓</td></tr>
+<tr><td>2F04</td><td>GB205</td><td>sm_120</td><td>GPU</td><td>GB205 [GeForce RTX 5070]</td><td>NVIDIA GeForce RTX 5070</td><td></td><td>✓</td></tr>
+<tr><td>2F06</td><td>GB205</td><td>sm_120</td><td>GPU</td><td>GB205 [GeForce RTX 5060]</td><td>NVIDIA GeForce RTX 5060</td><td></td><td>✓</td></tr>
+<tr><td>2F18</td><td>GB205</td><td>sm_120</td><td>GPU</td><td>GB205M [GeForce RTX 5070 Ti Mobile]</td><td>NVIDIA GeForce RTX 5070 Ti Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2F38</td><td>GB205</td><td>sm_120</td><td>GPU</td><td>GB205GLM [RTX PRO 3000 Blackwell Generation Laptop GPU]</td><td>NVIDIA RTX PRO 3000 Blackwell Generation Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2F58</td><td>GB205</td><td>sm_120</td><td>GPU</td><td>GB205M [GeForce RTX 5070 Ti Mobile]</td><td>NVIDIA GeForce RTX 5070 Ti Laptop GPU</td><td></td><td>✓</td></tr>
+<tr><td>2F80</td><td>GB205</td><td>sm_120</td><td><strong>HD Audio</strong></td><td>GB205 High Definition Audio Controller</td><td><span class="legend">—</span></td><td>On-board HD Audio function of the GPU board (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>22CE</td><td>GB10</td><td>sm_121</td><td><strong>Bridge/Root</strong></td><td>GB10 GEN5 X4 PCIe host</td><td><span class="legend">—</span></td><td>PCIe bridge / root-port function on the GPU board or host SoC (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>22D0</td><td>GB10</td><td>sm_121</td><td><strong>Bridge/Root</strong></td><td>GB10 GEN4 X1 PCIe host</td><td><span class="legend">—</span></td><td>PCIe bridge / root-port function on the GPU board or host SoC (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>22D1</td><td>GB20</td><td>sm_121</td><td><strong>Bridge/Root</strong></td><td>GB20B PCI bridge</td><td><span class="legend">—</span></td><td>PCIe bridge / root-port function on the GPU board or host SoC (not a standalone product)</td><td><span class="legend">—</span></td></tr>
+<tr><td>2E03</td><td>GB20</td><td>sm_121</td><td>GPU</td><td>GB20B [JMJWOA-Generic-GPU]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+<tr><td>2E12</td><td>GB10</td><td>sm_121</td><td>GPU</td><td>GB20B [GB10]</td><td>NVIDIA GB10</td><td></td><td>✓</td></tr>
+<tr><td>2E2A</td><td>GB20</td><td>sm_121</td><td>GPU</td><td>GB20B [JMJWOA-Generic-GPU]</td><td><span class="legend">—</span></td><td></td><td><span class="legend">—</span></td></tr>
+</tbody>
+</table>
+</div>
+
+        <h2>七、Rubin（2 个 ID · 下一代）</h2>
+        <p>截至 2026-06-24，pci.ids 里只有两个 Rubin device ID——<strong>GR100（3040）</strong>与 <strong>GR102（30C0）</strong>，均为数据中心 reticle-limited 裸 die，SM 预计 <code>sm_13x</code>（CUDA 13.3 尚未公开，待定）。R100 / R200 的 GPU 封装 = 2× GR die。消费级 GR20x 与 Rubin CPX（长上下文 prefill）GR21x 的 device ID 尚未发布，会在临近发售时扩充。</p>
+        <div class="table-scroll">
+<table>
+<caption>Rubin · 2 个 device ID（10DE:xxxx）</caption>
+<thead><tr><th>ID</th><th>芯片</th><th>SM</th><th>功能</th><th>pci.ids 名称</th><th>产品名（官方 / 社区）</th><th>说明 / 推断</th><th>开放驱动</th></tr></thead>
+<tbody>
+<tr><td>3040</td><td>GR100</td><td>sm_13x</td><td>GPU</td><td>GR100</td><td><span class="legend">—</span></td><td>Rubin datacenter die (reticle-limited); R100/R200 package = 2x GR-die. Not yet shipping (2026-2027)</td><td><span class="legend">—</span></td></tr>
+<tr><td>30C0</td><td>GR102</td><td>sm_13x</td><td>GPU</td><td>GR102</td><td><span class="legend">—</span></td><td>Rubin die — GR100 comprises two GR102 dies. Not yet shipping</td><td><span class="legend">—</span></td></tr>
+</tbody>
+</table>
+</div>
+
+        <h3>Rubin 代号家族与封装（公开路线图，2026）</h3>
+        <div class="table-scroll">
+        <table>
+          <caption>Rubin 代号方案（据 pci.ids 与行业路线图）</caption>
+          <thead><tr><th>代号 / 产品</th><th>定位</th></tr></thead>
+          <tbody>
+            <tr><td>GR10x</td><td>Rubin AI / 数据中心（GR100、GR102、GR150）</td></tr>
+            <tr><td>GR20x</td><td>客户端 / 消费 Rubin</td></tr>
+            <tr><td>GR21x</td><td>Rubin CPX（长上下文 prefill 加速器）</td></tr>
+            <tr><td>GR150</td><td>量产数据中心 die（CoWoP, SXM8），约 2027</td></tr>
+            <tr><td>R100 / R200</td><td>GPU 封装 = 2× reticle-limited GR die（SXM7 / SXM8）</td></tr>
+            <tr><td>VR200 NVL72</td><td>Vera（CPU）+ Rubin 机架级；72 个 GPU 封装</td></tr>
+            <tr><td>显存 / 互联</td><td>288 GB HBM4，13–22 TB/s 每 GPU；NVLink 6（3.6 TB/s）</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p>状态：2026 Q1 进入量产爬坡（NVIDIA GTC 2026），云上可用 H2 2026 → 2027；<code>sm_13x</code> 为预期值，CUDA 13.3（最新）尚未包含。另：RTX 50 SUPER 也尚未发布（推迟到 2026 H2/Q3，基于 GB203-450 / GB205-400，暂未分配 PCI ID）。</p>
+
+        <h2>八、数据来源与方法</h2>
+
+        <p>这张表不是凭记忆拼的，而是两个权威来源合并、再用四类来源交叉核对的结果：</p>
+
+        <ol>
+          <li><strong>pciutils / pci.ids（v2026.06.24）</strong>——超集，含新增的 Rubin GR100 / GR102；已确认与上游（ucw.cz 镜像）一致。</li>
+          <li><strong>NVIDIA/open-gpu-kernel-modules README</strong>——全部 831 条产品行（293 个 device ID、223 个名称，含 subsystem 级），提供官方名。</li>
+          <li><strong>torvalds/linux nouveau（nvkm）</strong>——代号交叉核对，结果吻合。</li>
+          <li><strong>NVIDIA CUDA 文档 + GTC 2026 + 路线图</strong>——每颗芯片的 SM / CC，以及 Rubin 的 GR 代号方案。</li>
+          <li><strong>TechPowerUp GPU DB + DeviceHunt + FreeBSD pci_vendors</strong>——为裸数据中心 / 中国 SKU 这类没有官方名的 ID 补社区名。</li>
+          <li><strong>厂商产品页（NVIDIA、Lenovo 等）</strong>——确认 B100 / B200 / H 系列的产品命名。</li>
+        </ol>
+
+        <blockquote>
+          <p><strong>检索结论：</strong>pci.ids + 开放驱动 README 两者合起来，就是<strong>完整的公开 device-ID 映射</strong>。外部源不再贡献新的 device-ID 级名称（除这里补的 18 个社区 ID）；剩余约 29 个裸 / 保留 ID 没有任何公开产品映射（内部 / 样片 / CSP / 下一代）。300 个 GPU 行<strong>全部有描述信息</strong>：271 个 pci.ids 方括号名、205 个 NVIDIA 官方名、18 个社区名、36 条推断说明，<strong>0 空白</strong>。</p>
+        </blockquote>
+
+        <p class="legend">列约定：官方名取自 NVIDIA 开放内核模块 README（权威），"—" = 不在该列表；社区名来自 TechPowerUp / DeviceHunt / 厂商文档，置信度低于官方；说明 / 推断用于保留 / 内部 / Rubin 条目，基于路线图研究；"开放驱动" 的"—"表示在 pci.ids 但不在开放驱动列表。本表生成于 2026-06-24，基于当时的 main 分支。</p>
+
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <span>© 2026 我的博客</span>
+      <span>由 <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a> 托管</span>
+    </footer>
+  </div>
+</body>
+</html>
