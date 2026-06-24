@@ -17,6 +17,16 @@
     .post-content tbody td:first-child { white-space: nowrap; font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     .post-content tbody td:nth-child(2) { white-space: nowrap; }
     .post-content .legend { opacity: 0.7; font-size: 0.9em; }
+    .post-content p.download { display: inline-block; margin: 0.2rem 0 0.4rem; padding: 0.5rem 0.85rem; border: 1px solid rgba(128,128,128,0.32); border-radius: 8px; background: rgba(128,128,128,0.07); font-size: 0.92rem; }
+    .post-content p.download a { font-weight: 600; }
+    /* 目录 */
+    html { scroll-behavior: smooth; }
+    .post-content h2[id], .post-content .table-scroll[id] { scroll-margin-top: 1rem; }
+    .post-content .toc { border: 1px solid rgba(128,128,128,0.32); border-radius: 10px; background: rgba(128,128,128,0.05); padding: 0.8rem 1.1rem; margin: 0.6rem 0 1.4rem; }
+    .post-content .toc-title { font-weight: 700; margin: 0 0 0.5rem; font-size: 0.95rem; opacity: 0.9; }
+    .post-content .toc ul { margin: 0; padding: 0; list-style: none; columns: 2; column-gap: 1.4rem; }
+    .post-content .toc li { margin: 0.2rem 0; break-inside: avoid; font-size: 0.9rem; }
+    @media (max-width: 560px) { .post-content .toc ul { columns: 1; } }
   </style>
 </head>
 <body>
@@ -39,7 +49,24 @@
           <p>把 <code>lspci</code> 里那串 <code>10de:xxxx</code> 翻译成"到底是哪颗芯片、哪代架构、哪个产品"。本文整理了从 Ampere 到刚刚出现的 Rubin 共 <strong>332 个</strong> NVIDIA GPU PCI device ID，交叉核对 pci.ids、NVIDIA 开源内核模块 README、nouveau 与 CUDA 文档，标注芯片、SM / Compute Capability、功能、官方与社区产品名，以及是否在开放驱动列表内。</p>
         </blockquote>
 
-        <h2>一、为什么需要这张表</h2>
+        <p class="download">📊 <strong>原始数据</strong>：<a href="/assets/files/nvidia-gpu-pci-ids-ampere-to-rubin.xlsx" download>下载原版表格（.xlsx · 9 个工作表 · 332 个 device ID · 57&nbsp;KB）</a></p>
+
+        <nav class="toc" aria-label="目录">
+          <p class="toc-title">目录</p>
+          <ul>
+            <li><a href="#sec-why">一、为什么需要这张表</a></li>
+            <li><a href="#sec-howto">二、怎么读这张表</a></li>
+            <li><a href="#sec-smmap">· SM / CC 速查表</a></li>
+            <li><a href="#sec-ampere">三、Ampere（150）</a></li>
+            <li><a href="#sec-ada">四、Ada Lovelace（67）</a></li>
+            <li><a href="#sec-hopper">五、Hopper（29）</a></li>
+            <li><a href="#sec-blackwell">六、Blackwell（84）</a></li>
+            <li><a href="#sec-rubin">七、Rubin（2 · 下一代）</a></li>
+            <li><a href="#sec-sources">八、数据来源与方法</a></li>
+          </ul>
+        </nav>
+
+        <h2 id="sec-why">一、为什么需要这张表</h2>
 
         <p><code>lspci -nn</code> 只会告诉你 <code>10de:2901</code> 这种 <code>vendor:device</code> 组合——<code>10de</code> 是 NVIDIA，后面四位才是具体设备。但要从这四位 hex 反推"这是哪颗 die、属于哪代架构、对应哪款上市产品"，并不直观：同一颗 die 会派生出一堆 device ID（裸卡、HGX 模组、中国特供 SKU、CSP 内部变体、保留/未发布 ID），而且同一段 ID 空间里还混着<strong>板载 HD Audio、NVSwitch、Bridge/Root</strong> 等"不是 GPU"的功能。这张表就是把这些全部摊开、逐条对应。</p>
 
@@ -53,7 +80,7 @@
           <li><strong>Rubin（下一代）</strong> 2 个（GR100 / GR102，sm_13x 待定）</li>
         </ul>
 
-        <h2>二、怎么读这张表</h2>
+        <h2 id="sec-howto">二、怎么读这张表</h2>
 
         <p>每代一张表，列含义如下：</p>
 
@@ -67,7 +94,7 @@
           <li><strong>开放驱动</strong>：<code>✓</code> = 在 NVIDIA 开放内核模块的设备列表里；"—" = 只在 pci.ids、不在开放驱动列表（多为中国 SKU、数据中心变体、保留/下一代）。</li>
         </ul>
 
-        <div class="table-scroll">
+        <div class="table-scroll" id="sec-smmap">
 <table>
 <caption>架构 × SM / Compute Capability 速查</caption>
 <thead><tr><th>架构</th><th>芯片</th><th>SM</th><th>Compute Capability</th><th>代表产品</th><th>备注</th></tr></thead>
@@ -87,7 +114,7 @@
 </table>
 </div>
 
-        <h2>三、Ampere（150 个 ID · sm_80 / 86 / 87）</h2>
+        <h2 id="sec-ampere">三、Ampere（150 个 ID · sm_80 / 86 / 87）</h2>
         <p>三个 SM 等级并存：<strong>GA100</strong> 数据中心（sm_80，A100 / A30，HBM2e + FP64）、<strong>GA102–107</strong> 消费与专业卡（sm_86，RTX 30 系列 / RTX A 系列 / A40 / A10 / A16）、<strong>GA10B（Orin）</strong> 车载与嵌入式 iGPU（sm_87，Tegra）。表中还能看到 1 个 NVSwitch、3 个 Bridge/Root、4 个 HD Audio 功能，以及大量没有公开 SKU 映射的 CSP / 内部变体。</p>
         <div class="table-scroll">
 <table>
@@ -248,7 +275,7 @@
 </table>
 </div>
 
-        <h2>四、Ada Lovelace（67 个 ID · sm_89）</h2>
+        <h2 id="sec-ada">四、Ada Lovelace（67 个 ID · sm_89）</h2>
         <p>单一 SM 等级 <strong>sm_89</strong>（AD102–107）：RTX 40 系列、RTX 6000 Ada，以及 L40 / L40S / L4 / L20 等推理卡——FP8 Transformer Engine 的首发代。表中含 5 个板载 HD Audio 功能。</p>
         <div class="table-scroll">
 <table>
@@ -326,7 +353,7 @@
 </table>
 </div>
 
-        <h2>五、Hopper（29 个 ID · sm_90）</h2>
+        <h2 id="sec-hopper">五、Hopper（29 个 ID · sm_90）</h2>
         <p><strong>GH100</strong> 单芯片（sm_90，含 CUTLASS 用的 sm_90a 变体）：H100 / H200 / GH200，以及中国特供的 H800 / H20 / H20-3e / H20 NVL16。数据中心训练主力，含 1 个 NVSwitch。可以看到不少 H20 系列在 pci.ids 里有名、却不在开放驱动列表内（中国 SKU 的典型特征）。</p>
         <div class="table-scroll">
 <table>
@@ -366,7 +393,7 @@
 </table>
 </div>
 
-        <h2>六、Blackwell（84 个 ID · sm_100 / 103 / 110 / 120 / 121）</h2>
+        <h2 id="sec-blackwell">六、Blackwell（84 个 ID · sm_100 / 103 / 110 / 120 / 121）</h2>
         <p>一个代号、五个 SM——这是 Blackwell 最容易混的地方：<strong>数据中心 GB100 / GB102</strong>（sm_100，B100 / B200 / GB200 NVL72）、<strong>Blackwell Ultra GB110 / 112 / 120</strong>（sm_103，B300 / GB300 NVL72）、<strong>Thor 机器人 SoC</strong>（sm_110，从 sm_101 改名）、<strong>消费 GB202–207</strong>（sm_120，RTX 50 系列 / RTX PRO 6000；注意它走 Ampere 式 <code>mma.sync</code>、不是 tcgen05）、<strong>DGX Spark / GB10</strong>（sm_121）。同段 ID 里还混有 Bridge/Root 与 HD Audio 功能。</p>
         <div class="table-scroll">
 <table>
@@ -461,7 +488,7 @@
 </table>
 </div>
 
-        <h2>七、Rubin（2 个 ID · 下一代）</h2>
+        <h2 id="sec-rubin">七、Rubin（2 个 ID · 下一代）</h2>
         <p>截至 2026-06-24，pci.ids 里只有两个 Rubin device ID——<strong>GR100（3040）</strong>与 <strong>GR102（30C0）</strong>，均为数据中心 reticle-limited 裸 die，SM 预计 <code>sm_13x</code>（CUDA 13.3 尚未公开，待定）。R100 / R200 的 GPU 封装 = 2× GR die。消费级 GR20x 与 Rubin CPX（长上下文 prefill）GR21x 的 device ID 尚未发布，会在临近发售时扩充。</p>
         <div class="table-scroll">
 <table>
@@ -492,7 +519,7 @@
         </div>
         <p>状态：2026 Q1 进入量产爬坡（NVIDIA GTC 2026），云上可用 H2 2026 → 2027；<code>sm_13x</code> 为预期值，CUDA 13.3（最新）尚未包含。另：RTX 50 SUPER 也尚未发布（推迟到 2026 H2/Q3，基于 GB203-450 / GB205-400，暂未分配 PCI ID）。</p>
 
-        <h2>八、数据来源与方法</h2>
+        <h2 id="sec-sources">八、数据来源与方法</h2>
 
         <p>这张表不是凭记忆拼的，而是两个权威来源合并、再用四类来源交叉核对的结果：</p>
 
