@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blackwell-Next CXL DVSEC：代码考据与最终结论 · 我的博客</title>
+  <meta name="description" content="从微信一句&quot;Blackwell-Next&quot;出发，全树核查这个 NVIDIA 代号在 Linux 内核源码里的唯一落地点——nvgrace-gpu 驱动新增的 CXL DVSEC 显存就绪探测路径，并给出&quot;VR200 是否从 PCIe+C2C 变成 CXL+C2C&quot;的最终结论。" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <style>
+    /* 文章内表格样式——仅作用于本页，用中性灰 + currentColor，浅色/深色模式都适配，不动全局 style.css。
+       本文表格首列多为整句而非短编号，故去掉 nowrap，允许换行。 */
+    .post-content .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1.1rem 0; }
+    .post-content table { border-collapse: collapse; width: 100%; font-size: 0.86rem; line-height: 1.5; }
+    .post-content caption { caption-side: top; text-align: left; font-weight: 700; font-size: 0.98rem; padding: 0 0 0.45rem; opacity: 0.95; }
+    .post-content th, .post-content td { border: 1px solid rgba(128,128,128,0.32); padding: 0.5rem 0.65rem; text-align: left; vertical-align: top; }
+    .post-content thead th { background: rgba(128,128,128,0.14); font-weight: 600; }
+    .post-content tbody td:first-child { font-weight: 600; }
+    .post-content .legend { opacity: 0.75; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="site-header">
+      <a class="site-title" href="/">我的博客</a>
+      <nav class="site-nav">
+        <a href="/">首页</a>
+        <a href="/about.html">关于</a>
+      </nav>
+    </header>
+
+    <main>
+      <a class="back-link" href="/">← 返回首页</a>
+      <article class="post-content">
+        <h1>Blackwell-Next CXL DVSEC：代码考据与最终结论</h1>
+        <p class="post-meta">2026-06-24</p>
+
+        <blockquote>
+          <p>起点：微信文章提到 NVIDIA "Blackwell-Next"。本文在 GitHub / Linux 内核源码与 LKML 上全量核查了这个词唯一的落地点，梳理相关代码，并就"VR200 是否从 PCIe+C2C 变成 CXL+C2C、提升缓存一致性"给出结论。</p>
+        </blockquote>
+
+        <h2>一、最终结论（先看这个）</h2>
+
+        <p><strong>命题：Rubin 时代的 VR200 会从"传统 PCIe + C2C"变成"CXL + C2C"，从而提升缓存一致性。</strong></p>
+
+        <p>这个命题<strong>方向对、表述错</strong>，错在把两个不同层级的东西混在了一起。</p>
+
+        <div class="table-scroll">
+        <table>
+          <caption>命题逐条评估</caption>
+          <thead>
+            <tr><th>子命题</th><th>评估</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>VR200 从 PCIe+C2C 变成 CXL+C2C</td><td>✗ <strong>概念错位</strong>。CPU↔GPU 一致性主干从 Grace Hopper → Grace Blackwell → Vera Rubin <strong>一直是 NVLink-C2C</strong>，根本没有"PCIe 阶段"可换。PCIe 与 CXL 在 Vera 上是<strong>并存能力</strong>（Vera 同时支持 PCIe6 与 CXL 3.1）。</td></tr>
+            <tr><td>因此缓存一致性提升</td><td>✗ <strong>不能由这段代码推出</strong>。这段代码改的是"显存就绪状态怎么上报"，与"运行时一致性强度"是两回事。</td></tr>
+            <tr><td>这段 CXL DVSEC 代码 = 纯 host 端探测</td><td>✗ <strong>DVSEC 长在 GPU 自己的 PCI 配置空间里</strong>，host 读的是 GPU 暴露的寄存器，这从头到尾就是 CPU↔GPU。</td></tr>
+            <tr><td>NVIDIA 在向更标准化 / CXL-native 的"设备内存暴露模型"演进</td><td>✓ 代码 + Vera 支持 CXL 3.1 共同支持的合理解读。</td></tr>
+            <tr><td>Rubin 一致性确实增强了</td><td>✓ 但功劳在 <strong>NVLink-C2C 翻倍到 1.8 TB/s</strong>，<strong>不是</strong>这段 CXL DVSEC 探测逻辑。</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <h3>准确的两层划分</h3>
+
+        <div class="table-scroll">
+        <table>
+          <caption>Grace Blackwell → Blackwell-Next 的两层变化</caption>
+          <thead>
+            <tr><th>层</th><th>Grace Blackwell → Blackwell-Next 的变化</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>一致性<strong>传输 / 带宽</strong></td><td>仍是 <strong>NVLink-C2C（1.8 TB/s）</strong>。CXL-over-PCIe6 与它差一个量级，不可能替代。</td></tr>
+            <tr><td>内存<strong>暴露 / 描述模型</strong></td><td><strong>从 NVIDIA 私有方案 → CXL HDM 标准化</strong>。GPU 改用标准 CXL DVSEC 结构来描述自己的 HBM 与就绪状态。这才是"一致性相关变化"的真实落点。</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <p><strong>一句话结论：</strong>这段代码反映的是"GPU 显存的就绪状态 / 内存描述改用 CXL 标准寄存器上报"，是<strong>接口标准化信号</strong>；Rubin 的一致性增强是真的，但来源是 NVLink-C2C 1.8 TB/s，与这段 CXL DVSEC 探测逻辑不是同一回事。所以不是 "PCIe+C2C → CXL+C2C"，而是 <strong>"GPU 内存暴露接口：私有 → CXL 标准化"，传输层 NVLink-C2C 不变</strong>。</p>
+
+        <p>它的现实意义在 <strong>NVLink Fusion 第三方硅互操作、统一内存模型、内存池化语义</strong>，而不是"把已有的 C2C 一致性再调强"。</p>
+
+        <hr>
+
+        <h2>二、"Blackwell-Next" 在源码中的唯一落地点</h2>
+
+        <p>全树搜索，"Blackwell-Next" 只出现在<strong>一个文件、一处注释</strong>：</p>
+
+        <pre><code>drivers/vfio/pci/nvgrace-gpu/main.c   (master ~1437 行)</code></pre>
+
+        <ul>
+          <li>目录极简：<code>main.c</code> + <code>Makefile</code>(3 行) + <code>Kconfig</code>(10 行)</li>
+          <li>模块名 <code>nvgrace-gpu-vfio-pci</code>，是 <code>vfio-pci</code> 的 variant 驱动</li>
+          <li>作者：Ankit Agrawal / Aniket Agashe（均 NVIDIA）</li>
+          <li>用途：把 Grace 系（CPU↔GPU cache-coherent 互联）GPU 的显存以"假 BAR"形式 passthrough 给虚拟机</li>
+        </ul>
+
+        <blockquote>
+          <p>注意：GitHub 仓库搜索 <code>blackwell-next</code> 返回的 3 个结果（<code>zhiquan0319/blackwell-project</code>、<code>abonaidesu-crypto/QuantumCache-CUDA</code>、<code>nabe2030/bevformer-blackwell-fp4-fp8</code>）全是 "Next.js / Next-Generation / next step" 之类的巧合匹配，与代号无关。GitHub Code Search API 需要鉴权，故下述代码均直接从 <code>raw.githubusercontent.com</code> 拉取核对。</p>
+        </blockquote>
+
+        <hr>
+
+        <h2>三、相关 GitHub PR / Patch（来龙去脉）</h2>
+
+        <p>需要厘清一个<strong>容易混淆的点</strong>：2024–2025 那批标题含 "blackwell" 的系列引入的是 <strong>legacy BAR0 轮询</strong>路径，针对的是 <strong>Grace Blackwell (GB200/GB300)</strong>；而 <strong>"Blackwell-Next" 这个词</strong>是 2026 年 6 月才提交、进入 <strong>Linux 7.2 merge window</strong> 的新改动引入的 <strong>CXL DVSEC 路径</strong>。</p>
+
+        <h3>3.1 引入 "Blackwell-Next" 的改动（CXL DVSEC 路径，Linux 7.2）</h3>
+
+        <ul>
+          <li>Phoronix 报道：<a href="https://www.phoronix.com/news/NVIDIA-Blackwell-Next-VFIO" target="_blank" rel="noopener">https://www.phoronix.com/news/NVIDIA-Blackwell-Next-VFIO</a></li>
+          <li>主线驱动文件（已合并）：<a href="https://github.com/torvalds/linux/blob/master/drivers/vfio/pci/nvgrace-gpu/main.c" target="_blank" rel="noopener">https://github.com/torvalds/linux/blob/master/drivers/vfio/pci/nvgrace-gpu/main.c</a></li>
+        </ul>
+
+        <h3>3.2 更早的 "Enable grace blackwell boards" 系列（legacy BAR0 路径，2024–2025）</h3>
+
+        <div class="table-scroll">
+        <table>
+          <caption>"Enable grace blackwell boards" 补丁版本</caption>
+          <thead>
+            <tr><th>版本</th><th>LKML / Patchwork 链接</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>v1 (2024-10-06)</td><td><a href="https://lore.kernel.org/lkml/20241006102722.3991-1-ankita@nvidia.com/" target="_blank" rel="noopener">lore.kernel.org/lkml/20241006102722.3991-1-ankita@nvidia.com</a></td></tr>
+            <tr><td>v4 (2025-01-17)</td><td><a href="https://lore.kernel.org/kvm/20250117233704.3374-2-ankita@nvidia.com/T/" target="_blank" rel="noopener">lore.kernel.org/kvm/20250117233704.3374-2-ankita@nvidia.com/T/</a></td></tr>
+            <tr><td>v6 (2025-01-24)</td><td><a href="https://lore.kernel.org/lkml/20250124183102.3976-1-ankita@nvidia.com/T/" target="_blank" rel="noopener">lore.kernel.org/lkml/20250124183102.3976-1-ankita@nvidia.com/T/</a></td></tr>
+            <tr><td>v6 cover (Patchwork)</td><td><a href="https://patchwork.kernel.org/project/kvm/cover/20250124183102.3976-1-ankita@nvidia.com/" target="_blank" rel="noopener">patchwork.kernel.org/project/kvm/cover/20250124183102.3976-1-ankita@nvidia.com</a></td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <p>v6 系列 4 个 commit：</p>
+
+        <ol>
+          <li><code>vfio/nvgrace-gpu: Read dvsec register to determine need for uncached resmem</code></li>
+          <li><code>vfio/nvgrace-gpu: Expose the blackwell device PF BAR1 to the VM</code></li>
+          <li><code>vfio/nvgrace-gpu: Check the HBM training and C2C link status</code></li>
+          <li><code>vfio/nvgrace-gpu: Add GB200 SKU to the devid table</code></li>
+        </ol>
+
+        <hr>
+
+        <h2>四、核心机制：两条"设备就绪"探测路径</h2>
+
+        <p>本质：给"GPU 复位 / 上电后，显存是否 ready"的判定<strong>新增一条基于 CXL DVSEC 的路径</strong>，与原有 BAR0 轮询路径并存。靠一个字段分流。</p>
+
+        <h3>4.1 设备结构体与字段（main.c:59）</h3>
+
+        <pre><code>struct nvgrace_gpu_pci_core_device {
+    struct vfio_pci_core_device core_device;
+    struct mem_region usemem;       /* VM 可用的 cached 显存 */
+    struct mem_region resmem;       /* 末尾切出的 non-cached 区 */
+    struct mutex remap_lock;
+    void __iomem *bar0_base;
+    bool has_mig_hw_bug;
+    bool reset_done;                /* GPU 刚被 reset */
+    /* CXL Device DVSEC offset; 0 if not present (legacy GB path) */
+    int  cxl_dvsec;                 /* ← 关键：分流字段 */
+};</code></pre>
+
+        <h3>4.2 探测发生在 probe()，对象是 GPU 自己（main.c:1336）</h3>
+
+        <pre><code>nvdev-&gt;cxl_dvsec = pci_find_dvsec_capability(pdev, PCI_VENDOR_ID_CXL,
+                                             PCI_DVSEC_CXL_DEVICE);</code></pre>
+
+        <blockquote>
+          <p><strong>这是回答"是不是纯 host 端探测"的关键证据：</strong><code>pdev</code> 是<strong>那块 GPU</strong>。<code>pci_find_dvsec_capability</code> 在 <strong>GPU 自己的 PCI 配置空间</strong>里找 CXL DVSEC capability。host(Vera) 上的 VFIO 驱动只是去<strong>读 GPU 暴露的寄存器</strong>。</p>
+          <p>探测到 CXL DVSEC → 走 Blackwell-Next 路径；探测不到 → 走 legacy Grace Blackwell / Grace Hopper 路径。</p>
+        </blockquote>
+
+        <h3>4.3 两条路径对比</h3>
+
+        <div class="table-scroll">
+        <table>
+          <caption>Legacy 路径 vs Blackwell-Next 路径</caption>
+          <thead>
+            <tr><th>维度</th><th>Legacy 路径 (GH / GB)</th><th>Blackwell-Next 路径</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>判定函数</td><td><code>nvgrace_gpu_wait_device_ready_legacy()</code></td><td><code>nvgrace_gpu_wait_device_ready_cxl()</code></td></tr>
+            <tr><td>读取位置</td><td>BAR0 两个寄存器</td><td><strong>GPU 的 PCI config space → CXL DVSEC</strong></td></tr>
+            <tr><td>具体信号</td><td><code>C2C_LINK</code>(0x1498) + <code>HBM_TRAINING</code>(0x200BC) 均 == <code>0xFF</code></td><td><code>MEM_INFO_VALID</code> + <code>MEM_ACTIVE</code> 位</td></tr>
+            <tr><td>超时</td><td>固定 30s</td><td>1s 出 <code>MEM_INFO_VALID</code>，再 ~256s 内出 <code>MEM_ACTIVE</code></td></tr>
+            <tr><td>加锁</td><td><code>memory_lock</code> 锁内轮询</td><td>锁外轮询（最长 256s），锁内只快速 check</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <hr>
+
+        <h2>五、Blackwell-Next 专属新增代码块</h2>
+
+        <h3>5.1 CXL 超时解码 + active 判定（main.c:271–289）</h3>
+
+        <pre><code>/*
+ * Decode the 3-bit Memory_Active_Timeout field from CXL DVSEC Range 1 Low
+ * (bits 15:13) into milliseconds. Encoding per CXL spec r4.0 sec 8.1.3.8.2:
+ * 000b = 1s, 001b = 4s, 010b = 16s, 011b = 64s, 100b = 256s,
+ * 101b-111b = reserved (clamped to 256s).
+ */
+static inline unsigned long cxl_mem_active_timeout_ms(u8 timeout)
+{
+    return MSEC_PER_SEC &lt;&lt; (2 * min_t(u8, timeout, 4));   /* 1/4/16/64/256 s */
+}
+
+static inline bool cxl_dvsec_mem_is_active(u32 status)
+{
+    return (status &amp; PCI_DVSEC_CXL_MEM_INFO_VALID) &amp;&amp;
+           (status &amp; PCI_DVSEC_CXL_MEM_ACTIVE);
+}</code></pre>
+
+        <h3>5.2 单次读取 CXL 就绪状态（main.c:291–312）</h3>
+
+        <pre><code>static int nvgrace_gpu_test_device_ready_cxl(struct nvgrace_gpu_pci_core_device *nvdev,
+                                             u32 *status)
+{
+    struct pci_dev *pdev = nvdev-&gt;core_device.pdev;
+    int cxl_dvsec = nvdev-&gt;cxl_dvsec;
+    u32 val;
+
+    pci_read_config_dword(pdev,
+                          cxl_dvsec + PCI_DVSEC_CXL_RANGE_SIZE_LOW(0),
+                          &amp;val);
+
+    if (val == ~0U)
+        return -ENODEV;
+
+    if (status)
+        *status = val;
+
+    if (cxl_dvsec_mem_is_active(val))
+        return 0;
+
+    return -EAGAIN;
+}</code></pre>
+
+        <h3>5.3 两阶段轮询等待（lockless、可被信号打断）（main.c:314–345）</h3>
+
+        <pre><code>/*
+ * As per CXL spec r4.0 sec 8.1.3.8.2, MEM_INFO_VALID needs to be set
+ * within 1s and MEM_ACTIVE within Memory_Active_Timeout (up to ~256s)
+ * after reset and bootup.
+ */
+static int nvgrace_gpu_wait_device_ready_cxl(struct nvgrace_gpu_pci_core_device *nvdev)
+{
+    unsigned long deadline = jiffies + msecs_to_jiffies(POLL_QUANTUM_MS);
+    bool active_phase = false;
+    u32 status;
+    int ret;
+
+    for (;;) {
+        ret = nvgrace_gpu_test_device_ready_cxl(nvdev, &amp;status);
+        if (ret != -EAGAIN)
+            return ret;
+
+        if (!active_phase &amp;&amp; (status &amp; PCI_DVSEC_CXL_MEM_INFO_VALID)) {
+            u8 t = FIELD_GET(PCI_DVSEC_CXL_MEM_ACTIVE_TIMEOUT, status);
+
+            deadline = jiffies +
+                       msecs_to_jiffies(cxl_mem_active_timeout_ms(t));
+            active_phase = true;
+        }
+
+        if (time_after(jiffies, deadline))
+            return -ETIME;
+
+        if (schedule_timeout_killable(msecs_to_jiffies(POLL_QUANTUM_MS)))
+            return -EINTR;
+    }
+}</code></pre>
+
+        <h3>5.4 统一就绪检查：锁内分流（main.c:347–380）</h3>
+
+        <pre><code>/*
+ * Since the CXL polling wait could take 256s, it happens outside
+ * memory_lock. Only do quick readiness check under the lock. Legacy
+ * keeps the in-lock poll.
+ */
+static int
+nvgrace_gpu_check_device_ready(struct nvgrace_gpu_pci_core_device *nvdev)
+{
+    struct vfio_pci_core_device *vdev = &amp;nvdev-&gt;core_device;
+    int ret;
+
+    lockdep_assert_held_read(&amp;vdev-&gt;memory_lock);
+
+    if (!nvdev-&gt;reset_done)
+        return 0;
+    if (!__vfio_pci_memory_enabled(vdev))
+        return -EIO;
+
+    if (nvdev-&gt;cxl_dvsec)
+        ret = nvgrace_gpu_test_device_ready_cxl(nvdev, NULL);
+    else
+        ret = nvgrace_gpu_wait_device_ready_legacy(nvdev-&gt;bar0_base);
+    if (ret)
+        return ret;
+
+    nvdev-&gt;reset_done = false;
+    return 0;
+}</code></pre>
+
+        <h3>5.5 "Blackwell-Next" 注释出现处：probe 期检查（main.c:1259–1317）</h3>
+
+        <pre><code>/*
+ * ...（前略：GH/GB 的 HBM training 与 C2C link 检查说明）...
+ *
+ * On Blackwell-Next systems, memory readiness is determined via the
+ * CXL Device DVSEC in PCI config space and does not require BAR0.
+ * For the legacy path, ensure BAR0 is enabled before accessing the
+ * registers.
+ */
+static int nvgrace_gpu_probe_check_device_ready(struct nvgrace_gpu_pci_core_device *nvdev)
+{
+    struct pci_dev *pdev = nvdev-&gt;core_device.pdev;
+    void __iomem *io;
+    int ret;
+
+    /* 最坏 ~256s（vs legacy ~30s），可能阻塞 unbind/sysfs */
+    if (nvdev-&gt;cxl_dvsec)
+        return nvgrace_gpu_wait_device_ready_cxl(nvdev);
+
+    ret = pci_enable_device(pdev);
+    if (ret)
+        return ret;
+    /* ...legacy: 映射 BAR0 后轮询 nvgrace_gpu_wait_device_ready_legacy(io)... */
+}</code></pre>
+
+        <h3>5.6 三处复用 CXL 等待的调用点</h3>
+
+        <p>reset 后首次访问（<code>reset_done==true &amp;&amp; cxl_dvsec</code>）都会触发 256s 级等待：</p>
+
+        <ul>
+          <li>mmap fault 路径 <code>nvgrace_gpu_vfio_pci_huge_fault()</code>（main.c:422–438，带 <code>retry:</code> 处理 reset race）</li>
+          <li>读路径 <code>nvgrace_gpu_read_mem()</code>（main.c:834–838）</li>
+          <li>写路径（main.c:974 附近，结构同读）</li>
+        </ul>
+
+        <p>reset 标志由 PCI error handler 置位：</p>
+
+        <pre><code>static void nvgrace_gpu_vfio_pci_reset_done(struct pci_dev *pdev) {
+    /* ... */
+    nvdev-&gt;reset_done = true;
+}</code></pre>
+
+        <hr>
+
+        <h2>六、依赖的内核头文件定义</h2>
+
+        <p>CXL 路径用到的宏不在本驱动，而在 UAPI / pci_ids 头文件。</p>
+
+        <h3>6.1 <code>include/uapi/linux/pci_regs.h</code>（约 1350–1365）</h3>
+
+        <pre><code>#define PCI_DVSEC_CXL_DEVICE                  0
+#define  PCI_DVSEC_CXL_RANGE_SIZE_LOW(i)      (0x1C + (i * 0x10))
+#define   PCI_DVSEC_CXL_MEM_INFO_VALID        _BITUL(0)
+#define   PCI_DVSEC_CXL_MEM_ACTIVE            _BITUL(1)
+#define   PCI_DVSEC_CXL_MEM_ACTIVE_TIMEOUT    __GENMASK(15, 13)
+#define   PCI_DVSEC_CXL_MEM_SIZE_LOW          __GENMASK(31, 28)</code></pre>
+
+        <blockquote>
+          <p>这些就是 CXL 1.1 "CXL Range" 设备 DVSEC 寄存器——描述<strong>设备自带内存（HDM, Host-managed Device Memory）</strong>及其就绪状态。<code>Memory_Active_Timeout</code> 是 spec 里"复位后多久内存 active"的标准字段。也就是说，<strong>Blackwell-Next GPU 把自己的 HBM 描述成了一段 CXL HDM 范围。</strong></p>
+        </blockquote>
+
+        <h3>6.2 <code>include/linux/pci_ids.h</code>（约 2633）</h3>
+
+        <pre><code>#define PCI_VENDOR_ID_CXL    0x1e98</code></pre>
+
+        <blockquote>
+          <p>vendor ID 用的是 <strong>CXL Consortium (0x1e98)</strong> 而非 NVIDIA——因为这是标准 CXL Device DVSEC，不是 NVIDIA 私有的那个 <code>GPU_CAP_DVSEC_REGISTER</code>(ID 3，走 <code>PCI_VENDOR_ID_NVIDIA</code>，用于 MIG bug 判定)。</p>
+        </blockquote>
+
+        <hr>
+
+        <h2>七、当前已支持的 PCI 设备 ID（还没有 Blackwell-Next）</h2>
+
+        <p><code>nvgrace_gpu_vfio_pci_table[]</code>（main.c:1380）列的全是现有 Grace 硬件：</p>
+
+        <pre><code>static const struct pci_device_id nvgrace_gpu_vfio_pci_table[] = {
+    /* GH200 120GB */ { PCI_DRIVER_OVERRIDE_DEVICE_VFIO(PCI_VENDOR_ID_NVIDIA, 0x2342) },
+    /* GH200 480GB */ { PCI_DRIVER_OVERRIDE_DEVICE_VFIO(PCI_VENDOR_ID_NVIDIA, 0x2345) },
+    /* GH200 SKU   */ { PCI_DRIVER_OVERRIDE_DEVICE_VFIO(PCI_VENDOR_ID_NVIDIA, 0x2348) },
+    /* GB200 SKU   */ { PCI_DRIVER_OVERRIDE_DEVICE_VFIO(PCI_VENDOR_ID_NVIDIA, 0x2941) },
+    /* GB300 SKU   */ { PCI_DRIVER_OVERRIDE_DEVICE_VFIO(PCI_VENDOR_ID_NVIDIA, 0x31C2) },
+    {}
+};</code></pre>
+
+        <blockquote>
+          <p>代码路径已就绪，但<strong>真正的 Blackwell-Next device ID 尚未加入</strong>——属于"先把软件框架铺好"。</p>
+        </blockquote>
+
+        <hr>
+
+        <h2>八、"Blackwell-Next" 到底指哪一代</h2>
+
+        <p>代号含义本身<strong>模糊</strong>。判读线索矛盾：</p>
+
+        <ul>
+          <li>改动修改的是 <code>nvgrace-gpu</code> 驱动 → 这是 <strong>Grace 系</strong>（Grace CPU + Blackwell GPU）；而 Rubin 搭配的是 <strong>Vera</strong> CPU，不是 Grace。</li>
+          <li>NVIDIA 已宣布 Rubin 接替 Blackwell B100/B200 及 Blackwell Ultra B300。</li>
+          <li>所以到底指 <strong>Blackwell Ultra</strong>、<strong>Rubin</strong>、还是两者之间，<strong>无定论</strong>。多数分析倾向"为下一代数据中心硬件做早期铺垫"。</li>
+          <li>可以确定：这出现在数据中心 Grace 平台相关的 VFIO 驱动里，<strong>不是消费级 GPU 驱动</strong>，没有依据认为它是 GeForce RTX 60 的代号。</li>
+        </ul>
+
+        <hr>
+
+        <h2>九、VR200 / Vera Rubin 硬件事实（佐证第一节结论）</h2>
+
+        <div class="table-scroll">
+        <table>
+          <caption>VR200 / Vera Rubin 硬件事实</caption>
+          <thead>
+            <tr><th>项</th><th>事实</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>CPU↔GPU 一致性互联</td><td><strong>NVLink-C2C</strong>，1.8 TB/s（相比上代翻倍），提供 cache-coherent 内存访问</td></tr>
+            <tr><td>PCIe 的角色</td><td>Rubin 经 C2C 连 Vera，再由 <strong>Vera 经 PCIe6 lane</strong> 连 ConnectX-9 等外设——PCIe 主要用于外设挂载，非一致性主路径</td></tr>
+            <tr><td>Vera 的接口能力</td><td><strong>同时支持 PCIe6 与 CXL 3.1</strong>（并存，非替代）</td></tr>
+            <tr><td>NVLink-C2C 可承载的协议</td><td>支持 <strong>Arm AMBA CHI 或 CXL</strong> 协议——即"C2C vs CXL"在物理层并非二选一，CXL 可作为 C2C 链路上跑的协议</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <hr>
+
+        <h2>十、结论一句话复述</h2>
+
+        <blockquote>
+          <p><strong>不是 "PCIe+C2C → CXL+C2C"，而是 "GPU 内存暴露接口：NVIDIA 私有 → CXL HDM 标准化"。</strong>高带宽一致性传输层始终是 NVLink-C2C（1.8 TB/s），这段 CXL DVSEC 代码改的只是"GPU 显存就绪状态 / 内存描述如何向 host 标准化上报"。Rubin 一致性确有增强，功劳在 NVLink-C2C 翻倍，而非这段探测逻辑。</p>
+        </blockquote>
+
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <span>© 2026 我的博客</span>
+      <span>由 <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a> 托管</span>
+    </footer>
+  </div>
+</body>
+</html>
