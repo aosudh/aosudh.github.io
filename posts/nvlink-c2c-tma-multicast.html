@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NVLink-C2C × TMA Multicast：从一条 folklore 到真相 · 我的博客</title>
+  <meta name="description" content="在 GH200 与双卡 H100 上动手验证“NVLink 上 TMA multicast 访问远程内存会挂卡”这条说法：NCU 数据通路、双卡复现、cuda-gdb 抓现场，最终定位挂卡真凶是 mbarrier 协议，而非 NVLink。附 DAK 论文代码复现与最小可复现示例。" />
+  <meta property="og:title" content="NVLink-C2C × TMA Multicast：从一条 folklore 到真相" />
+  <meta property="og:description" content="动手验证‘NVLink 上 TMA multicast 会挂卡’：真凶是 mbarrier 协议，不是 NVLink。" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://aosudh.github.io/posts/nvlink-c2c-tma-multicast.html" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="site-header">
+      <a class="site-title" href="/">我的博客</a>
+      <nav class="site-nav">
+        <a href="/">首页</a>
+        <a href="/about.html">关于</a>
+      </nav>
+    </header>
+
+    <main>
+      <a class="back-link" href="/">← 返回首页</a>
+      <article class="post-content">
+        <h1>NVLink-C2C × TMA Multicast：从一条 folklore 到真相</h1>
+        <p class="post-meta">2026-06-29 · 实验记录</p>
+
+        <p>起点是两个互相矛盾的东西。</p>
+        <p>一条流传很广的说法：<strong>“NVLink 上用 TMA multicast 访问远程内存会直接让卡挂逼。”</strong> 有不少人附和、看着像能复现。</p>
+        <p>一篇论文：DAK（<a href="https://arxiv.org/abs/2604.26074" target="_blank" rel="noopener">Direct-Access-Enabled GPU Memory Offloading</a>，arXiv:2604.26074），却反其道而行——在 <strong>NVLink-C2C</strong> 上用 TMA + TMA multicast 把 offload 出去的权重 / KV cache 直接读进 SMEM，号称比 prefetch baseline 最高 3×。</p>
+        <p>如果“NVLink 上 TMA multicast 访问远端会挂”，DAK 凭什么能在 NVLink-C2C 上跑？社区给的假说是：</p>
+        <blockquote>TMA multicast 的扇出要从<strong>本地 L2</strong> 取源；NVLink peer 内存是非一致“外部窗口”，数据只 cache 在对端、绕过本地 L2，于是 multicast 找不到本地源 → mbarrier 死锁 → 挂卡。而 C2C 是一致内存、读它会落本地 L2，所以能跑。</blockquote>
+        <p>这篇就是把这个假说<strong>拿到真硬件上动手验证</strong>的全过程。剧透：假说一半对、一半错，而真凶完全是另一回事。</p>
+
+        <h2>实验环境</h2>
+        <table>
+          <thead><tr><th></th><th>GH200（单卡）</th><th>2× H100 SXM5</th></tr></thead>
+          <tbody>
+            <tr><td>GPU</td><td>GH200 480GB（Grace+Hopper, <code>sm_90a</code>）</td><td>2× H100 80GB SXM5（<code>sm_90a</code>）</td></tr>
+            <tr><td>互连</td><td>NVLink-<strong>C2C</strong>（GPU↔Grace，一致）</td><td>GPU0↔GPU1 = <strong>NV18</strong>（18×NVLink）</td></tr>
+            <tr><td>形态</td><td>aarch64，带 Grace + LPDDR（有 C2C）</td><td>x86_64，无 C2C，两块独立物理 GPU</td></tr>
+          </tbody>
+        </table>
+        <p>软件统一为 CUDA 12.8 / driver 580 / Nsight Compute 2025.1 / cuda-gdb 12.8。探针的思路：一个 cluster of N 个 CTA，CTA0 发 <code>cp.async.bulk.tensor…multicast::cluster</code> 把一个 tile 扇出到 cluster 内各 CTA 的 SMEM，每个 CTA 在自己的 mbarrier 上等待；<strong>只改 TMA 源地址的内存类型</strong>做对照。</p>
+
+        <h2>实验一：C2C 上的数据通路（GH200）</h2>
+        <p>先验证假说的前半句——“C2C 内存读会落本地 L2”。固定一切，只改 TMA 源：本地 HBM（mode 0）、强制不迁移的 C2C Grace 内存（mode 3）、host-pinned mapped（mode 4）。功能上三者<strong>全部完成（DONE）</strong>。用 Nsight Compute 看 L2 的填充来源（32 KB tile，cluster=2）：</p>
+        <table>
+          <thead><tr><th>指标</th><th>mode 0 本地 HBM</th><th>mode 3 C2C（不迁移）</th><th>mode 4 host-mapped</th></tr></thead>
+          <tbody>
+            <tr><td><code>fill_device</code>（从 HBM 填 L2）</td><td><strong>1204</strong></td><td>207</td><td>199</td></tr>
+            <tr><td><code>fill_sysmem</code>（从 Grace/C2C 填 L2）</td><td><strong>0</strong></td><td><strong>1024</strong>（=1 tile）</td><td><strong>1024</strong></td></tr>
+            <tr><td><code>dram__bytes_read</code></td><td>38.66 KB</td><td>6.66 KB</td><td>5.89 KB</td></tr>
+          </tbody>
+        </table>
+        <p><code>fill_sysmem = 1024 sector</code> 正好是一个 32 KB tile：<strong>C2C 远端读确实穿过本地 L2 填进来。</strong> 本地 HBM 与 C2C 的填充来源方向相反（device vs system），但都落进同一个本地 L2，所以都能当 multicast 的本地扇出源。下图把这两条通路画在一起：</p>
+
+        <svg viewBox="0 0 680 360" role="img" aria-label="TMA multicast 的 L2 数据通路对比：模式 0 数据从 HBM 填 L2，模式 3 数据从 Grace 经 C2C 填 L2，两者都过本地 L2 再扇出到 SMEM" style="width:100%;height:auto;margin:6px 0 22px;color:var(--text)">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+          <text x="170" y="38" text-anchor="middle" fill="currentColor" font-size="15" font-weight="600">模式 0 — 本地 HBM</text>
+          <text x="510" y="38" text-anchor="middle" fill="currentColor" font-size="15" font-weight="600">模式 3 — C2C Grace</text>
+          <line x1="340" y1="52" x2="340" y2="300" stroke="currentColor" stroke-opacity="0.18" stroke-width="1" stroke-dasharray="5 5"/>
+
+          <!-- LEFT: mode 0 -->
+          <rect x="60" y="58" width="220" height="44" rx="8" fill="var(--bg-soft)" stroke="#6b7280" stroke-width="1.5"/>
+          <text x="170" y="78" text-anchor="middle" fill="currentColor" font-size="14">SM 簇 · 2 份 SMEM</text>
+          <text x="170" y="94" text-anchor="middle" fill="currentColor" font-size="12" opacity="0.7">读一次 · 扇出多份</text>
+          <rect x="60" y="148" width="220" height="42" rx="8" fill="var(--bg-soft)" stroke="#2563eb" stroke-width="1.5"/>
+          <text x="170" y="174" text-anchor="middle" fill="#2563eb" font-size="14" font-weight="600">本地 L2 缓存</text>
+          <rect x="45" y="246" width="110" height="48" rx="8" fill="var(--bg-soft)" stroke="#d97706" stroke-width="1.5"/>
+          <text x="100" y="266" text-anchor="middle" fill="#d97706" font-size="14" font-weight="600">设备内存</text>
+          <text x="100" y="283" text-anchor="middle" fill="currentColor" font-size="12" opacity="0.7">HBM</text>
+          <rect x="175" y="246" width="125" height="48" rx="8" fill="var(--bg-soft)" stroke="#0d9488" stroke-width="1.5"/>
+          <text x="237" y="266" text-anchor="middle" fill="#0d9488" font-size="14" font-weight="600">系统内存</text>
+          <text x="237" y="283" text-anchor="middle" fill="currentColor" font-size="12" opacity="0.7">Grace · C2C</text>
+          <line x1="170" y1="148" x2="170" y2="104" stroke="#6b7280" stroke-width="2.5" marker-end="url(#ar)"/>
+          <text x="178" y="130" fill="currentColor" font-size="12" opacity="0.8">≈105 KB</text>
+          <line x1="100" y1="246" x2="140" y2="191" stroke="#d97706" stroke-width="3" marker-end="url(#ar)"/>
+          <text x="64" y="224" text-anchor="middle" fill="#d97706" font-size="12">37 KB</text>
+          <line x1="232" y1="246" x2="198" y2="191" stroke="#6b7280" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#ar)"/>
+          <text x="250" y="224" text-anchor="middle" fill="currentColor" font-size="12" opacity="0.55">0 KB</text>
+
+          <!-- RIGHT: mode 3 -->
+          <rect x="400" y="58" width="220" height="44" rx="8" fill="var(--bg-soft)" stroke="#6b7280" stroke-width="1.5"/>
+          <text x="510" y="78" text-anchor="middle" fill="currentColor" font-size="14">SM 簇 · 2 份 SMEM</text>
+          <text x="510" y="94" text-anchor="middle" fill="currentColor" font-size="12" opacity="0.7">读一次 · 扇出多份</text>
+          <rect x="400" y="148" width="220" height="42" rx="8" fill="var(--bg-soft)" stroke="#2563eb" stroke-width="1.5"/>
+          <text x="510" y="174" text-anchor="middle" fill="#2563eb" font-size="14" font-weight="600">本地 L2 缓存</text>
+          <rect x="385" y="246" width="110" height="48" rx="8" fill="var(--bg-soft)" stroke="#d97706" stroke-width="1.5"/>
+          <text x="440" y="266" text-anchor="middle" fill="#d97706" font-size="14" font-weight="600">设备内存</text>
+          <text x="440" y="283" text-anchor="middle" fill="currentColor" font-size="12" opacity="0.7">HBM</text>
+          <rect x="510" y="246" width="125" height="48" rx="8" fill="var(--bg-soft)" stroke="#0d9488" stroke-width="1.5"/>
+          <text x="572" y="266" text-anchor="middle" fill="#0d9488" font-size="14" font-weight="600">系统内存</text>
+          <text x="572" y="283" text-anchor="middle" fill="currentColor" font-size="12" opacity="0.7">Grace · C2C</text>
+          <line x1="510" y1="148" x2="510" y2="104" stroke="#6b7280" stroke-width="2.5" marker-end="url(#ar)"/>
+          <text x="518" y="130" fill="currentColor" font-size="12" opacity="0.8">≈102 KB</text>
+          <line x1="572" y1="246" x2="540" y2="191" stroke="#0d9488" stroke-width="3" marker-end="url(#ar)"/>
+          <text x="600" y="224" text-anchor="middle" fill="#0d9488" font-size="12">32 KB</text>
+          <line x1="440" y1="246" x2="474" y2="191" stroke="#d97706" stroke-width="1.2" marker-end="url(#ar)"/>
+          <text x="412" y="224" text-anchor="middle" fill="#d97706" font-size="12" opacity="0.7">5 KB</text>
+
+          <rect x="150" y="324" width="13" height="13" rx="3" fill="var(--bg-soft)" stroke="#d97706" stroke-width="1.5"/>
+          <text x="170" y="335" fill="currentColor" font-size="12" opacity="0.8">设备内存 HBM</text>
+          <rect x="330" y="324" width="13" height="13" rx="3" fill="var(--bg-soft)" stroke="#0d9488" stroke-width="1.5"/>
+          <text x="350" y="335" fill="currentColor" font-size="12" opacity="0.8">系统内存 Grace（经 C2C）</text>
+        </svg>
+
+        <p>所以假说前半句<strong>成立</strong>：C2C 内存对 TMA 引擎就是“挂在本地 L2 后面的内存”。</p>
+
+        <h2>实验二：单卡 / MIG 为何造不出“挂卡”</h2>
+        <p>要验证后半句（NVLink peer 会挂），得有一个<strong>非一致 peer 外部窗口</strong>。但 GH200 是单卡，连 host-mapped 内存都走 C2C 一致路径，物理上造不出。试着用 MIG 切两个实例模拟双卡——结论是<strong>模拟不出来</strong>，而且原因很有意思：</p>
+        <table>
+          <thead><tr><th></th><th>mode 0（本实例 HBM）</th><th>mode 1（peer MIG 实例）</th></tr></thead>
+          <tbody>
+            <tr><td><code>op_read</code>（L2 读扇出）</td><td>1792</td><td><strong>1790</strong></td></tr>
+            <tr><td>结果</td><td>DONE</td><td><strong>DONE</strong></td></tr>
+          </tbody>
+        </table>
+        <p>两者 <code>op_read</code> 几乎相同 → peer 实例的数据同样落本地 L2。根因：<strong>MIG 两个实例物理上是同一块 GPU、共享同一 L2 fabric</strong>。要构造真正的“独立物理 L2”外部窗口，必须两块独立物理 GPU。</p>
+
+        <h2>实验三：双卡 H100 上的反转 —— peer 也不挂</h2>
+        <p>换到 2× H100 SXM5（NVLink），终于能做真正的 mode 1：<strong>以 peer GPU 内存作 TMA multicast 的源</strong>。这正是 folklore 说必挂的场景。结果——<strong>没挂</strong>。探针回写“实际搬进 SMEM 的首字”做校验（<code>src</code> 全填 <code>0x01010101</code>）：</p>
+        <table>
+          <thead><tr><th>配置</th><th>结果</th><th>每个 CTA 的 SMEM 首字</th></tr></thead>
+          <tbody>
+            <tr><td>mode 0 本地 HBM</td><td>2/2 DONE</td><td><code>0x01010101</code></td></tr>
+            <tr><td><strong>mode 1 peer NVLink（cluster=2）</strong></td><td><strong>2/2 DONE</strong></td><td><strong><code>0x01010101</code></strong></td></tr>
+            <tr><td>mode 1 peer（cluster=4）</td><td>4/4 DONE</td><td><code>0x01010101</code></td></tr>
+            <tr><td>mode 1 peer（单播 TMA）</td><td>DONE</td><td><code>0x01010101</code></td></tr>
+          </tbody>
+        </table>
+        <p>不是假完成：首字是正确的 peer 数据，且所有 CTA（含非发起的 consumer）都完成。NCU 的 NVLink 流量坐实数据确实经 NVLink 从对端而来：</p>
+        <table>
+          <thead><tr><th>指标</th><th>mode 0（本地）</th><th>mode 1（peer）</th></tr></thead>
+          <tbody>
+            <tr><td><code>nvlrx__bytes</code>（NVLink 接收）</td><td><strong>0</strong></td><td><strong>40.99 KB</strong>（≈1 tile）</td></tr>
+            <tr><td><code>nvltx__bytes</code>（NVLink 发送）</td><td>16 B</td><td>25.20 KB</td></tr>
+          </tbody>
+        </table>
+        <p>假说为什么错？它把<strong>普通 <code>ld</code> 指令读 peer 的 L2 缓存行为</strong>错套到了 TMA 上。<strong>TMA（<code>cp.async.bulk</code>）是主动的 bulk DMA</strong>：它从 global 地址（含 peer，经 NVLink）主动拉数据、写入本地 SMEM，<code>complete_tx</code> 由“字节实际到达”驱动，<strong>不依赖本地 L2 是否预先持有源行</strong>。所以源是 peer 也不会“无本地源死锁”——TMA 会把数据搬过来。</p>
+
+        <h2>实验四：挂卡的真正根因 —— mbarrier 协议</h2>
+        <p>但“有人反映挂卡”是真实信号。继续深挖，把挂卡稳定复现出来了，但真凶<strong>不是 NVLink</strong>。</p>
+        <p>TMA multicast 的 <code>complete_tx</code> 会<strong>分别发往 cluster 内每个目标 CTA 自己的 mbarrier</strong>，所以<strong>每个目标 CTA 都必须 arm 自己的 <code>expect_tx</code></strong>。一个极常见的错误是：以为只有发起 CTA 需要 arm，consumer CTA 只 init 不 arm。就差一个 <code>if</code>：</p>
+        <pre><code>if (threadIdx.x == 0) {
+    mbarrier.init [mbar], 1;                        // 每个 CTA 都 init
+#ifdef BROKEN_BARRIER
+    if (rank == 0)              // 错误：只有发起 CTA arm，consumer 忘了
+#endif
+    mbarrier.arrive.expect_tx [mbar], TILE_BYTES;  // 正确：每个 CTA 都 arm 自己的
+}</code></pre>
+        <p>做一个 2×2 对照（源 × 协议）：</p>
+        <table>
+          <thead><tr><th>mbarrier 协议</th><th>mode 0 本地 HBM</th><th>mode 1 peer NVLink</th></tr></thead>
+          <tbody>
+            <tr><td><strong>正确</strong>（每个 CTA arm）</td><td>2/2 DONE ✓</td><td>2/2 DONE ✓</td></tr>
+            <tr><td><strong>错误</strong>（只发起 CTA arm）</td><td><strong>挂死</strong></td><td><strong>挂死</strong></td></tr>
+          </tbody>
+        </table>
+        <p><strong>关键：错误协议在本地 HBM 上一样挂死，正确协议在 peer 上一样不挂 —— 挂卡与 peer/NVLink 完全无关。</strong></p>
+        <p>用 cuda-gdb attach 挂死的 kernel，抓到“卡住”的字面现场：</p>
+        <pre><code>* (1,0,0) (0,0,0) ... at tma_multicast_barrier.cu:112   # mbarrier.try_wait 自旋
+  => SEL R7,RZ,0x1,!P0                                   # try_wait -> selp
+  （block (0,0,0) 已退出：cuda-gdb 报 Invalid coordinates）</code></pre>
+        <p>只有 consumer CTA（block 1）还活着、死死卡在 <code>mbarrier.try_wait</code>；issuer CTA（block 0）早已完成退出。含义：multicast 投递本身正常、数据（从 peer）也到了、issuer 完成了，唯独没 arm <code>expect_tx</code> 的 consumer 记账永远闭合不了。</p>
+        <blockquote>folklore 抓对了现象（确实挂），抓错了归因。挂卡 ⟺ mbarrier 协议错误，与源是不是 peer/远程无关。之所以总在“NVLink 远程内存”场景挂，是因为 multicast 的典型用法就是跨卡 offloading，大家都在那里第一次写 multicast；没人在本地 HBM 上用 multicast，所以“本地也会挂”从没被注意到。</blockquote>
+
+        <h2>实验五：DAK 论文代码复现</h2>
+        <p>DAK 有<a href="https://github.com/shouxulin/DirectAccessKernel" target="_blank" rel="noopener">开源代码</a>。在 GH200 上 clone、构建、运行（构建需补 CUTLASS include、装 pybind11、并 patch CUTLASS 一处 host/device 标注）。其核心 direct-access offloading 复现成功（decode GEMV，bsz=8）：</p>
+        <table>
+          <thead><tr><th>类型</th><th>权重位置</th><th>有效带宽</th><th>MAPE</th></tr></thead>
+          <tbody>
+            <tr><td>vanila（cuBLAS）</td><td>HBM</td><td><strong>1942 GB/s</strong></td><td>0%</td></tr>
+            <tr><td>DAK direct</td><td>HBM</td><td>1567 GB/s</td><td>1.17%</td></tr>
+            <tr><td><strong>DAK direct</strong></td><td><strong>Grace（C2C）</strong></td><td><strong>304 GB/s</strong></td><td>2.05%</td></tr>
+            <tr><td><strong>DAK direct</strong></td><td><strong>Grace（C2C）</strong></td><td><strong>323 GB/s</strong>（11008×4096）</td><td>0.88%</td></tr>
+          </tbody>
+        </table>
+        <p>权重 offload 到 Grace 后不 prefetch 回 HBM、直接经 C2C 读进 SMEM 计算，达到 C2C 单向带宽（450 GB/s）的约 70%，结果正确——这正是论文相比 prefetch 提速的根源。另外核实了社区的一个观察：DAK 的 <code>gemv_multicast_prefill</code> 实际上把 TMA multicast 注释掉了（没有 <code>__cluster_dims__</code>、走的是非-multicast 路径），只有 decode 路径的 <code>gemv_multicast</code> 真正用到 multicast。</p>
+
+        <h2>总结</h2>
+        <table>
+          <thead><tr><th>命题</th><th>结论</th></tr></thead>
+          <tbody>
+            <tr><td>C2C 内存读会落本地 L2</td><td>✅ 证实（<code>fill_sysmem</code>=1 tile）</td></tr>
+            <tr><td>C2C 上 TMA multicast 能跑（DAK）</td><td>✅ 证实（DAK direct 304–323 GB/s）</td></tr>
+            <tr><td><strong>NVLink peer 上 TMA multicast 必挂</strong></td><td>❌ <strong>推翻</strong>（双 H100 实测稳定 DONE，nvlrx 证明数据经 NVLink 拉回本地）</td></tr>
+            <tr><td>挂卡的真正根因</td><td><strong>mbarrier 协议误用</strong>（consumer 没 arm <code>expect_tx</code>），与 peer/NVLink 无关</td></tr>
+          </tbody>
+        </table>
+        <p>一句话：能不能跑 TMA multicast，取决于“数据是否被搬到了本地、每个 consumer CTA 的 mbarrier 是否正确记账”，而<strong>不是</strong>“源是不是 NVLink 远程内存”。C2C、本地 HBM、甚至 NVLink peer，只要协议写对都能跑；协议写错，无论源在哪都挂死，现场就是 consumer CTA 卡在 <code>mbarrier.try_wait</code>。真正的分界线从来不是链路类型。</p>
+
+        <h2>交付件 / 可复现</h2>
+        <p>本文涉及的代码、脚本、图与报告：</p>
+        <ul>
+          <li><a href="/posts/nvlink-c2c-tma-multicast/tma_mc_probe.cu">tma_mc_probe.cu</a> — 主探针（多 mode、bf16、cluster 可配、每-CTA 校验、<code>BROKEN_BARRIER</code> 开关）</li>
+          <li>最小可复现示例：<a href="/posts/nvlink-c2c-tma-multicast/tma_multicast_barrier.cu">tma_multicast_barrier.cu</a>、<a href="/posts/nvlink-c2c-tma-multicast/capture_hang.sh">capture_hang.sh</a>、<a href="/posts/nvlink-c2c-tma-multicast/demo_README.md">README</a>（本地 HBM 即可演示正确 vs 错误协议 + cuda-gdb 现场）</li>
+          <li><a href="/posts/nvlink-c2c-tma-multicast/attach_gdb.sh">attach_gdb.sh</a> — cuda-gdb 抓挂死现场脚本</li>
+          <li><a href="/posts/nvlink-c2c-tma-multicast/memory_chart.html" target="_blank" rel="noopener">memory_chart.html</a> — 实验一的内存通路图（独立页面）</li>
+          <li>完整记录（Markdown）：<a href="/posts/nvlink-c2c-tma-multicast/实验全过程.md">实验全过程</a>、<a href="/posts/nvlink-c2c-tma-multicast/H100双卡_mode1实测.md">H100 mode 1 修正</a></li>
+        </ul>
+        <p class="post-meta">环境：Hopper（<code>sm_90a</code>）/ CUDA 12.8 / driver 580 / Nsight Compute 2025.1 / cuda-gdb 12.8。编译：<code>nvcc -arch=sm_90a -O3 -lcuda tma_multicast_barrier.cu -o demo</code>。</p>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <span>© 2026 我的博客</span>
+      <span>由 <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a> 托管</span>
+    </footer>
+  </div>
+</body>
+</html>

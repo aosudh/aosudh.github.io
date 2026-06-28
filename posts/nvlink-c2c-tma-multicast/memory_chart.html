@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8">
+<title>TMA multicast 的 L2 数据通路 — GH200 实测</title>
+<style>
+body{font-family:system-ui,"Microsoft YaHei",sans-serif;background:#fff;color:#2c2c2a;max-width:780px;margin:24px auto;padding:0 16px;line-height:1.7}
+h1{font-size:20px;font-weight:500}
+.note{color:#5f5e5a;font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:13px;margin-top:18px}
+th,td{border:1px solid #d3d1c7;padding:6px 10px;text-align:left}
+th{background:#f1efe8;font-weight:500}
+svg text{font-family:system-ui,"Microsoft YaHei",sans-serif}
+</style></head><body>
+<h1>TMA multicast 的 L2 数据通路:本地 HBM vs C2C Grace(GH200 实测)</h1>
+<p class="note">32 KB tile,cluster=2,multicast。源 = 模式 0(本地 HBM) vs 模式 3(真 C2C,固定 Grace 不迁移)。数据由 Nsight Compute 在 NVIDIA GH200 上采集。两种模式数据都<b>穿过本地 L2</b>并扇出到簇内 SMEM,区别只在 L2 的填充来源:HBM(设备内存)还是 Grace(系统内存,经 C2C)。</p>
+
+<svg width="100%" viewBox="0 0 680 352" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>TMA multicast L2 数据通路:本地 HBM vs C2C Grace</title>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<text x="170" y="44" text-anchor="middle" font-size="14" font-weight="500" fill="#2c2c2a">模式 0 — 本地 HBM</text>
+<text x="510" y="44" text-anchor="middle" font-size="14" font-weight="500" fill="#2c2c2a">模式 3 — C2C Grace 内存</text>
+<line x1="340" y1="58" x2="340" y2="300" stroke="#D3D1C7" stroke-width="0.5" stroke-dasharray="4 4"/>
+
+<rect x="60" y="64" width="220" height="42" rx="6" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="1"/>
+<text x="170" y="82" text-anchor="middle" font-size="14" fill="#2C2C2A">SM 簇 · 2 份 SMEM</text>
+<text x="170" y="98" text-anchor="middle" font-size="12" fill="#5F5E5A">读一次 扇出多份</text>
+<rect x="60" y="150" width="220" height="40" rx="6" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+<text x="170" y="174" text-anchor="middle" font-size="14" fill="#0C447C">本地 L2 缓存</text>
+<rect x="45" y="250" width="110" height="46" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="1"/>
+<text x="100" y="270" text-anchor="middle" font-size="14" fill="#633806">设备内存</text>
+<text x="100" y="286" text-anchor="middle" font-size="12" fill="#854F0B">HBM</text>
+<rect x="175" y="250" width="125" height="46" rx="6" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1"/>
+<text x="237" y="270" text-anchor="middle" font-size="14" fill="#04342C">系统内存</text>
+<text x="237" y="286" text-anchor="middle" font-size="12" fill="#0F6E56">Grace · C2C</text>
+<line x1="170" y1="150" x2="170" y2="108" stroke="#888780" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="178" y="132" text-anchor="start" font-size="12" fill="#444441">≈105 KB</text>
+<line x1="100" y1="250" x2="138" y2="191" stroke="#BA7517" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="70" y="226" text-anchor="middle" font-size="12" fill="#854F0B">37 KB</text>
+<line x1="232" y1="250" x2="200" y2="191" stroke="#B4B2A9" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
+<text x="254" y="226" text-anchor="middle" font-size="12" fill="#888780">0 KB</text>
+
+<rect x="400" y="64" width="220" height="42" rx="6" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="1"/>
+<text x="510" y="82" text-anchor="middle" font-size="14" fill="#2C2C2A">SM 簇 · 2 份 SMEM</text>
+<text x="510" y="98" text-anchor="middle" font-size="12" fill="#5F5E5A">读一次 扇出多份</text>
+<rect x="400" y="150" width="220" height="40" rx="6" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+<text x="510" y="174" text-anchor="middle" font-size="14" fill="#0C447C">本地 L2 缓存</text>
+<rect x="385" y="250" width="110" height="46" rx="6" fill="#FAEEDA" stroke="#854F0B" stroke-width="1"/>
+<text x="440" y="270" text-anchor="middle" font-size="14" fill="#633806">设备内存</text>
+<text x="440" y="286" text-anchor="middle" font-size="12" fill="#854F0B">HBM</text>
+<rect x="510" y="250" width="125" height="46" rx="6" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1"/>
+<text x="572" y="270" text-anchor="middle" font-size="14" fill="#04342C">系统内存</text>
+<text x="572" y="286" text-anchor="middle" font-size="12" fill="#0F6E56">Grace · C2C</text>
+<line x1="510" y1="150" x2="510" y2="108" stroke="#888780" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="518" y="132" text-anchor="start" font-size="12" fill="#444441">≈102 KB</text>
+<line x1="572" y1="250" x2="540" y2="191" stroke="#1D9E75" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="598" y="226" text-anchor="middle" font-size="12" fill="#0F6E56">32 KB</text>
+<line x1="440" y1="250" x2="472" y2="191" stroke="#BA7517" stroke-width="1" marker-end="url(#arrow)"/>
+<text x="414" y="226" text-anchor="middle" font-size="12" fill="#854F0B">5 KB</text>
+
+<rect x="150" y="318" width="13" height="13" rx="3" fill="#FAEEDA" stroke="#854F0B"/>
+<text x="170" y="329" text-anchor="start" font-size="12" fill="#444441">设备内存 HBM</text>
+<rect x="330" y="318" width="13" height="13" rx="3" fill="#E1F5EE" stroke="#0F6E56"/>
+<text x="350" y="329" text-anchor="start" font-size="12" fill="#444441">系统内存 Grace(经 C2C)</text>
+</svg>
+
+<table>
+<tr><th>指标 (NCU)</th><th>模式 0 · 本地 HBM</th><th>模式 3 · C2C Grace</th><th>含义</th></tr>
+<tr><td>lts__d_sectors_fill_device</td><td>1188 sector ≈ 37 KB</td><td>167 sector ≈ 5 KB</td><td>L2 从设备 HBM 填充</td></tr>
+<tr><td>lts__d_sectors_fill_sysmem</td><td><b>0</b></td><td><b>1024 sector = 32 KB</b></td><td>L2 从系统 Grace 经 C2C 填充</td></tr>
+<tr><td>dram__bytes_read</td><td>37.89 KB</td><td>5.38 KB</td><td>HBM 读字节</td></tr>
+<tr><td>lts__t_sectors_op_read</td><td>3362 sector</td><td>3251 sector</td><td>L2 读取 sector(→SMEM 扇出)</td></tr>
+</table>
+<p class="note">结论:数据来源相反(HBM ↔ Grace),但都落进同一个<b>本地 L2</b>并由 multicast 一次扇出到簇内多份 SMEM —— 这就是 C2C 内存能作为 TMA multicast 源的根因。</p>
+</body></html>

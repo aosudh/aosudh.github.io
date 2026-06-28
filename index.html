@@ -32,6 +32,12 @@
 
         <!-- ↓↓↓ 新增文章：复制下面这个 <li> 块，改链接/标题/日期/摘要即可 ↓↓↓ -->
         <li class="post-item">
+          <a class="post-link" href="/posts/nvlink-c2c-tma-multicast.html">NVLink-C2C × TMA Multicast：从一条 folklore 到真相</a>
+          <p class="post-meta">2026-06-29</p>
+          <p class="post-summary">动手验证“NVLink 上用 TMA multicast 访问远程内存会挂卡”这条说法：在 GH200 上用 Nsight Compute 证明 C2C 远端读会落本地 L2；在双卡 H100 上复现 peer 访问其实稳定不挂（NVLink 流量为证）；再用 2×2 对照 + cuda-gdb 抓现场，把挂卡真凶定位到 mbarrier 协议误用（consumer CTA 没 arm expect_tx），与 NVLink 无关——本地 HBM 用错误协议一样挂死。附 DAK 论文代码复现与最小可复现示例。</p>
+        </li>
+
+        <li class="post-item">
           <a class="post-link" href="/posts/nvidia-gpu-pci-device-ids.html">NVIDIA GPU PCI Device ID 全量对照：Ampere → Rubin</a>
           <p class="post-meta">2026-06-24</p>
           <p class="post-summary">把 lspci 里的 10DE:xxxx 翻译成芯片 / 架构 / 产品：整理从 Ampere 到刚出现的 Rubin 共 332 个 NVIDIA GPU PCI device ID，交叉核对 pci.ids、开源内核模块 README、nouveau 与 CUDA 文档，逐条标注芯片、SM / Compute Capability、功能、官方与社区产品名，以及是否在开放驱动列表内。附 SM/CC 速查与 Rubin 代号路线图。</p>
