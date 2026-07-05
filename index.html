@@ -32,6 +32,12 @@
 
         <!-- ↓↓↓ 新增文章：复制下面这个 <li> 块，改链接/标题/日期/摘要即可 ↓↓↓ -->
         <li class="post-item">
+          <a class="post-link" href="/posts/h100-es-fallen-off-the-bus.html">我与 H100 884 ES 的激情斗法</a>
+          <p class="post-meta">2026-07-06</p>
+          <p class="post-summary">一块 GH100 ES（10de:233f）突然从 nvidia-smi 消失：lspci 看得见、链路 Gen5 x16 训练正常、PCI config 可读，BAR0 MMIO 却一读就 I/O error，内核反复报 fallen off the bus。FLR、secondary bus reset、remove/rescan、BAR2 resize、modprobe 旗子全家桶六个回合轮番上阵全部无效，最终真凶是引导参数 pci=nocrs,realloc=on——内核无视 ACPI _CRS 窗口自作主张重排 BAR；改回 pci=use_crs,realloc=off 一击痊愈。附完整验证与复发自查清单。</p>
+        </li>
+
+        <li class="post-item">
           <a class="post-link" href="/posts/nvlink-c2c-tma-multicast.html">NVLink-C2C × TMA Multicast：从一条 folklore 到真相</a>
           <p class="post-meta">2026-06-29</p>
           <p class="post-summary">动手验证“NVLink 上用 TMA multicast 访问远程内存会挂卡”这条说法：在 GH200 上用 Nsight Compute 证明 C2C 远端读会落本地 L2；在双卡 H100 上复现 peer 访问其实稳定不挂（NVLink 流量为证）；再用 2×2 对照 + cuda-gdb 抓现场，把挂卡真凶定位到 mbarrier 协议误用（consumer CTA 没 arm expect_tx），与 NVLink 无关——本地 HBM 用错误协议一样挂死。附 DAK 论文代码复现与最小可复现示例。</p>

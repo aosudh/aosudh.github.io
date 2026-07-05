@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>我与 H100 884 ES 的激情斗法 · 我的博客</title>
+  <meta name="description" content="一块 GH100 ES（10de:233f）突然从 nvidia-smi 消失：lspci 看得见、链路 Gen5 x16 正常、PCI config 可读，BAR0 MMIO 却一读就 I/O error，内核反复报 fallen off the bus。FLR、secondary bus reset、remove/rescan、BAR2 resize、modprobe 旗子全家桶轮番上阵全部无效，最终根因是引导参数 pci=nocrs,realloc=on 让内核无视 ACPI _CRS 窗口乱摆 BAR；改回 pci=use_crs,realloc=off 一击痊愈。附完整验证与复发自查清单。" />
+  <meta property="og:title" content="我与 H100 884 ES 的激情斗法" />
+  <meta property="og:description" content="H100 ES 掉卡排障全记录：六种 reset 全灭，真凶不是驱动，是 pci=nocrs,realloc=on。" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://aosudh.github.io/posts/h100-es-fallen-off-the-bus.html" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="site-header">
+      <a class="site-title" href="/">我的博客</a>
+      <nav class="site-nav">
+        <a href="/">首页</a>
+        <a href="/about.html">关于</a>
+      </nav>
+    </header>
+
+    <main>
+      <a class="back-link" href="/">← 返回首页</a>
+      <article class="post-content">
+        <h1>我与 H100 884 ES 的激情斗法</h1>
+        <p class="post-meta">2026-07-06 · 排障记录</p>
+
+        <p>手上这块 H100 是工程样品（ES），没有零售名分：PCI ID <code>10de:233f</code>，在公开 pci.ids 里查无此人——我之前整理的<a href="/posts/nvidia-gpu-pci-device-ids.html">《NVIDIA GPU PCI Device ID 全量对照》</a>里也没有它，ES 专属 ID 本来就不进公开名单。<code>nvidia-smi</code> 里它只肯自称 <strong>NVIDIA Graphics Device</strong>，开源内核驱动要打开 <code>OpenRmEnableUnsupportedGpus=1</code> 才肯伺候，NVLink 还得手动关掉。这种卡从第一天起就走在“非官方支持”的钢丝上。</p>
+        <p>然后某一天，它从 <code>nvidia-smi</code> 里消失了。</p>
+        <p>这篇是这场斗法的完整记录：六个回合的复活手段轮番上阵、全部无效，最后靠一行内核引导参数一击定胜负。剧透：<strong>真凶不是驱动、不是 CUDA、也不是卡坏了，是 <code>pci=nocrs,realloc=on</code></strong>——内核被这行参数指使着无视 ACPI 上报的 host bridge 窗口、自作主张重排了 GPU 的 BAR，把 MMIO 摆成了黑洞。改回 <code>pci=use_crs,realloc=off</code>，卡当场复活。</p>
+
+        <h2>对局双方</h2>
+        <table>
+          <tbody>
+            <tr><td>主板</td><td>Supermicro H13SSL-N</td></tr>
+            <tr><td>系统 / 内核</td><td>Ubuntu 24.04，<code>6.17.0-35-generic</code></td></tr>
+            <tr><td>驱动</td><td>NVIDIA 开源内核模块 <code>595.71.05</code></td></tr>
+            <tr><td>GPU</td><td>Hopper GH100 ES，<code>0000:41:00.0</code></td></tr>
+            <tr><td>PCI ID</td><td><code>10de:233f</code>（subsystem <code>10de:16c1</code>）</td></tr>
+            <tr><td>料号 / VBIOS</td><td><code>233F-885-A1</code> / <code>96.00.74.00.01</code></td></tr>
+          </tbody>
+        </table>
+        <p>安装的 NVIDIA 软件栈：</p>
+        <pre><code>nvidia-driver-595-open
+nvidia-kernel-source-595-open
+nvidia-utils-595
+linux-modules-nvidia-595-open-6.17.0-35-generic</code></pre>
+        <p>Secure Boot 提前排除嫌疑：</p>
+        <pre><code>SecureBoot disabled
+Platform is in Setup Mode</code></pre>
+        <p>ES 身份需要的前置设定（它们不是本次问题的原因，而是这块卡能工作的前提）：</p>
+        <pre><code>OpenRmEnableUnsupportedGpus: 1
+NvLinkDisable: 1</code></pre>
+        <p>持久化的 modprobe 配置，修复完成后长这样：</p>
+        <pre><code>options nvidia NVreg_NvLinkDisable=1
+options nvidia NVreg_PreserveVideoMemoryAllocations=1
+options nvidia NVreg_TemporaryFilePath=/var
+options nvidia_drm modeset=1
+blacklist nouveau
+blacklist lbm-nouveau
+blacklist nova
+blacklist nova_core
+alias nouveau off
+alias lbm-nouveau off
+alias nova off
+alias nova_core off</code></pre>
+
+        <h2>发病现场：五个信号指向同一层</h2>
+        <p>第一现场，<code>nvidia-smi</code> 与驱动彻底失联：</p>
+        <pre><code>$ nvidia-smi -L
+NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver.
+Make sure that the latest NVIDIA driver is installed and running.</code></pre>
+        <p>但 <code>lspci</code> 还看得见它：</p>
+        <pre><code>$ lspci -Dnn | rg -i 'nvidia|3d controller|vga|display'
+0000:41:00.0 3D controller [0302]: NVIDIA Corporation Device [10de:233f] (rev a1)
+0000:c6:00.0 VGA compatible controller [0300]: ASPEED Technology, Inc. ASPEED Graphics Family [1a03:2000] (rev 52)</code></pre>
+        <p>内核日志里，驱动在反复碰壁：</p>
+        <pre><code>NVRM: The NVIDIA GPU 0000:41:00.0
+NVRM: (PCI ID: 10de:233f) installed in this system has
+NVRM: fallen off the bus and is not responding to commands.
+nvidia 0000:41:00.0: probe with driver nvidia failed with error -1
+NVRM: The NVIDIA probe routine failed for 1 device(s).
+NVRM: None of the NVIDIA devices were initialized.</code></pre>
+        <p>链路甚至训练在满血 Gen5 x16：</p>
+        <pre><code>current_link_speed = 32.0 GT/s PCIe
+current_link_width = 16</code></pre>
+        <p>而最有信息量的一条证据：<strong>PCI config 空间读得好好的，BAR0 的 MMIO 一读就报 I/O error</strong>：</p>
+        <pre><code>$ od -A x -t x4 -N 64 /sys/bus/pci/devices/0000:41:00.0/resource0
+000000
+od: '/sys/bus/pci/devices/0000:41:00.0/resource0': Input/output error</code></pre>
+        <p>把五个信号摆到一起看：</p>
+        <ul>
+          <li>PCI config 读正常；</li>
+          <li>PCIe 链路在 Gen5 x16；</li>
+          <li>NVIDIA 驱动初始化失败；</li>
+          <li>BAR0 MMIO 读失败；</li>
+          <li>内核报 “fallen off the bus”。</li>
+        </ul>
+        <p>这个组合非常挑人：config 事务由 root complex 按 BDF 直接寻址，不依赖 MMIO 窗口；而 BAR 访问走的是普通内存事务，要求 host bridge 沿途每一级都正确 decode 这个地址。“config 通、MMIO 死”意味着问题不在 CUDA、不在用户态、大概率也不在链路本身，而在 <strong>PCI 资源路由 / endpoint MMIO decode / 电源与槽位状态 / GPU 内部卡死</strong>这一层。后面的六个回合，全部围绕这个判断展开。</p>
+
+        <h2>六个回合的无用功（但不白打）</h2>
+
+        <h3>回合一：先让战场安静下来</h3>
+        <p>失联的设备会引来 udev 和 <code>nvidia-persistenced</code> 的反复 probe，日志刷屏，reset 的效果也没法干净地观察。先止噪：</p>
+        <pre><code>systemctl stop nvidia-persistenced.service nvidia-cdi-refresh.service || true
+udevadm control --stop-exec-queue
+modprobe -r nvidia_uvm nvidia_drm nvidia_modeset nvidia || true</code></pre>
+        <p>udev 还会反复重放 NVIDIA 规则，于是再压一层运行时 modprobe guard：</p>
+        <pre><code>/run/modprobe.d/zz-disable-nvidia-until-reboot.conf</code></pre>
+        <pre><code>install nvidia /bin/false
+install nvidia-modeset /bin/false
+install nvidia-drm /bin/false
+install nvidia-uvm /bin/false</code></pre>
+        <p>注意它放在 <code>/run</code> 下——重启自动消失，只是诊断期间的临时手段，不属于持久修复的一部分。</p>
+
+        <h3>回合二：FLR（函数级复位）</h3>
+        <p>设备声称支持两种复位方式：</p>
+        <pre><code>$ cat /sys/bus/pci/devices/0000:41:00.0/reset_method
+flr bus</code></pre>
+        <p>先来 FLR：</p>
+        <pre><code>printf 1 &gt; /sys/bus/pci/devices/0000:41:00.0/enable
+printf 1 &gt; /sys/bus/pci/devices/0000:41:00.0/reset</code></pre>
+        <p>结果：链路还在 Gen5 x16，BAR0 还是 I/O error，probe 还是失败。</p>
+
+        <h3>回合三：secondary bus reset</h3>
+        <p>总线 41 上只挂了这一个 endpoint，可以放心做下游总线复位：</p>
+        <pre><code>printf 'bus\n' &gt; /sys/bus/pci/devices/0000:41:00.0/reset_method
+printf 1 &gt; /sys/bus/pci/devices/0000:41:00.0/reset
+printf 'flr bus\n' &gt; /sys/bus/pci/devices/0000:41:00.0/reset_method</code></pre>
+        <p>链路重训练成功——然后一切照旧。</p>
+
+        <h3>回合四：remove + rescan</h3>
+        <p>把 PCI function 整个摘掉再重新扫描：</p>
+        <pre><code>printf 1 &gt; /sys/bus/pci/devices/0000:41:00.0/remove
+printf 1 &gt; /sys/bus/pci/rescan</code></pre>
+        <p>设备在 <code>41:00.0</code> 原位归来，内核重建了 BAR 分配，BAR0 依然 I/O error。这一轮还附赠了新报错——连 DOE mailbox 都复位不动：</p>
+        <pre><code>pci 0000:41:00.0: DOE: [2c8] ABORT timed out
+pci 0000:41:00.0: DOE: [2c8] failed to reset mailbox with abort command : -5
+pci 0000:41:00.0: DOE: [2c8] failed to create mailbox: -5</code></pre>
+        <p>设备对这些管理面的操作一概爱答不理。</p>
+
+        <h3>回合五：把 BAR2 从 128 GB 砍到 64 MB</h3>
+        <p>这块卡支持 Resizable BAR：</p>
+        <pre><code>BAR 2: current size: 128GB, supported: 64MB ... 128GB</code></pre>
+        <p>怀疑 128 GB 的巨型 BAR 摆不下，先砍到最小试试。<code>resource2_resize</code> 写入的是以 MB 为单位的 log2 值：6 → 2⁶ = 64 MB，17 → 2¹⁷ MB = 128 GB：</p>
+        <pre><code>printf 0 &gt; /sys/bus/pci/devices/0000:41:00.0/enable
+printf 6 &gt; /sys/bus/pci/devices/0000:41:00.0/resource2_resize</code></pre>
+        <p>再配合驱动侧关掉 BAR resize 探一次：</p>
+        <pre><code>modprobe nvidia NVreg_OpenRmEnableUnsupportedGpus=1 NVreg_EnableResizableBar=0</code></pre>
+        <p>resize 机械上成功了，该失败的照样失败：probe 挂、BAR0 依旧 I/O error。试完把 BAR2 恢复回 128 GB：</p>
+        <pre><code>printf 17 &gt; /sys/bus/pci/devices/0000:41:00.0/resource2_resize</code></pre>
+
+        <h3>回合六：modprobe 旗子全家桶</h3>
+        <pre><code>modprobe nvidia NVreg_OpenRmEnableUnsupportedGpus=1
+modprobe nvidia NVreg_OpenRmEnableUnsupportedGpus=1 NVreg_EnableResizableBar=0
+modprobe nvidia NVreg_OpenRmEnableUnsupportedGpus=1 NVreg_EnableResizableBar=0 NVreg_IgnoreMMIOCheck=1</code></pre>
+        <p>连 <code>NVreg_IgnoreMMIOCheck=1</code> 都压不住。在旧引导策略下没有任何一种组合能救活它，失败形态从头到尾高度一致——<strong>这是更低层的 PCI/MMIO 映射问题</strong>。</p>
+
+        <p>战况小结：</p>
+        <table>
+          <thead><tr><th>回合</th><th>手段</th><th>链路</th><th>BAR0 读</th><th>驱动 probe</th></tr></thead>
+          <tbody>
+            <tr><td>一</td><td>停服务 / 卸模块 / modprobe guard</td><td>—</td><td>—</td><td>—（只为止噪）</td></tr>
+            <tr><td>二</td><td>FLR</td><td>Gen5 x16</td><td>I/O error</td><td>失败</td></tr>
+            <tr><td>三</td><td>Secondary bus reset</td><td>重训练成功</td><td>I/O error</td><td>失败</td></tr>
+            <tr><td>四</td><td>remove + rescan</td><td>重新枚举成功</td><td>I/O error</td><td>失败（附赠 DOE 报错）</td></tr>
+            <tr><td>五</td><td>BAR2 128 GB → 64 MB</td><td>正常</td><td>I/O error</td><td>失败</td></tr>
+            <tr><td>六</td><td>modprobe 旗子全家桶</td><td>正常</td><td>I/O error</td><td>失败</td></tr>
+          </tbody>
+        </table>
+
+        <h2>真凶浮出水面：pci=nocrs,realloc=on</h2>
+        <p>回头审引导参数。这台机器的旧 boot line 带着：</p>
+        <pre><code>pci=nocrs,realloc=on</code></pre>
+        <p>而内核日志里其实早就留了自白书：</p>
+        <pre><code>PCI: Ignoring host bridge windows from ACPI; if necessary, use "pci=use_crs" and report a bug
+PCI: Using E820 reservations for host bridge windows</code></pre>
+        <p>两个参数拆开看：<code>nocrs</code> 让内核无视 ACPI <code>_CRS</code> 上报的 host bridge 资源窗口，退回用 E820 保留表去猜；<code>realloc=on</code> 进一步允许内核把固件分好的 BAR 全部重排。在这块主板 + 这块卡的组合上，后果就是 GPU 的 BAR 被挪到了一个“枚举看起来正常、链路也在，但 MMIO 实际不被可靠 decode”的位置——于是就有了前面那组诡异的症状。</p>
+        <p>固件本来把话说得很清楚。ACPI 给 root bus <code>40</code> 上报的资源里，有一个巨大的高位 MMIO 窗口：</p>
+        <pre><code>pci_bus 0000:40: root bus resource [mem 0x28081000000-0x38080ffffff window]</code></pre>
+        <p>H100 的三个 BAR 天然就住在这个窗口里：</p>
+        <pre><code>pci 0000:41:00.0: BAR 0 [mem 0x38002000000-0x38002ffffff 64bit pref]
+pci 0000:41:00.0: BAR 2 [mem 0x36000000000-0x37fffffffff 64bit pref]
+pci 0000:41:00.0: BAR 4 [mem 0x38000000000-0x38001ffffff 64bit pref]</code></pre>
+        <p>BAR0 是 16 MB 寄存器区，BAR2 是 128 GB 显存映射（对应后文 BAR1 Memory 的 131072 MiB），BAR4 是 32 MB。让内核尊重 ACPI 窗口之后，驱动一次初始化成功。两种策略下的差别画出来是这样：</p>
+
+        <svg viewBox="0 0 680 400" role="img" aria-label="两种内核 PCI 资源策略对比：pci=nocrs,realloc=on 下内核无视 ACPI 窗口重排 BAR，config 事务可达但 MMIO 读报 I/O error；pci=use_crs,realloc=off 下 BAR 落在 ACPI _CRS 高位窗口内，config 与 MMIO 均正常" style="width:100%;height:auto;margin:6px 0 22px;color:var(--text)">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+          <text x="170" y="30" text-anchor="middle" fill="currentColor" font-size="15" font-weight="600">旧引导 — pci=nocrs,realloc=on</text>
+          <text x="510" y="30" text-anchor="middle" fill="currentColor" font-size="15" font-weight="600">新引导 — pci=use_crs,realloc=off</text>
+          <line x1="340" y1="44" x2="340" y2="368" stroke="currentColor" stroke-opacity="0.18" stroke-width="1" stroke-dasharray="5 5"/>
+
+          <!-- LEFT: nocrs -->
+          <rect x="60" y="48" width="220" height="42" rx="8" fill="var(--bg-soft)" stroke="#6b7280" stroke-width="1.5"/>
+          <text x="170" y="74" text-anchor="middle" fill="currentColor" font-size="14">CPU · PCIe Root Complex</text>
+          <rect x="60" y="150" width="220" height="52" rx="8" fill="none" stroke="#d97706" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.6"/>
+          <text x="170" y="171" text-anchor="middle" fill="#d97706" font-size="13" opacity="0.85">ACPI _CRS MMIO 窗口</text>
+          <text x="170" y="189" text-anchor="middle" fill="#dc2626" font-size="12" font-weight="600">被 nocrs 整个无视</text>
+          <rect x="85" y="256" width="170" height="52" rx="8" fill="var(--bg-soft)" stroke="#6b7280" stroke-width="1.5"/>
+          <text x="170" y="277" text-anchor="middle" fill="currentColor" font-size="14" font-weight="600">GPU BAR0/2/4</text>
+          <text x="170" y="294" text-anchor="middle" fill="currentColor" font-size="12" opacity="0.7">被 realloc 重排到别处</text>
+          <line x1="112" y1="90" x2="122" y2="256" stroke="#2563eb" stroke-width="2.5" marker-end="url(#ar)"/>
+          <text x="64" y="126" fill="#2563eb" font-size="12">config 事务</text>
+          <text x="64" y="141" fill="#2563eb" font-size="12">可读 ✓</text>
+          <line x1="228" y1="90" x2="218" y2="256" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+          <text x="232" y="126" fill="#dc2626" font-size="12">MMIO 读</text>
+          <text x="232" y="141" fill="#dc2626" font-size="12">I/O error ✗</text>
+          <text x="170" y="340" text-anchor="middle" fill="currentColor" font-size="12" opacity="0.75">链路 Gen5 x16、lspci 看得见，</text>
+          <text x="170" y="357" text-anchor="middle" fill="currentColor" font-size="12" opacity="0.75">驱动却报 “fallen off the bus”</text>
+
+          <!-- RIGHT: use_crs -->
+          <rect x="400" y="48" width="220" height="42" rx="8" fill="var(--bg-soft)" stroke="#6b7280" stroke-width="1.5"/>
+          <text x="510" y="74" text-anchor="middle" fill="currentColor" font-size="14">CPU · PCIe Root Complex</text>
+          <rect x="400" y="150" width="220" height="158" rx="8" fill="none" stroke="#0d9488" stroke-width="1.5"/>
+          <text x="510" y="171" text-anchor="middle" fill="#0d9488" font-size="13" font-weight="600">ACPI _CRS 高位 MMIO 窗口</text>
+          <text x="510" y="188" text-anchor="middle" fill="currentColor" font-size="11" opacity="0.7">0x28081000000 – 0x38080ffffff</text>
+          <rect x="425" y="216" width="170" height="76" rx="8" fill="var(--bg-soft)" stroke="#6b7280" stroke-width="1.5"/>
+          <text x="510" y="238" text-anchor="middle" fill="currentColor" font-size="14" font-weight="600">GPU BAR0/2/4</text>
+          <text x="510" y="257" text-anchor="middle" fill="currentColor" font-size="12" opacity="0.7">16 MB / 128 GB / 32 MB</text>
+          <text x="510" y="274" text-anchor="middle" fill="currentColor" font-size="12" opacity="0.7">自然落回窗口内</text>
+          <line x1="452" y1="90" x2="462" y2="216" stroke="#2563eb" stroke-width="2.5" marker-end="url(#ar)"/>
+          <text x="410" y="126" fill="#2563eb" font-size="12">config ✓</text>
+          <line x1="568" y1="90" x2="558" y2="216" stroke="#0d9488" stroke-width="3" marker-end="url(#ar)"/>
+          <text x="574" y="126" fill="#0d9488" font-size="12">MMIO ✓</text>
+          <text x="510" y="340" text-anchor="middle" fill="currentColor" font-size="12" opacity="0.75">BAR 落在桥真正 decode 的窗口里，</text>
+          <text x="510" y="357" text-anchor="middle" fill="currentColor" font-size="12" opacity="0.75">驱动一次点亮，nvidia-smi 复活</text>
+        </svg>
+
+        <h2>终局：一行参数定胜负</h2>
+        <p>编辑 <code>/etc/default/grub</code>。改前：</p>
+        <pre><code>GRUB_CMDLINE_LINUX_DEFAULT="quiet splash pci=nocrs,realloc=on iommu=pt"</code></pre>
+        <p>改后：</p>
+        <pre><code>GRUB_CMDLINE_LINUX_DEFAULT="quiet splash pci=use_crs,realloc=off iommu=pt"</code></pre>
+        <p>重新生成 GRUB 配置并重启：</p>
+        <pre><code>update-grub
+systemctl reboot</code></pre>
+        <p>重启后确认生效的引导行：</p>
+        <pre><code>$ cat /proc/cmdline
+BOOT_IMAGE=/boot/vmlinuz-6.17.0-35-generic root=UUID=1b66de5d-62ff-4e45-b5c1-c127818b6c5b ro quiet splash pci=use_crs,realloc=off iommu=pt vt.handoff=7</code></pre>
+
+        <h2>战后验尸</h2>
+        <p><code>lspci</code>：驱动上桩，三个 BAR 各就各位，链路满血：</p>
+        <pre><code>$ lspci -Dnnvv -s 0000:41:00.0
+0000:41:00.0 3D controller [0302]: NVIDIA Corporation Device [10de:233f] (rev a1)
+    Kernel driver in use: nvidia
+    Region 0: Memory at 38002000000 (64-bit, prefetchable) [size=16M]
+    Region 2: Memory at 36000000000 (64-bit, prefetchable) [size=128G]
+    Region 4: Memory at 38000000000 (64-bit, prefetchable) [size=32M]
+    LnkSta: Speed 32GT/s, Width x16</code></pre>
+        <p>设备节点齐了：</p>
+        <pre><code>$ ls -l /dev/nvidia0 /dev/nvidiactl /dev/nvidia-uvm</code></pre>
+        <p>驱动侧的登记信息：</p>
+        <pre><code>$ cat /proc/driver/nvidia/gpus/0000:41:00.0/information
+Model:           Unknown
+GPU UUID:        GPU-ef59d941-6b8d-2e65-026a-580067da9fcd
+Video BIOS:      96.00.74.00.01
+Bus Type:        PCIe
+Bus Location:    0000:41:00.0
+Device Minor:    0
+GPU Firmware:    595.71.05
+GPU Excluded:    No</code></pre>
+        <p><code>Model: Unknown</code> 不用慌——ES 的 PCI ID 本来就不在驱动的花名册里。重要的信号是：UUID 在、minor <code>0</code> 在、<code>GPU Excluded: No</code>。然后是久违的问候：</p>
+        <pre><code>$ nvidia-smi -L
+GPU 0: NVIDIA Graphics Device (UUID: GPU-ef59d941-6b8d-2e65-026a-580067da9fcd)</code></pre>
+        <p>一条命令看齐健康指标：</p>
+        <pre><code>$ nvidia-smi --query-gpu=index,name,uuid,pci.bus_id,driver_version,memory.total,pstate,temperature.gpu,power.draw,power.limit,ecc.mode.current --format=csv
+index, name, uuid, pci.bus_id, driver_version, memory.total [MiB], pstate, temperature.gpu, power.draw [W], power.limit [W], ecc.mode.current
+0, NVIDIA Graphics Device, GPU-ef59d941-6b8d-2e65-026a-580067da9fcd, 00000000:41:00.0, 595.71.05, 81559 MiB, P0, 29, 86.62 W, 700.00 W, Enabled</code></pre>
+        <p>81559 MiB 显存、P0、29 ℃、86 W / 上限 700 W、ECC 开启。显存与 ECC 细查（<code>nvidia-smi -q -d MEMORY</code> / <code>-d ECC</code>）：</p>
+        <pre><code>FB Memory Usage
+    Total:    81559 MiB
+    Reserved: 478 MiB
+    Used:     14 MiB
+    Free:     81068 MiB
+BAR1 Memory Usage
+    Total:    131072 MiB</code></pre>
+        <pre><code>ECC Mode
+    Current: Enabled
+    Pending: Enabled
+Volatile ECC Errors:
+    SRAM Correctable: 0
+    SRAM Uncorrectable Parity: 0
+    SRAM Uncorrectable SEC-DED: 0
+    DRAM Correctable: 0
+    DRAM Uncorrectable: 0</code></pre>
+        <p>BAR1 的 131072 MiB = 128 GB，正是回合五折腾过的那个 BAR2 映射，如今安安稳稳。内核日志也干净了：</p>
+        <pre><code>nvidia 0000:41:00.0: enabling device (0000 -&gt; 0002)
+NVRM: loading NVIDIA UNIX Open Kernel Module for x86_64 595.71.05
+nvidia-modeset: Loading NVIDIA UNIX Open Kernel Mode Setting Driver for x86_64 595.71.05
+[drm] [nvidia-drm] [GPU ID 0x00004100] Loading driver
+[drm] Initialized nvidia-drm 0.0.0 for 0000:41:00.0 on minor 2</code></pre>
+        <p>没有 “fallen off the bus”、没有 Xid、没有致命 NVRM 报错。下面这两条 DRM 消息对无头计算卡无害，属正常现象：</p>
+        <pre><code>nvidia 0000:41:00.0: [drm] No compatible format found
+nvidia 0000:41:00.0: [drm] Cannot find any crtc or sizes</code></pre>
+
+        <h2>备忘与告诫</h2>
+        <ul>
+          <li>本次结论的前提是单卡在位（只有 <code>0000:41:00.0</code> 一个 NVIDIA endpoint）。若装两块 ES 而 <code>lspci</code> 只见其一，那是另一类枚举 / 供电 / 槽位问题，别直接套用本文。</li>
+          <li>ES 卡在 <code>nvidia-smi</code> 里显示为 <code>NVIDIA Graphics Device</code> 而非零售名 H100，属预期行为。</li>
+          <li>VBIOS 为 <code>96.00.74.00.01</code>，料号 <code>233F-885-A1</code>，最终工作驱动为开源内核模块 <code>595.71.05</code>。</li>
+          <li><strong>最重要的持久设定是内核 PCI 资源策略。</strong>除非有独立的平台级理由、且改完重新验证过 GPU，否则不要把 <code>pci=nocrs,realloc=on</code> 加回来。</li>
+        </ul>
+
+        <h2>复发自查清单</h2>
+        <p>同样症状再次出现时，按顺序过一遍：</p>
+        <ol>
+          <li>确认当前引导行，应包含 <code>pci=use_crs,realloc=off iommu=pt</code>：
+            <pre><code>cat /proc/cmdline</code></pre></li>
+          <li>确认 PCI 设备还在：
+            <pre><code>lspci -Dnn | rg -i 'nvidia|3d controller'</code></pre></li>
+          <li>确认驱动绑定，期望指向 <code>/sys/bus/pci/drivers/nvidia</code>：
+            <pre><code>readlink -f /sys/bus/pci/devices/0000:41:00.0/driver</code></pre></li>
+          <li>确认设备节点：
+            <pre><code>ls -l /dev/nvidia0 /dev/nvidiactl /dev/nvidia-uvm</code></pre></li>
+          <li>确认 <code>nvidia-smi</code>：
+            <pre><code>nvidia-smi -L
+nvidia-smi --query-gpu=index,name,uuid,pci.bus_id,driver_version,memory.total,ecc.mode.current --format=csv</code></pre></li>
+          <li>若 <code>nvidia-smi</code> 再次失联，先收集现场：
+            <pre><code>dmesg -T | rg -i 'nvrm|nvidia|xid|41:00|fallen off|aer|bar|doe'
+lspci -Dnnvv -s 0000:41:00.0
+cat /sys/bus/pci/devices/0000:41:00.0/resource
+cat /proc/driver/nvidia/version</code></pre></li>
+          <li>不要上来就动 CUDA 软件包。这次的故障从头到尾不在 CUDA 用户态，而在 PCI 资源 / MMIO 路由。</li>
+        </ol>
+
+        <p>最后一句话总结这场斗法：<strong>链路在 ≠ MMIO 通，config 可读 ≠ 卡还活着。</strong>当 <code>nvidia-smi</code> 失联、<code>lspci</code> 却看得见、BAR 一读就 I/O error 时，别急着重装驱动、更别动 CUDA——低头看一眼 <code>/proc/cmdline</code>。斗了六个回合才发现，对面站着的从来不是这块卡，它也是受害者；真正的对手，是引导参数里那七个字符：<code>nocrs</code>。</p>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <span>© 2026 我的博客</span>
+      <span>由 <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a> 托管</span>
+    </footer>
+  </div>
+</body>
+</html>
