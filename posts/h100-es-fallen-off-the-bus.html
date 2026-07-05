@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>我与 H100 884 ES 的激情斗法 · 我的博客</title>
+  <title>我与 H100 885 ES 的激情斗法 · 我的博客</title>
   <meta name="description" content="一块 GH100 ES（10de:233f）突然从 nvidia-smi 消失：lspci 看得见、链路 Gen5 x16 正常、PCI config 可读，BAR0 MMIO 却一读就 I/O error，内核反复报 fallen off the bus。FLR、secondary bus reset、remove/rescan、BAR2 resize、modprobe 旗子全家桶轮番上阵全部无效，最终根因是引导参数 pci=nocrs,realloc=on 让内核无视 ACPI _CRS 窗口乱摆 BAR；改回 pci=use_crs,realloc=off 一击痊愈。附完整验证与复发自查清单。" />
-  <meta property="og:title" content="我与 H100 884 ES 的激情斗法" />
+  <meta property="og:title" content="我与 H100 885 ES 的激情斗法" />
   <meta property="og:description" content="H100 ES 掉卡排障全记录：六种 reset 全灭，真凶不是驱动，是 pci=nocrs,realloc=on。" />
   <meta property="og:type" content="article" />
   <meta property="og:url" content="https://aosudh.github.io/posts/h100-es-fallen-off-the-bus.html" />
@@ -24,7 +24,7 @@
     <main>
       <a class="back-link" href="/">← 返回首页</a>
       <article class="post-content">
-        <h1>我与 H100 884 ES 的激情斗法</h1>
+        <h1>我与 H100 885 ES 的激情斗法</h1>
         <p class="post-meta">2026-07-06 · 排障记录</p>
 
         <p>手上这块 H100 是工程样品（ES），没有零售名分：PCI ID <code>10de:233f</code>，在公开 pci.ids 里查无此人——我之前整理的<a href="/posts/nvidia-gpu-pci-device-ids.html">《NVIDIA GPU PCI Device ID 全量对照》</a>里也没有它，ES 专属 ID 本来就不进公开名单。<code>nvidia-smi</code> 里它只肯自称 <strong>NVIDIA Graphics Device</strong>，开源内核驱动要打开 <code>OpenRmEnableUnsupportedGpus=1</code> 才肯伺候，NVLink 还得手动关掉。这种卡从第一天起就走在“非官方支持”的钢丝上。</p>

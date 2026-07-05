@@ -32,7 +32,7 @@
 
         <!-- ↓↓↓ 新增文章：复制下面这个 <li> 块，改链接/标题/日期/摘要即可 ↓↓↓ -->
         <li class="post-item">
-          <a class="post-link" href="/posts/h100-es-fallen-off-the-bus.html">我与 H100 884 ES 的激情斗法</a>
+          <a class="post-link" href="/posts/h100-es-fallen-off-the-bus.html">我与 H100 885 ES 的激情斗法</a>
           <p class="post-meta">2026-07-06</p>
           <p class="post-summary">一块 GH100 ES（10de:233f）突然从 nvidia-smi 消失：lspci 看得见、链路 Gen5 x16 训练正常、PCI config 可读，BAR0 MMIO 却一读就 I/O error，内核反复报 fallen off the bus。FLR、secondary bus reset、remove/rescan、BAR2 resize、modprobe 旗子全家桶六个回合轮番上阵全部无效，最终真凶是引导参数 pci=nocrs,realloc=on——内核无视 ACPI _CRS 窗口自作主张重排 BAR；改回 pci=use_crs,realloc=off 一击痊愈。附完整验证与复发自查清单。</p>
         </li>
