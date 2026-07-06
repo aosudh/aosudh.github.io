@@ -32,6 +32,12 @@
 
         <!-- ↓↓↓ 新增文章：复制下面这个 <li> 块，改链接/标题/日期/摘要即可 ↓↓↓ -->
         <li class="post-item">
+          <a class="post-link" href="/posts/rtx-6000d-vs-pro-6000.html">RTX PRO 6000 vs RTX 6000D：阉割点实测与 profiling 接口验证报告</a>
+          <p class="post-meta">2026-07-06</p>
+          <p class="post-summary">租两台 AutoDL 实例把满血 RTX PRO 6000 Server 与中国特供 RTX 6000D 摆在一起对称实测：DCGM tensor_active 计数器当场抓到限速器现行——D 卡 tensor 发射占空比被硬锁 ~37%，TF32/FP16/FP8/INT8/NVFP4 全 MMA 一视同仁，cutlass 最优内核也拉不动（满血 +20%、D 卡 +0%），证实"FP16≈148T"传闻并算清 TPP 合规账；带宽 0.875、CUDA core 0.83 均为纯物理裁剪。逐项验证"profiling/DCGM 被阉"传闻：ncu/CUPTI 确被 SKU 白名单封锁（官方文档背书），DCGM≥4.4.1 已修复，nvidia-smi/NVML 属讹传。附限速器形状/强度响应曲线与 D 卡顺特性优化 playbook（NVFP4 3.8×、融合 5.4×、Sage +18%）。</p>
+        </li>
+
+        <li class="post-item">
           <a class="post-link" href="/posts/h100-es-fallen-off-the-bus.html">我与 H100 885 ES 的激情斗法</a>
           <p class="post-meta">2026-07-06</p>
           <p class="post-summary">一块 GH100 ES（10de:233f）突然从 nvidia-smi 消失：lspci 看得见、链路 Gen5 x16 训练正常、PCI config 可读，BAR0 MMIO 却一读就 I/O error，内核反复报 fallen off the bus。FLR、secondary bus reset、remove/rescan、BAR2 resize、modprobe 旗子全家桶六个回合轮番上阵全部无效，最终真凶是引导参数 pci=nocrs,realloc=on——内核无视 ACPI _CRS 窗口自作主张重排 BAR；改回 pci=use_crs,realloc=off 一击痊愈。附完整验证与复发自查清单。</p>
