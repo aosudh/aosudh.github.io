@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1900 1380" role="img" aria-labelledby="title desc">
+  <title id="title">GSP generic feature gate 的注释反汇编和控制流</title>
+  <desc id="desc">以 595.58.03 的 rm.elf gate 为主图，展示 feature table 查询、状态分支、override 字节、OBJGPU 回调槽以及 GA10x 选中的恒返回零 callback；右侧列出精确指令，并标出未证明与 P2P 的语义关系。</desc>
+  <style>
+    svg{font-family:Inter,"Noto Sans CJK SC","Microsoft YaHei",sans-serif;color:#152238} text{fill:#152238}
+    .title{font-size:34px;font-weight:700}.subtitle{font-size:17px;fill:#536176}.head{font-size:21px;font-weight:750}.label{font-size:16px;font-weight:650}.detail{font-size:14px;fill:#536176}.small{font-size:13px;fill:#536176}.mono{font-family:Consolas,"Cascadia Mono",monospace;font-size:15px;fill:#172033}.mono-small{font-family:Consolas,"Cascadia Mono",monospace;font-size:13px;fill:#172033}.badge{font-size:13px;font-weight:700}
+    .frame{fill:#ffffff;stroke:#cbd5e1;stroke-width:2}.block{fill:#eef2f7;stroke:#cbd5e1;stroke-width:1.5}.dispatch{fill:#e7efff;stroke:#2563eb}.decision{fill:#fff2d8;stroke:#a45b08}.callback{fill:#ddf5ec;stroke:#0f8a68}.unknown{fill:#eeeafb;stroke:#6b5aa6;stroke-dasharray:8 6}.danger{fill:#fde8e7;stroke:#b42318}
+    .edge{stroke:#2563eb;stroke-width:3;fill:none;marker-end:url(#arr-blue)}.true{stroke:#0f8a68;stroke-width:3;fill:none;marker-end:url(#arr-green)}.false{stroke:#a45b08;stroke-width:3;fill:none;marker-end:url(#arr-amber)}.unknownedge{stroke:#6b5aa6;stroke-width:2.5;stroke-dasharray:9 7;fill:none;marker-end:url(#arr-purple)}
+    .ruler{stroke:#cbd5e1;stroke-width:1.5}.highlight{fill:#fff2d8}.codeframe{fill:#eef2f7;stroke:#cbd5e1;stroke-width:1.5}.note{fill:#ffffff;stroke:#cbd5e1;stroke-width:1.5}
+  </style>
+  <defs>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#2563eb"/></marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#0f8a68"/></marker>
+    <marker id="arr-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#a45b08"/></marker>
+    <marker id="arr-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#6b5aa6"/></marker>
+  </defs>
+  <rect x="0" y="0" width="1900" height="1380" fill="#f7f9fc"/>
+
+  <text x="40" y="52" class="title">GSP generic feature gate 与 5090 P2P registry 路径：两条链不能混为一谈</text>
+  <text x="40" y="82" class="subtitle">主图使用 595.58.03 container RVA；595 的 GB202 index 67 与 610 的 index 65 均已 concrete 验证为恒零。</text>
+
+  <!-- Left CFG -->
+  <rect x="40" y="115" width="980" height="1165" rx="16" class="frame"/>
+  <text x="70" y="155" class="head">A. 高层 CFG（595.58.03）</text>
+  <rect x="70" y="180" width="590" height="112" rx="13" class="block dispatch"/>
+  <text x="95" y="210" class="label">入口：container 0x5bef58 / rm.elf task 0x142ff58</text>
+  <text x="95" y="239" class="mono">a0 = OBJGPU　a1 = feature_id　a2 = additional argument</text>
+  <text x="95" y="265" class="detail">保存 receiver/return address；按 ID 范围进入主表或其他子路径</text>
+
+  <rect x="70" y="340" width="590" height="150" rx="13" class="block dispatch"/>
+  <text x="95" y="370" class="label">主表查找：32 条记录，stride 0x18</text>
+  <text x="95" y="399" class="mono">lw a6, 0x5158(OBJGPU)</text>
+  <text x="95" y="425" class="mono">for i in 0..31: if record[i].id == a1</text>
+  <text x="95" y="451" class="detail">按记录中的 shift/mask 从 OBJGPU 状态字提取 s2</text>
+  <text x="95" y="475" class="small">旧 flat alias 0x31a56c0 → rm.elf task 0x40166c0 / container 0xf6b6c0</text>
+
+  <polygon points="365,535 620,625 365,715 110,625" class="decision"/>
+  <text x="365" y="604" text-anchor="middle" class="label">提取出的 state s2</text>
+  <text x="365" y="633" text-anchor="middle" class="mono">0 / 1 / 2</text>
+  <text x="365" y="661" text-anchor="middle" class="detail">表字段语义未强行命名</text>
+
+  <rect x="70" y="780" width="590" height="138" rx="13" class="block decision"/>
+  <text x="95" y="810" class="label">state == 0：检查全局 override，再调用策略槽</text>
+  <text x="95" y="839" class="mono">lbu a5, OBJGPU+0x5452</text>
+  <text x="95" y="865" class="detail">override != 0 → 跳过 callback，保持 s2=0 返回</text>
+  <text x="95" y="891" class="detail">override == 0 → 调用 *(OBJGPU+0x458)(OBJGPU, feature_id)</text>
+
+  <rect x="70" y="975" width="590" height="142" rx="13" class="block callback"/>
+  <text x="95" y="1005" class="label">595：GB202/index 67 concrete 选中恒零 callback</text>
+  <text x="95" y="1034" class="mono">start 0xca4646 · 121 insns · store 0xca5536</text>
+  <text x="95" y="1060" class="mono">value 0xabf428 / task 0x1930428 · return 0</text>
+  <text x="95" y="1086" class="detail">与 GA10x 路径落到同一 callback；函数不读取 a1/a2</text>
+
+  <rect x="720" y="350" width="260" height="130" rx="13" class="block unknown"/>
+  <text x="745" y="381" class="label">其他 ID/表路径</text><text x="745" y="411" class="detail">同一函数内仍有 secondary</text><text x="745" y="436" class="detail">table、special IDs 与错误路</text><text x="745" y="461" class="detail">径；图中压缩显示，不删除证据</text>
+  <rect x="720" y="550" width="260" height="120" rx="13" class="block"/>
+  <text x="745" y="581" class="label">state == 1</text><text x="745" y="611" class="mono">return s2 (=1)</text><text x="745" y="638" class="detail">不进入 callback</text>
+  <rect x="720" y="720" width="260" height="140" rx="13" class="block unknown"/>
+  <text x="745" y="751" class="label">state == 2</text><text x="745" y="781" class="detail">进入 secondary table /</text><text x="745" y="806" class="detail">special feature 子路径，随后</text><text x="745" y="831" class="detail">回到统一返回或错误处理</text>
+  <rect x="720" y="940" width="260" height="108" rx="13" class="block callback"/>
+  <text x="745" y="971" class="label">统一返回</text><text x="745" y="1001" class="mono">a0 = sext.w(s2)</text><text x="745" y="1028" class="detail">恢复寄存器并 c.jr ra</text>
+
+  <path d="M365 292V330" class="edge"/>
+  <path d="M365 490V525" class="edge"/>
+  <path d="M365 715V770" class="true"/><text x="380" y="750" class="small">s2 = 0</text>
+  <path d="M620 625H710" class="true"/><text x="650" y="610" class="small">s2 = 1</text>
+  <path d="M520 690C650 720 650 770 710 790" class="unknownedge"/><text x="610" y="731" class="small">s2 = 2</text>
+  <path d="M660 410H710" class="unknownedge"/><text x="670" y="394" class="small">其他分派</text>
+  <path d="M365 918V965" class="true"/><text x="380" y="949" class="small">override = 0</text>
+  <path d="M660 850C700 850 690 960 710 980" class="false"/><text x="676" y="876" class="small">override ≠ 0</text>
+  <path d="M660 1045H710" class="true"/>
+  <path d="M980 610H1000V994H990" class="edge"/><path d="M850 860V930" class="edge"/>
+
+  <rect x="70" y="1165" width="910" height="95" rx="12" class="danger"/>
+  <text x="95" y="1193" class="label">跨版本硬证据：GB202 索引不同，但两版都选中恒零 callback</text>
+  <text x="95" y="1218" class="detail">595 index 67：0xca5536→0xabf428；610 index 65：0xb0410a→0xaef6c0。</text>
+  <text x="95" y="1242" class="detail">generic gate 与 P2P regkey parser 无 direct edge，因此不能把 generic gate 写成 P2P 根因。</text>
+
+  <!-- Right disassembly -->
+  <rect x="1050" y="115" width="810" height="1165" rx="16" class="frame"/>
+  <text x="1080" y="155" class="head">B. 关键指令与跨版本锚点</text>
+  <rect x="1080" y="180" width="750" height="540" rx="12" class="codeframe"/>
+  <text x="1110" y="213" class="mono"># 595.58.03 · main table / state</text>
+  <text x="1110" y="243" class="mono-small">0x5bef7e  c.lui a5, 5</text>
+  <text x="1110" y="268" class="mono-small">0x5bef80  c.add a5, a0</text>
+  <text x="1110" y="293" class="mono-small">0x5bef82  lw a6, 0x158(a5)       # OBJGPU+0x5158</text>
+  <text x="1110" y="318" class="mono-small">0x5bef86  auipc/addi a5, ...      # feature table</text>
+  <text x="1110" y="343" class="mono-small">0x5bef9c  c.lw a4, 0(a5)</text>
+  <text x="1110" y="368" class="mono-small">0x5bef9e  c.addi a5, 0x18         # next record</text>
+  <text x="1110" y="393" class="mono-small">0x5befa0  bne a4, a1, -0xa        # match feature_id</text>
+  <rect x="1095" y="414" width="720" height="128" rx="8" class="highlight"/>
+  <text x="1110" y="441" class="mono"># state==0: override / indirect callback</text>
+  <text x="1110" y="469" class="mono-small">0x5befda  lbu a5, 0x452(a5)       # OBJGPU+0x5452</text>
+  <text x="1110" y="494" class="mono-small">0x5befde  c.bnez a5, +0x1e        # skip callback</text>
+  <text x="1110" y="519" class="mono-small">0x5befe0  ld a5, 0x458(s3)        # callback slot</text>
+  <text x="1110" y="544" class="mono-small">0x5befe4  c.mv a0, s3              # OBJGPU receiver</text>
+  <text x="1110" y="569" class="mono-small">0x5befe6  sd a1, -0x48(s0)          # preserve feature_id</text>
+  <text x="1110" y="594" class="mono-small">0x5befea  c.jalr a5                 # a1 remains feature_id</text>
+  <text x="1110" y="619" class="mono-small">0x5beff4  sext.w s2, a0             # callback result</text>
+  <text x="1110" y="654" class="mono"># selected callback @ 0xabf428</text>
+  <text x="1110" y="682" class="mono-small">... c.li a0, 0 ; ... ; c.jr ra</text>
+
+  <rect x="1080" y="745" width="750" height="182" rx="12" class="note"/>
+  <text x="1110" y="778" class="label">610.43.03 对应变化（结构保持等价）</text>
+  <text x="1110" y="810" class="mono">gate：0x5def08 / rm.elf task 0x143ff08</text>
+  <text x="1110" y="840" class="mono">override：OBJGPU+0x54ba　slot：OBJGPU+0x490</text>
+  <text x="1110" y="870" class="mono">610 GB202/index 65：0xb0410a → 0xaef6c0</text>
+  <text x="1110" y="899" class="detail">595 GB202/index 67：0xca5536 → 0xabf428；两版 callback 都恒返回 0。</text>
+
+  <rect x="1080" y="950" width="750" height="112" rx="12" class="note unknown"/>
+  <text x="1110" y="982" class="label">为什么 0x404b90 不是这个 callback</text>
+  <text x="1110" y="1012" class="mono">ld a5, 0x238(a1) → 把 a1 当指针解引用</text>
+  <text x="1110" y="1040" class="detail">gate ABI 的 a1 是小整数 feature_id；这是 receiver 类型/ABI 冲突，属于 offset 碰撞。</text>
+
+  <rect x="1080" y="1080" width="750" height="180" rx="12" class="callback"/>
+  <text x="1110" y="1112" class="label">已证实：同一 registry DB 分叉给 host 与 GSP 两个消费者</text>
+  <text x="1110" y="1140" class="mono-small">shared registry DB / module parameters</text>
+  <text x="1110" y="1167" class="mono-small">├─ host: _kbifInitRegistryOverrides / kern_bus.c</text>
+  <text x="1110" y="1194" class="mono-small">│        → CPU-RM p2p_caps / GB202 BAR1 HAL</text>
+  <text x="1110" y="1221" class="mono-small">└─ GSP: RegistryDwords → SET_REGISTRY → parser / mirror</text>
+  <text x="1110" y="1248" class="small">module-param 协同两支；GSP 不回喂 host HAL；.fwimage patch 需 exact diff。</text>
+
+  <text x="40" y="1335" class="small">坐标说明：container RVA 便于复现文件字节；task VA 才是内嵌 rm.elf 的运行时地址。旧 base=0 flat alias 仅在此作为纠错映射出现。</text>
+</svg>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 1260" role="img" aria-labelledby="title desc">
+  <title id="title">RTX 3090、4090、5090 的 P2P 与 GDR 修改矩阵</title>
+  <desc id="desc">对比 GA102、AD102、GB202 在 OpenRM 610.43.03 中的 GPU-GPU BAR1 P2P 分派、社区修改路径、GDR 用户态证据以及 GSP 证据边界。</desc>
+  <style>
+    svg{font-family:Inter,"Noto Sans CJK SC","Microsoft YaHei",sans-serif;color:#152238} text{fill:#152238}
+    .title{font-size:34px;font-weight:700}.subtitle{font-size:17px;fill:#536176}.gpu{font-size:26px;font-weight:750}.chip{font-size:16px;fill:#536176}.rowhead{font-size:18px;font-weight:700}.label{font-size:16px;font-weight:650}.detail{font-size:14px;fill:#536176}.small{font-size:13px;fill:#536176}.mono{font-family:Consolas,"Cascadia Mono",monospace;font-size:14px}.badge{font-size:13px;font-weight:700;letter-spacing:.03em}
+    .frame{fill:#ffffff;stroke:#cbd5e1;stroke-width:2}.cell{stroke:#cbd5e1;stroke-width:1.2}.row{fill:#eef2f7}.hard{fill:#ddf5ec}.external{fill:#e7efff}.reported{fill:#fff2d8;stroke:#a45b08;stroke-dasharray:9 6}.unknown{fill:#eeeafb;stroke:#6b5aa6;stroke-dasharray:7 6}.blocked{fill:#fde8e7}.neutral{fill:#ffffff}
+    .hardstroke{stroke:#0f8a68;stroke-width:3}.externalstroke{stroke:#2563eb;stroke-width:3}.reportedstroke{stroke:#a45b08;stroke-width:3;stroke-dasharray:9 6}.unknownstroke{stroke:#6b5aa6;stroke-width:3;stroke-dasharray:7 6}.check{font-size:22px;font-weight:800}
+  </style>
+  <rect x="0" y="0" width="1800" height="1260" fill="#f7f9fc"/>
+
+  <text x="40" y="52" class="title">3090 / 4090 / 5090：能改哪一层，证据到哪一层</text>
+  <text x="40" y="82" class="subtitle">基准源码：OpenRM 610.43.03。社区补丁与用户实测另行标注，不把“观察到有效”自动等同于“已定位唯一因果门”。</text>
+  <line x1="1030" y1="50" x2="1070" y2="50" class="hardstroke"/><text x="1082" y="56" class="small">本地源码/固件硬证据</text>
+  <line x1="1265" y1="50" x2="1305" y2="50" class="externalstroke"/><text x="1317" y="56" class="small">公开社区端到端证据</text>
+  <line x1="1515" y1="50" x2="1555" y2="50" class="reportedstroke"/><text x="1567" y="56" class="small">用户实测输入/机制待复核</text>
+
+  <rect x="40" y="115" width="1720" height="1035" rx="16" class="frame"/>
+  <!-- column headers -->
+  <rect x="40" y="115" width="280" height="100" rx="16" class="cell row"/>
+  <text x="180" y="157" text-anchor="middle" class="rowhead">比较项</text><text x="180" y="185" text-anchor="middle" class="detail">P2P 与 GDR 分开判断</text>
+  <rect x="320" y="115" width="480" height="100" class="cell neutral"/><text x="560" y="153" text-anchor="middle" class="gpu">RTX 3090</text><text x="560" y="183" text-anchor="middle" class="chip">GA102 · Ampere · 可选 NVLink bridge</text>
+  <rect x="800" y="115" width="480" height="100" class="cell neutral"/><text x="1040" y="153" text-anchor="middle" class="gpu">RTX 4090</text><text x="1040" y="183" text-anchor="middle" class="chip">AD102 · Ada · 无 NVLink</text>
+  <rect x="1280" y="115" width="480" height="100" rx="16" class="cell neutral"/><text x="1520" y="153" text-anchor="middle" class="gpu">RTX 5090</text><text x="1520" y="183" text-anchor="middle" class="chip">GB202 · Blackwell · 无 NVLink</text>
+
+  <!-- physical -->
+  <rect x="40" y="215" width="280" height="105" class="cell row"/><text x="65" y="252" class="rowhead">物理 peer 通道</text><text x="65" y="280" class="detail">不是 capability 本身</text>
+  <rect x="320" y="215" width="480" height="105" class="cell hard"/><text x="345" y="249" class="label">NVLink（装桥时）或 PCIe BAR1</text><text x="345" y="276" class="detail">NVLink 可作为独立路径；PCIe fallback 仍需 host patch</text>
+  <rect x="800" y="215" width="480" height="105" class="cell hard"/><text x="825" y="249" class="label">PCIe BAR1</text><text x="825" y="276" class="detail">所有 GPU-GPU peer TLP 都受平台拓扑约束</text>
+  <rect x="1280" y="215" width="480" height="105" class="cell hard"/><text x="1305" y="249" class="label">PCIe BAR1</text><text x="1305" y="276" class="detail">需要足够 aperture、static BAR1 与地址/页表正确</text>
+
+  <!-- dispatch -->
+  <rect x="40" y="320" width="280" height="130" class="cell row"/><text x="65" y="357" class="rowhead">官方 OpenRM 610</text><text x="65" y="385" class="detail">GPU-GPU BAR1 HAL 分派</text>
+  <rect x="320" y="320" width="480" height="130" class="cell blocked"/><text x="345" y="353" class="label">明确阻断：GA10x 不在真实实现列表</text><text x="345" y="383" class="mono">dispatch → _d69453 → NV_FALSE</text><text x="345" y="413" class="detail">即使 static BAR1 底层实现存在，也先被 capability stub 拒绝</text>
+  <rect x="800" y="320" width="480" height="130" class="cell blocked"/><text x="825" y="353" class="label">明确阻断：AD10x 不在真实实现列表</text><text x="825" y="383" class="mono">dispatch → _d69453 → NV_FALSE</text><text x="825" y="413" class="detail">与 GA10x 相同的 host CPU-RM 机器代码阻断</text>
+  <rect x="1280" y="320" width="480" height="130" class="cell hard"/><text x="1305" y="353" class="label">不落 stub：GB202 分派到真实门体</text><text x="1305" y="383" class="mono">…Supported_GH100 + SUPPORT…=TRUE</text><text x="1305" y="413" class="detail">只表示能继续检查；不是 stock 端到端必然可用的证明</text>
+
+  <!-- community P2P -->
+  <rect x="40" y="450" width="280" height="160" class="cell row"/><text x="65" y="487" class="rowhead">当前社区 P2P 路线</text><text x="65" y="515" class="detail">版本匹配 OpenRM/UVM</text><text x="65" y="542" class="detail">（外部事实，不是官方支持）</text>
+  <rect x="320" y="450" width="480" height="160" class="cell external"/><text x="345" y="483" class="label">NVLink 可用时优先；否则 PCIe BAR1 补丁</text><text x="345" y="513" class="detail">接真实 HAL、强制 BAR1/读写策略、static BAR1/ReBAR</text><text x="345" y="540" class="detail">并保持 kernel module、user-space、GSP 版本一致</text><text x="345" y="573" class="badge">COMMUNITY：3090 / 3090 Ti 分支声明支持</text>
+  <rect x="800" y="450" width="480" height="160" class="cell external"/><text x="825" y="483" class="label">绕过 HAL stub，接 GH100 BAR1 方法</text><text x="825" y="513" class="detail">再修 peer address / aperture / UVM mapping 路径</text><text x="825" y="540" class="detail">单改 registry 或 GSP generic feature ID 不等价</text><text x="825" y="573" class="badge">COMMUNITY：多个版本已有实测</text>
+  <rect x="1280" y="450" width="480" height="160" class="cell external"/><text x="1305" y="483" class="label">真实门体之外仍补 OpenRM/UVM 路径</text><text x="1305" y="513" class="detail">static BAR1、ReBAR/aperture、coherent/address 修正</text><text x="1305" y="540" class="detail">因此不能写成“50 系无需改源码”</text><text x="1305" y="573" class="badge">COMMUNITY：多卡 5090 全连通与带宽样例</text>
+
+  <!-- GDR -->
+  <rect x="40" y="610" width="280" height="175" class="cell row"/><text x="65" y="647" class="rowhead">GPUDirect RDMA</text><text x="65" y="675" class="detail">peermem / DMA-BUF</text><text x="65" y="702" class="detail">独立于 GPU-GPU HAL</text>
+  <rect x="320" y="610" width="480" height="175" class="cell unknown"/><text x="345" y="643" class="label">内核有第三方 P2P / DMA-BUF 基础路径</text><text x="345" y="673" class="detail">但本次审计没有与 5090 同等级的 GeForce 端到端</text><text x="345" y="700" class="detail">公开复现；必须逐 build-id probe 用户态 capability</text><text x="345" y="740" class="badge">状态：不可照抄 5090 libcuda 字节</text>
+  <rect x="800" y="610" width="480" height="175" class="cell unknown"/><text x="825" y="643" class="label">同样有 kernel GDR plumbing，用户态门待取样</text><text x="825" y="673" class="detail">不能假定与 5090 是同一 struct offset / bit / 指令</text><text x="825" y="700" class="detail">先验 CUDA attribute、FD 导出、MR，再决定是否逆向</text><text x="825" y="740" class="badge">状态：没有本报告可核验的完整复现</text>
+  <rect x="1280" y="610" width="480" height="175" class="cell external"/><text x="1305" y="643" class="label">DMA-BUF：精确组合已有端到端证据</text><text x="1305" y="673" class="mono">590.48.01 / CUDA 13.1</text><text x="1305" y="700" class="mono">83 ca 40 → 83 ca 60（仅该样本）</text><text x="1305" y="727" class="detail">CUDA attributes、FD、nv_dma_buf_create、NCCL GDRDMA 均通过</text><text x="1305" y="757" class="badge">不启用 legacy nvidia-peermem；offset 不跨版本</text>
+
+  <!-- GSP -->
+  <rect x="40" y="785" width="280" height="180" class="cell row"/><text x="65" y="822" class="rowhead">GSP 修改证据</text><text x="65" y="850" class="detail">效果与机制分开记录</text>
+  <rect x="320" y="785" width="480" height="180" class="cell hard"/><text x="345" y="818" class="label">595/610 GA10x generic gate 已完整建模</text><text x="345" y="848" class="detail">部署路径 callback 初始化为恒返回 0；无 feature ID</text><text x="345" y="875" class="detail">被证实为 P2P；也未排除运行期后续覆写</text><text x="345" y="915" class="badge">硬边界：不能由此声称“改 GSP 即开 P2P”</text>
+  <rect x="800" y="785" width="480" height="180" class="cell unknown"/><text x="825" y="818" class="label">与 3090 共用 gsp_ga10x 镜像家族</text><text x="825" y="848" class="detail">但当前 typed initializer 的部署证明只覆盖 GA102/103/</text><text x="825" y="875" class="detail">104/106/107；不得把 GA 路径外推成 AD 运行期结论</text><text x="825" y="915" class="badge">状态：缺 AD102 精确 patch 与因果 xref</text>
+  <rect x="1280" y="785" width="480" height="180" class="cell reported"/><text x="1305" y="818" class="label">registry DB 双消费者；不是 GSP 回喂 host HAL</text><text x="1305" y="848" class="detail">host：_kbifInitRegistryOverrides/kern_bus.c → CPU-RM HAL</text><text x="1305" y="875" class="detail">GSP：RegistryDwords → SET_REGISTRY → parser/mirror</text><text x="1305" y="902" class="detail">generic：595 index67 / 610 index65 均恒零、无 direct edge</text><text x="1305" y="940" class="badge">.fwimage patch 需 exact diff；不能由 module-param 链解释</text>
+
+  <!-- decision -->
+  <rect x="40" y="965" width="280" height="185" rx="0" class="cell row"/><text x="65" y="1002" class="rowhead">自动化策略</text><text x="65" y="1030" class="detail">当前无 validated profile</text><text x="65" y="1055" class="detail">未知组合必须 fail closed</text>
+  <rect x="320" y="965" width="480" height="185" class="cell neutral"/><text x="345" y="998" class="label">P2P profile：GPU PCI ID + driver + OpenRM commit</text><text x="345" y="1028" class="detail">优先验证 NVLink；PCIe 路径构建匹配的 OpenRM</text><text x="345" y="1055" class="detail">GDR profile 未建立时只 audit，不猜 libcuda 指令</text><text x="345" y="1100" class="badge">验证：peer matrix + correctness + bandwidth</text>
+  <rect x="800" y="965" width="480" height="185" class="cell neutral"/><text x="825" y="998" class="label">P2P profile：HAL + aperture/UVM 精确补丁</text><text x="825" y="1028" class="detail">GDR 必须另建 libcuda build-id/指令邻域 profile</text><text x="825" y="1055" class="detail">未建立前不可宣称 P2P+GDR 完整成功</text><text x="825" y="1100" class="badge">验证：FD/MR/真实网络流量，而非仅 capability</text>
+  <rect x="1280" y="965" width="480" height="185" rx="0" class="cell neutral"/><text x="1305" y="998" class="label">当前仅 unresolved 示例；production apply 必定拒绝</text><text x="1305" y="1028" class="detail">RegistryDwords 是因果证据，尚无 runtime apply 操作；</text><text x="1305" y="1055" class="detail">p2p_gsp 当前仅支持 exact binary_patch_copy 副本</text><text x="1305" y="1100" class="badge">晋升 validated 前：补齐 SHA/build-id/diff/验收与回滚</text>
+
+  <rect x="40" y="1180" width="1720" height="52" rx="12" class="reported"/>
+  <text x="900" y="1212" text-anchor="middle" class="label">最重要的审计结论：module-param 配置由同一 registry DB 协同 host/GSP 两支；真正进入 BAR1 HAL 的是 host 消费支，不是 generic feature ID。</text>
+</svg>

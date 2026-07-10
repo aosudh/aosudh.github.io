@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 1220" role="img" aria-labelledby="title desc">
+  <title id="title">P2P 与 GPUDirect RDMA 的分层责任图</title>
+  <desc id="desc">从应用、libcuda、OpenRM/UVM、GSP、主机内核、BIOS、NIC 驱动到 PCIe 硬件，分列说明 GPU P2P 和 GDR 的职责及已知证据边界。</desc>
+  <style>
+    svg{font-family:Inter,"Noto Sans CJK SC","Microsoft YaHei",sans-serif;color:#152238} text{fill:#152238}
+    .title{font-size:34px;font-weight:700}.subtitle{font-size:17px;fill:#536176}.head{font-size:19px;font-weight:700}.layer{font-size:20px;font-weight:700}.label{font-size:16px;font-weight:650}.detail{font-size:14px;fill:#536176}.small{font-size:13px;fill:#536176}.mono{font-family:Consolas,"Cascadia Mono",monospace;font-size:14px}
+    .table{fill:#ffffff;stroke:#cbd5e1;stroke-width:2}.cell{fill:transparent;stroke:#cbd5e1;stroke-width:1}.layercell{fill:#eef2f7}.p2p{fill:#e7efff}.gdr{fill:#ddf5ec}.boundary{fill:#fff2d8}.gsp{fill:#eeeafb}.data{fill:#ddf5ec;stroke:#0f8a68;stroke-width:2}
+    .control{stroke:#2563eb;stroke-width:3;fill:none;marker-end:url(#arr-blue)}.dma{stroke:#0f8a68;stroke-width:8;fill:none;marker-end:url(#arr-green)}.uncertain{stroke:#6b5aa6;stroke-width:2.5;stroke-dasharray:9 7;fill:none;marker-end:url(#arr-purple)}
+    .pill{font-size:13px;font-weight:700}.divider{stroke:#cbd5e1;stroke-width:2}.brace{fill:none;stroke:#a45b08;stroke-width:2.5;stroke-dasharray:8 6}
+  </style>
+  <defs>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#2563eb"/></marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#0f8a68"/></marker>
+    <marker id="arr-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#6b5aa6"/></marker>
+  </defs>
+  <rect x="0" y="0" width="1800" height="1220" fill="#f7f9fc"/>
+
+  <text x="40" y="52" class="title">谁负责什么：从产品策略到 TLP/DMA 的完整分层</text>
+  <text x="40" y="82" class="subtitle">“直连”只描述 bulk payload 不经 host bounce；建立映射、权限、页表、MR 与同步仍由 CPU 控制面完成。</text>
+
+  <rect x="40" y="115" width="1720" height="840" rx="16" class="table"/>
+  <!-- header -->
+  <rect x="40" y="115" width="230" height="72" rx="16" class="cell layercell"/><text x="155" y="158" text-anchor="middle" class="head">层 / 组件</text>
+  <rect x="270" y="115" width="500" height="72" class="cell p2p"/><text x="520" y="145" text-anchor="middle" class="head">GPU↔GPU P2P</text><text x="520" y="170" text-anchor="middle" class="detail">GPU A 访问 GPU B</text>
+  <rect x="770" y="115" width="500" height="72" class="cell gdr"/><text x="1020" y="145" text-anchor="middle" class="head">GPUDirect RDMA</text><text x="1020" y="170" text-anchor="middle" class="detail">NIC/第三方设备访问 GPU</text>
+  <rect x="1270" y="115" width="490" height="72" rx="16" class="cell boundary"/><text x="1515" y="145" text-anchor="middle" class="head">证据边界 / 不能混淆</text><text x="1515" y="170" text-anchor="middle" class="detail">实线事实；虚线关系仍待因果定位</text>
+
+  <!-- Application -->
+  <rect x="40" y="187" width="230" height="105" class="cell layercell"/><text x="65" y="226" class="layer">应用与通信库</text><text x="65" y="254" class="detail">CUDA / NCCL / UCX / verbs</text>
+  <rect x="270" y="187" width="500" height="105" class="cell"/><text x="295" y="220" class="label">选择 peer transport；创建 peer access</text><text x="295" y="247" class="detail">提交 copy / load-store / collective，并核验是否 fallback</text>
+  <rect x="770" y="187" width="500" height="105" class="cell"/><text x="795" y="220" class="label">选择 peermem 或 DMA-BUF；注册 MR</text><text x="795" y="247" class="detail">使用真实 RDMA/NCCL 数据流验证 GDRDMA</text>
+  <rect x="1270" y="187" width="490" height="105" class="cell"/><text x="1295" y="220" class="label">capability=1 不是成功终点</text><text x="1295" y="247" class="detail">还需数据正确性、带宽、日志与无 IOMMU fault</text>
+
+  <!-- libcuda -->
+  <rect x="40" y="292" width="230" height="112" class="cell layercell"/><text x="65" y="332" class="layer">libcuda.so</text><text x="65" y="360" class="detail">用户态 NVIDIA driver</text>
+  <rect x="270" y="292" width="500" height="112" class="cell p2p"/><text x="295" y="326" class="label">设备/产品 capability 与 CUDA API 编排</text><text x="295" y="353" class="detail">把 peer 请求下发给 host RM/UVM</text>
+  <rect x="770" y="292" width="500" height="112" class="cell gdr"/><text x="795" y="326" class="label">识别 GPU allocation；DMA-BUF 导出入口</text><text x="795" y="353" class="mono">cuMemGetHandleForAddressRange → FD</text><text x="795" y="380" class="detail">legacy peermem 则由 verbs 侧提交 GPU VA</text>
+  <rect x="1270" y="292" width="490" height="112" class="cell boundary"/><text x="1295" y="326" class="label">5090 的已验证用户态拒绝点</text><text x="1295" y="353" class="detail">仅覆盖 driver 590.48.01 + CUDA 13.1 + DMA-BUF；</text><text x="1295" y="378" class="detail">不能把固定 offset/bit 外推到 3090、4090 或 peermem</text>
+
+  <!-- OpenRM UVM -->
+  <rect x="40" y="404" width="230" height="138" class="cell layercell"/><text x="65" y="443" class="layer">host OpenRM / UVM</text><text x="65" y="471" class="detail">CPU-RM 内核态</text>
+  <rect x="270" y="404" width="500" height="138" class="cell p2p"/><text x="295" y="438" class="label">GPU-GPU HAL 与 host registry consumer</text><text x="295" y="465" class="mono">_kbifInitRegistryOverrides / kern_bus.c</text><text x="295" y="492" class="detail">P2P keys → CPU-RM p2p_caps/HAL、static BAR1/UVM</text><text x="295" y="519" class="detail">GA10x/AD10x 落 stub；GB202 可进入真实 BAR1 gate</text>
+  <rect x="770" y="404" width="500" height="138" class="cell gdr"/><text x="795" y="438" class="label">把 GPU 显存变为第三方设备可 DMA 的地址</text><text x="795" y="465" class="mono">nvidia_p2p_*　或　dma_buf_export</text><text x="795" y="492" class="detail">BAR1/C2C、pin/map/unmap、SG table、拓扑检查</text><text x="795" y="519" class="detail">该路径不调用 GPU-GPU BAR1 capability HAL</text>
+  <rect x="1270" y="404" width="490" height="138" class="cell boundary"/><text x="1295" y="438" class="label">host 直接读取 P2P keys 并进入 HAL</text><text x="1295" y="465" class="detail">不是从 GSP parser 回传；OpenRM/UVM 是当前社区</text><text x="1295" y="492" class="detail">P2P 补丁主层；DMA-BUF 与 libcuda 仍是另外两道门</text>
+
+  <!-- GSP -->
+  <rect x="40" y="542" width="230" height="135" class="cell layercell gsp"/><text x="65" y="582" class="layer">GSP-RM</text><text x="65" y="610" class="detail">GPU 上的 RISC-V RM 任务</text>
+  <rect x="270" y="542" width="500" height="135" class="cell gsp"/><text x="295" y="576" class="label">初始化/资源管理；消费同一 registry DB 的镜像支</text><text x="295" y="603" class="mono">RegistryDwords → SET_REGISTRY → parser / mirror</text><text x="295" y="630" class="detail">generic gate 已恢复，但没有 feature ID 被证实为裸机 P2P</text>
+  <rect x="770" y="542" width="500" height="135" class="cell gsp"/><text x="795" y="576" class="label">可能参与下游 GPU 资源配置</text><text x="795" y="603" class="detail">不是 NIC bulk DMA 数据面；尚无 GSP→libcuda</text><text x="795" y="630" class="detail">capability bit 的已证实静态链</text>
+  <rect x="1270" y="542" width="490" height="135" class="cell boundary"/><text x="1295" y="576" class="label">同库双消费者，不是串行 GSP→host 链</text><text x="1295" y="603" class="detail">module-param 协同 host/GSP runtime config；直接</text><text x="1295" y="630" class="detail">.fwimage patch 是另一机制，必须以 exact diff 证明</text>
+
+  <!-- host OS -->
+  <rect x="40" y="677" width="230" height="108" class="cell layercell"/><text x="65" y="716" class="layer">主机 OS / PCIe</text><text x="65" y="744" class="detail">Linux kernel / DMA core</text>
+  <rect x="270" y="677" width="500" height="108" class="cell"/><text x="295" y="711" class="label">枚举 GPU、分配 BAR、IOMMU/ACS 管理</text><text x="295" y="738" class="detail">提供页表与 DMA 基础设施，不搬运直连 bulk payload</text>
+  <rect x="770" y="677" width="500" height="108" class="cell"/><text x="795" y="711" class="label">RDMA core、DMA-BUF core、IOMMU/DMA 映射</text><text x="795" y="738" class="detail">保证 peer 设备看到正确物理/IOVA 地址</text>
+  <rect x="1270" y="677" width="490" height="108" class="cell boundary"/><text x="1295" y="711" class="label">IOMMU/ACS 设置涉及隔离与安全</text><text x="1295" y="738" class="detail">自动化工具只检测与提示，不应静默关闭</text>
+
+  <!-- BIOS -->
+  <rect x="40" y="785" width="230" height="105" class="cell layercell"/><text x="65" y="824" class="layer">BIOS / UEFI / VBIOS</text><text x="65" y="852" class="detail">平台资源窗口与能力暴露</text>
+  <rect x="270" y="785" width="500" height="105" class="cell"/><text x="295" y="819" class="label">Above 4G、足够 64-bit MMIO、PCIe routing</text><text x="295" y="846" class="detail">通常以 ReBAR/大 BAR 支撑 static BAR1 aperture</text>
+  <rect x="770" y="785" width="500" height="105" class="cell"/><text x="795" y="819" class="label">同样提供 GPU/NIC BAR 可达性与路由</text><text x="795" y="846" class="detail">legacy 动态 BAR1 不等于所有 GDR 都硬性要求 ReBAR</text>
+  <rect x="1270" y="785" width="490" height="105" class="cell boundary"/><text x="1295" y="819" class="label">公开社区方案当前不改 GPU VBIOS</text><text x="1295" y="846" class="detail">真正约束是 aperture 与拓扑，不是某个统一命名开关</text>
+
+  <!-- NIC -->
+  <rect x="40" y="890" width="230" height="65" rx="0" class="cell layercell"/><text x="65" y="930" class="layer">NIC driver / firmware</text>
+  <rect x="270" y="890" width="500" height="65" class="cell"/><text x="295" y="930" class="detail">GPU-GPU P2P：无直接职责</text>
+  <rect x="770" y="890" width="500" height="65" class="cell gdr"/><text x="795" y="918" class="label">导入 SG/FD、注册 MR/rkey、编程 DMA engine</text><text x="795" y="942" class="detail">必须支持所选 peermem 或 DMA-BUF 接口</text>
+  <rect x="1270" y="890" width="490" height="65" class="cell boundary"/><text x="1295" y="930" class="detail">没有 NIC/RDMA importer，libcuda 与 GPU kernel gate 全开也无用</text>
+
+  <!-- data plane -->
+  <text x="40" y="1006" class="head">最终硬件数据面（映射建立后）</text>
+  <rect x="70" y="1040" width="260" height="92" rx="14" class="data"/><text x="200" y="1078" text-anchor="middle" class="layer">GPU A</text><text x="200" y="1105" text-anchor="middle" class="detail">copy engine / load-store</text>
+  <rect x="600" y="1040" width="260" height="92" rx="14" class="data"/><text x="730" y="1078" text-anchor="middle" class="layer">GPU B 显存</text><text x="730" y="1105" text-anchor="middle" class="detail">peer PTE / BAR1 / NVLink</text>
+  <path d="M330 1086H590" class="dma"/><text x="460" y="1068" text-anchor="middle" class="small">GPU↔GPU：NVLink 或 PCIe TLP</text>
+
+  <rect x="970" y="1040" width="260" height="92" rx="14" class="data"/><text x="1100" y="1078" text-anchor="middle" class="layer">NIC</text><text x="1100" y="1105" text-anchor="middle" class="detail">RDMA DMA engine</text>
+  <rect x="1500" y="1040" width="260" height="92" rx="14" class="data"/><text x="1630" y="1078" text-anchor="middle" class="layer">GPU 显存</text><text x="1630" y="1105" text-anchor="middle" class="detail">BAR1 / C2C</text>
+  <path d="M1230 1086H1490" class="dma"/><text x="1360" y="1068" text-anchor="middle" class="small">GDR：NIC↔GPU PCIe/C2C DMA</text>
+  <path d="M520 955V1025" class="control"/><path d="M1360 955V1025" class="control"/>
+  <text x="40" y="1185" class="small">结论：OpenRM、GSP、libcuda、BIOS 各自能影响“能否建立直连”，但它们不是可以互相任意替换的一枚总开关。</text>
+</svg>
