@@ -33,6 +33,11 @@
 
         <!-- ↓↓↓ 新增文章：复制下面这个 <li> 块，改链接/标题/日期/摘要即可 ↓↓↓ -->
         <li class="post-item">
+          <a class="post-link" href="/posts/mtt-s5000-single-and-8gpu-benchmark.html">MTT S5000 单卡与八卡实测：从 PCIe、FP8 到 MTLink 与 MCCL</a>
+          <p class="post-meta">2026-07-14</p>
+          <p class="post-summary">MTT S5000 单卡到八卡完整实测：PCIe 57.1 GB/s、FP8 899.4 TFLOP/s、Torch flash 372.6 TFLOP/s、全互联 MTLink P2P 35.7 GB/s，以及 8 卡 MCCL AllReduce 234.3 GB/s；附 DSL 兼容矩阵、profiling 结论和 mthreads-gmi CLI 吐槽。</p>
+        </li>
+        <li class="post-item">
           <a class="post-link" href="/posts/pcie-p2p-gdr-gsp-enablement-guide.html">消费级 RTX 的 PCIe P2P、GPUDirect RDMA 与 GSP-RM</a>
           <p class="post-meta">2026-07-10</p>
           <p class="post-summary">把 RTX 3090、4090 与 5090 的 GPU↔GPU PCIe P2P、legacy nvidia-peermem、DMA-BUF GDR、host OpenRM、GSP-RM、libcuda 和 BIOS/拓扑放进同一张可验证的工程图：给出源码与反汇编证据、分代修改策略、逐键消融方法、验证与回滚标准，以及 profile 驱动的可审计自动化框架。</p>
