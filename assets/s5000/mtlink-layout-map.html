@@ -6,7 +6,7 @@
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>MTT S5000 MtLink Layout Map</title>
-<style>:root{color-scheme:light dark;background:light-dark(rgb(255 255 255), rgb(24 24 24))}html,body{margin:0}body{box-sizing:border-box;padding:1rem;background:inherit}iframe{display:block;width:100%;max-width:736px;height:calc(100vh - 2rem);margin:0 auto;border:0}</style>
+<style>:root{color-scheme:light dark;background:light-dark(rgb(255 255 255), rgb(24 24 24))}html,body{margin:0;overflow:hidden}body{box-sizing:border-box;background:inherit}iframe{display:block;width:100%;height:760px;margin:0;border:0}</style>
 </head>
 <body>
 <iframe sandbox="allow-scripts" referrerpolicy="no-referrer" title="MTT S5000 MtLink Layout Map" srcdoc="&lt;!doctype html&gt;
@@ -786,15 +786,20 @@ html&gt;body{padding:0}&lt;/style&gt;
   #mtlink-layout-map {
     color: var(--foreground);
     width: 100%;
+    min-width: 0;
+    overflow: hidden;
   }
   #mtlink-layout-map .ml-shell {
     position: relative;
     width: 100%;
+    min-width: 0;
   }
   #mtlink-layout-map .ml-svg {
     display: block;
     width: 100%;
+    max-width: 760px;
     height: auto;
+    margin-inline: auto;
   }
   #mtlink-layout-map .ml-edge {
     fill: none;
@@ -884,16 +889,19 @@ html&gt;body{padding:0}&lt;/style&gt;
   }
   #mtlink-layout-map .ml-detail-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
     gap: 6px 18px;
   }
   #mtlink-layout-map .ml-detail-row {
     display: flex;
+    min-width: 0;
     justify-content: space-between;
     gap: 12px;
   }
   #mtlink-layout-map .ml-detail-row code {
-    white-space: nowrap;
+    min-width: 0;
+    text-align: right;
+    white-space: normal;
   }
   @media (prefers-reduced-motion: reduce) {
     #mtlink-layout-map .ml-edge {
@@ -977,12 +985,12 @@ html&gt;body{padding:0}&lt;/style&gt;
 
   function buildPositions(isNarrow) {
     const width = isNarrow ? 360 : 760;
-    const height = isNarrow ? 980 : 650;
+    const height = isNarrow ? 420 : 650;
     const cx = width / 2;
-    const cy = isNarrow ? 470 : 310;
+    const cy = isNarrow ? 210 : 310;
     const rx = isNarrow ? 135 : 285;
-    const ry = isNarrow ? 395 : 245;
-    const radius = isNarrow ? 30 : 37;
+    const ry = isNarrow ? 155 : 245;
+    const radius = isNarrow ? 28 : 37;
     positions = Array.from({length: 8}, (_, gpu) =&gt; {
       const angle = -Math.PI / 2 + gpu * Math.PI / 4;
       return {
@@ -993,6 +1001,9 @@ html&gt;body{padding:0}&lt;/style&gt;
       };
     });
     svg.setAttribute(&#x27;viewBox&#x27;, `0 0 ${width} ${height}`);
+    svg.setAttribute(&#x27;width&#x27;, width);
+    svg.setAttribute(&#x27;height&#x27;, height);
+    svg.setAttribute(&#x27;preserveAspectRatio&#x27;, &#x27;xMidYMid meet&#x27;);
   }
 
   function laneGeometry(pair, lane) {
@@ -1105,7 +1116,7 @@ html&gt;body{padding:0}&lt;/style&gt;
       sub.textContent = &#x27;14 Links&#x27;;
       group.append(circle, label, sub);
       nodesLayer.appendChild(group);
-      nodeEls.push({el: group, gpu: position.gpu});
+      nodeEls.push({el: group, gpu: position.gpu, sub});
     });
 
     updateSelection();
@@ -1120,15 +1131,18 @@ html&gt;body{padding:0}&lt;/style&gt;
       const {geom, lane} = item;
       const aPort = lane === 0 ? pair.a1 : pair.a2;
       const bPort = lane === 0 ? pair.b1 : pair.b2;
+      const labelNormal = lane === 0 ? -14 : 14;
+      const labelPx = -geom.uy;
+      const labelPy = geom.ux;
       const startLabel = svgEl(&#x27;text&#x27;, {
-        x: geom.start.x + geom.ux * 18,
-        y: geom.start.y + geom.uy * 18 - 4,
+        x: geom.start.x + geom.ux * 18 + labelPx * labelNormal,
+        y: geom.start.y + geom.uy * 18 + labelPy * labelNormal - 4,
         class: &#x27;ml-port-label&#x27;
       });
       startLabel.textContent = `L${aPort}`;
       const endLabel = svgEl(&#x27;text&#x27;, {
-        x: geom.end.x - geom.ux * 18,
-        y: geom.end.y - geom.uy * 18 - 4,
+        x: geom.end.x - geom.ux * 18 + labelPx * labelNormal,
+        y: geom.end.y - geom.uy * 18 + labelPy * labelNormal - 4,
         class: &#x27;ml-port-label&#x27;
       });
       endLabel.textContent = `L${bPort}`;
@@ -1167,6 +1181,15 @@ html&gt;body{padding:0}&lt;/style&gt;
     detail.innerHTML = &#x27;&lt;div class=&quot;ml-detail-heading&quot;&gt;28 个 GPU 对 · 56 条物理 MtLink · 112 个端口端点 · 双向映射校验通过&lt;/div&gt;&#x27;;
   }
 
+  let resizeRequest = 0;
+  function requestHostResize() {
+    cancelAnimationFrame(resizeRequest);
+    resizeRequest = requestAnimationFrame(() =&gt; {
+      const height = Math.ceil(root.getBoundingClientRect().height);
+      parent.postMessage({type: &#x27;mtlink-content-resize&#x27;, height}, &#x27;*&#x27;);
+    });
+  }
+
   function updateSelection() {
     const selectedPair = pairByKey(pairSelect.value);
     const focusGpu = gpuSelect.value;
@@ -1180,15 +1203,29 @@ html&gt;body{padding:0}&lt;/style&gt;
       el.classList.toggle(&#x27;is-dimmed&#x27;, Boolean(dimmed));
     });
 
-    nodeEls.forEach(({el, gpu}) =&gt; {
+    nodeEls.forEach(({el, gpu, sub}) =&gt; {
       const active = selectedPair
         ? gpu === selectedPair.a || gpu === selectedPair.b
         : focusGpu !== &#x27;all&#x27; &amp;&amp; gpu === Number(focusGpu);
       el.classList.toggle(&#x27;is-active&#x27;, active);
+      sub.textContent = &#x27;14 Links&#x27;;
     });
 
-    if (selectedPair) addPortLabels(selectedPair);
+    if (selectedPair) {
+      nodeEls.find(({gpu}) =&gt; gpu === selectedPair.a).sub.textContent = `L${selectedPair.a1}/L${selectedPair.a2}`;
+      nodeEls.find(({gpu}) =&gt; gpu === selectedPair.b).sub.textContent = `L${selectedPair.b1}/L${selectedPair.b2}`;
+      addPortLabels(selectedPair);
+    } else if (focusGpu !== &#x27;all&#x27;) {
+      const gpu = Number(focusGpu);
+      pairs
+        .filter((pair) =&gt; pair.a === gpu || pair.b === gpu)
+        .map((pair) =&gt; oriented(pair, gpu))
+        .forEach((row) =&gt; {
+          nodeEls.find(({gpu: nodeGpu}) =&gt; nodeGpu === row.peer).sub.textContent = `L${row.peer1}/L${row.peer2}`;
+        });
+    }
     renderDetail(selectedPair, focusGpu);
+    requestHostResize();
   }
 
   gpuSelect.addEventListener(&#x27;change&#x27;, () =&gt; {
@@ -1208,9 +1245,13 @@ html&gt;body{padding:0}&lt;/style&gt;
     draw();
   }
 
-  const resizeObserver = new ResizeObserver(responsiveDraw);
+  const resizeObserver = new ResizeObserver(() =&gt; {
+    responsiveDraw();
+    requestHostResize();
+  });
   resizeObserver.observe(root);
   responsiveDraw();
+  requestHostResize();
 })();
 &lt;/script&gt;
 
@@ -1456,5 +1497,24 @@ html&gt;body{padding:0}&lt;/style&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 "></iframe>
+<script>
+(() => {
+  const frame = document.querySelector('iframe');
+  if (!frame) return;
+  let lastHeight = 0;
+  window.addEventListener('message', (event) => {
+    const data = event.data;
+    if (event.source !== frame.contentWindow || !data || data.type !== 'mtlink-content-resize') return;
+    const measured = Math.ceil(Number(data.height));
+    if (!Number.isFinite(measured) || measured < 1) return;
+    const height = Math.max(420, Math.min(measured, 2400));
+    if (height !== lastHeight) {
+      lastHeight = height;
+      frame.style.height = `${height}px`;
+    }
+    parent.postMessage({type: 'mtlink-layout-resize', height}, '*');
+  });
+})();
+</script>
 </body>
 </html>

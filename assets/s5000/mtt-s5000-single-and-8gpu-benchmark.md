@@ -7,7 +7,7 @@
 | 项目 | 本机实测环境 |
 |:---|:---|
 | GPU | 8 × MTT S5000；GMI 显示每卡 81,920 MiB，runtime device property 为 85,813,358,592 B（约 79.92 GiB） |
-| CPU | 2 × Intel Xeon Platinum 8358P；2 个 NUMA 节点；系统枚举 256 个 CPU，CPU 239 offline |
+| CPU | 按平台硬件信息：2 × AMD EPYC Genoa 9T34（每颗 64 核/128 线程，合计 128 核/256 线程）；2 个 NUMA 节点；系统枚举 256 个逻辑 CPU，其中 CPU 239 offline |
 | OS / Kernel | Ubuntu 22.04.5 LTS / `5.15.0-105-generic` |
 | Driver | `3.3.5-server` |
 | MUSA | Toolkit 4.3.5，安装在 `/usr/local/musa-4.3.5`；`mcc 4.3.5` |
@@ -15,6 +15,8 @@
 | Kernel/DSL 库 | MUTLASS `0.2.0`、FlagGems `4.2.0`；其它 DSL 见单卡兼容表 |
 | 管理工具 | `mthreads-gmi 2.3.2` |
 | MCCL | 包元数据 `2.1.5`；测试横幅和 SONAME 为 `2.11.4`；commit 都指向 `b1ac16e7...` |
+
+CPU 识别说明：容器内 `/proc/cpuinfo` 来自 `/docker_vm/vm-…/proc_cpuinfo` 的 bind mount，因此 `lscpu` 显示的 `GenuineIntel / Intel Xeon Platinum 8358P` 只是容器注入的身份字段，不代表物理 CPU。MCCL 生成的拓扑 XML 持续报告 `AuthenticAMD`；容器可独立确认的拓扑是 2 socket、64 cores/socket、2 threads/core、256 个逻辑 CPU 和 512 MiB 总 L3。平台硬件信息及[实例规格](https://help.aliyun.com/zh/egs/gpu-accelerated-compute-optimized-instance-families/)标识为双路 AMD EPYC Genoa 9T34，而 [Intel 8358P 官方规格](https://www.intel.com/content/www/us/en/products/sku/212308/intel-xeon-platinum-8358p-processor-48m-cache-2-60-ghz/specifications.html)只有 32 核、48 MiB 缓存。本文据此更正型号，原始采集文件保持不改。
 
 MCCL 的两个版本字符串互相冲突，所以本文把它们同时保留，不擅自挑一个“修正”另一个。单卡测试只使用 GPU0；多卡阶段只运行真实 2/4/8 卡程序，没有把单卡 benchmark 混进多卡结果。
 

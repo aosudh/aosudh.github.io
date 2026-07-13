@@ -31,12 +31,12 @@
     .post-content figure { margin: 1.2rem 0 0.5rem; text-align: center; }
     .post-content figure a { display: inline-block; }
     .post-content figure img { max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: var(--radius); }
-    .post-content .topology-embed { width: min(95vw, 1200px); height: min(78vh, 820px); min-height: 620px; margin: 1rem 0 1.5rem 50%; transform: translateX(-50%); overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius); background: #111; }
+    .post-content .topology-embed { width: min(95vw, 1200px); height: 760px; min-height: 420px; margin: 1rem 0 1.5rem 50%; transform: translateX(-50%); overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius); background: #111; }
     .post-content .topology-embed iframe { display: block; width: 100%; height: 100%; border: 0; }
     @media (max-width: 560px) {
       .post-content .toc ul { columns: 1; }
       .post-content .table-scroll.wide { width: calc(100vw - 24px); }
-      .post-content .topology-embed { width: calc(100vw - 24px); height: 640px; min-height: 640px; }
+      .post-content .topology-embed { width: calc(100vw - 24px); }
     }
   </style>
 </head>
@@ -88,7 +88,7 @@
         </tr>
         <tr>
         <td align="left">CPU</td>
-        <td align="left">2 × Intel Xeon Platinum 8358P；2 个 NUMA 节点；系统枚举 256 个 CPU，CPU 239 offline</td>
+        <td align="left">按平台硬件信息：2 × AMD EPYC Genoa 9T34（每颗 64 核/128 线程，合计 128 核/256 线程）；2 个 NUMA 节点；系统枚举 256 个逻辑 CPU，其中 CPU 239 offline</td>
         </tr>
         <tr>
         <td align="left">OS / Kernel</td>
@@ -120,6 +120,7 @@
         </tr>
         </tbody></table>
         </div>
+        <p>CPU 识别说明：容器内 <code>/proc/cpuinfo</code> 来自 <code>/docker_vm/vm-…/proc_cpuinfo</code> 的 bind mount，因此 <code>lscpu</code> 显示的 <code>GenuineIntel / Intel Xeon Platinum 8358P</code> 只是容器注入的身份字段，不代表物理 CPU。MCCL 生成的拓扑 XML 持续报告 <code>AuthenticAMD</code>；容器可独立确认的拓扑是 2 socket、64 cores/socket、2 threads/core、256 个逻辑 CPU 和 512 MiB 总 L3。平台硬件信息及<a href="https://help.aliyun.com/zh/egs/gpu-accelerated-compute-optimized-instance-families/">实例规格</a>标识为双路 AMD EPYC Genoa 9T34，而 <a href="https://www.intel.com/content/www/us/en/products/sku/212308/intel-xeon-platinum-8358p-processor-48m-cache-2-60-ghz/specifications.html">Intel 8358P 官方规格</a>只有 32 核、48 MiB 缓存。本文据此更正型号，原始采集文件保持不改。</p>
         <p>MCCL 的两个版本字符串互相冲突，所以本文把它们同时保留，不擅自挑一个“修正”另一个。单卡测试只使用 GPU0；多卡阶段只运行真实 2/4/8 卡程序，没有把单卡 benchmark 混进多卡结果。</p>
         <figure><a href="/assets/s5000/gmi-eight-gpu-overview.png" target="_blank" rel="noopener"><img src="/assets/s5000/gmi-eight-gpu-overview.png" alt="mthreads-gmi 八卡枚举" width="995" height="1311" loading="lazy" decoding="async" /></a></figure>
         <p><em>八卡枚举截图：8 张卡均为 S5000、每卡 81,920 MiB，PCIe lane width 为 x16。截图底部的进程查询失败不是“确认没有进程”，而是该接口本次不可用。</em></p>
@@ -771,5 +772,19 @@
       <span>由 <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a> 托管</span>
     </footer>
   </div>
+  <script>
+    (() => {
+      const host = document.getElementById("mtlink-interactive");
+      const frame = host?.querySelector("iframe");
+      if (!host || !frame) return;
+      window.addEventListener("message", (event) => {
+        const data = event.data;
+        if (event.source !== frame.contentWindow || !data || data.type !== "mtlink-layout-resize") return;
+        const measured = Math.ceil(Number(data.height));
+        if (!Number.isFinite(measured) || measured < 1) return;
+        host.style.height = `${Math.max(420, Math.min(measured, 2400))}px`;
+      });
+    })();
+  </script>
 </body>
 </html>
