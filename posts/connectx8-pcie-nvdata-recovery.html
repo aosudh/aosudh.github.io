@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ConnectX-8 PCIe 配置改崩后的完整恢复：CH347、MTUSB、FNP 与 NV_DATA · 我的博客</title>
+  <meta name="description" content="误改 ConnectX-8 mlxconfig PCIe 参数后设备从总线消失：从 CH347/MTUSB 带外访问、FNP Flash Recovery、固件重刷失败，到定位并修复双份 NV_DATA 的完整实战记录。" />
+  <meta property="og:title" content="ConnectX-8 PCIe 配置改崩后的完整恢复：CH347、MTUSB、FNP 与 NV_DATA" />
+  <meta property="og:description" content="固件能刷、verify 能过，为什么 CX8 仍不枚举？这是一条从 ICMD 失效追到 FS5 NV_DATA 的完整恢复链。" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://aosudh.github.io/posts/connectx8-pcie-nvdata-recovery.html" />
+  <meta property="og:image" content="https://aosudh.github.io/assets/cx8-repair/mlxup-device-info.png" />
+  <meta property="article:published_time" content="2026-07-15" />
+  <link rel="canonical" href="https://aosudh.github.io/posts/connectx8-pcie-nvdata-recovery.html" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <style>
+    html { scroll-behavior: smooth; }
+    .post-content h2[id], .post-content h3[id] { scroll-margin-top: 1rem; }
+    .post-content .toc { border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-soft); padding: .9rem 1.1rem; margin: 1rem 0 1.6rem; }
+    .post-content .toc-title { font-weight: 700; margin: 0 0 .5rem; }
+    .post-content .toc ul { list-style: none; padding: 0; margin: 0; columns: 2; column-gap: 1.5rem; }
+    .post-content .toc li { break-inside: avoid; margin: .25rem 0; font-size: .92rem; }
+    .post-content figure { margin: 1.4rem 0 1.6rem; text-align: center; }
+    .post-content figure a { display: inline-block; }
+    .post-content figure img { max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+    .post-content figcaption { color: var(--text-muted); font-size: .88rem; margin-top: .5rem; text-align: left; }
+    .post-content .danger { border-left: 4px solid #d64545; background: var(--bg-soft); padding: .85rem 1rem; margin: 1.1rem 0; }
+    @media (max-width: 560px) { .post-content .toc ul { columns: 1; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="site-header">
+      <a class="site-title" href="/">我的博客</a>
+      <nav class="site-nav"><a href="/">首页</a><a href="/about.html">关于</a></nav>
+    </header>
+    <main>
+      <a class="back-link" href="/">← 返回首页</a>
+      <article class="post-content">
+        <h1>ConnectX-8 PCIe 配置改崩后的完整恢复：CH347、MTUSB、FNP 与 NV_DATA</h1>
+        <p class="post-meta">2026-07-15 · 硬件维修记录</p>
+        <blockquote><p>我原本只是照 ConnectX-8 官网手册研究 <code>mlxconfig</code> 的 PCIe hierarchy、width 和 speed。参数写完、冷启动之后，CX8 直接从 PCIe 总线上消失。最终结论并不是“固件坏了”，而是错误配置留在 FS5 的双份 <code>NV_DATA</code> 中；普通重刷会保留它们，所以固件能烧、verify 能过，卡依然起不来。</p></blockquote>
+        <nav class="toc" aria-label="目录"><p class="toc-title">目录</p><ul>
+            <li><a href="#sec-1">1. 前情提要</a></li>
+            <li><a href="#sec-2">2. 硬件与软件信息</a></li>
+            <li><a href="#sec-3">3. 故障症状</a></li>
+            <li><a href="#sec-4">4. 处理过程</a></li>
+            <li><a href="#sec-5">5. 下游设备导致 POST 卡 92 的后续问题</a></li>
+            <li><a href="#sec-6">6. 经验总结</a></li>
+          </ul></nav>
+        <h2 id="sec-1">1. 前情提要</h2>
+        <p>此前主要依据 ConnectX-8 官网手册研究并修改 <code>mlxconfig</code> 的 PCIe 参数。修改后冷启动，主机不再枚举 CX8，<code>lspci</code> 中设备消失，常规 <code>/dev/mst/*pciconf*</code> 管理路径也随之消失。</p>
+        <p>这类故障的本质是：<code>mlxconfig</code> 修改的是持久化 NVConfig。PCIe hierarchy、width、speed、ASPM、PERST 或 switch 拓扑配置错误时，固件可能在建立 PCIe 静态配置之前失败。此时系统看不到设备，正常的 <code>mlxconfig reset</code>、<code>mlxfwreset</code> 和驱动路径都无法工作。</p>
+        <h2 id="sec-2">2. 硬件与软件信息</h2>
+        <h3 id="sec-2-1">2.1 卡与固件</h3>
+        <ul>
+        <li>型号：<code>900-9T128-0000-001_Ax</code></li>
+        <li>描述：ConnectX-8 VPI，PCIe Switch，PCIe 6.0 3x16，内部开发用途</li>
+        <li>PSID：<code>MT_0000001241</code></li>
+        <li>固件：<code>40.42.8250</code></li>
+        <li>固件日期：<code>30.10.2024</code></li>
+        <li>镜像类型：FS5</li>
+        <li>安全属性：<code>secure-fw, dev</code></li>
+        <li>Flash：ISSI <code>IS25LPxxx</code>，64 MiB，JEDEC <code>0x20709d</code></li>
+        <li>问题卡 GUID：<code>7c8c090300dc2b96</code></li>
+        <li>问题卡 MAC：<code>7c8c09dc2b96</code></li>
+        <li>正常参考卡 GUID：<code>b8e92403003f4cda</code></li>
+        <li>正常参考卡 MAC：<code>b8e9243f4cda</code></li>
+        </ul>
+        <p>下图是卡本身的 <code>mlxup</code> 身份信息：设备类型 ConnectX8、部件号 <code>900-9T128-0000-001_Ax</code>、PSID <code>MT_0000001241</code>、Base GUID <code>b8e92403003f4cda</code>、固件 <code>40.42.8250</code>。<code>No matching image found</code> 表示 <code>mlxup</code> 的公开仓库没有与该内部开发 PSID 匹配的升级镜像。</p>
+        <figure><a href="/assets/cx8-repair/mlxup-device-info.png" target="_blank" rel="noopener"><img src="/assets/cx8-repair/mlxup-device-info.png" alt="ConnectX-8 型号、PSID、GUID 与固件基线" width="1684" height="337" loading="lazy" decoding="async" /></a><figcaption>ConnectX-8 型号、PSID、GUID 与固件基线</figcaption></figure>
+        <h3 id="sec-2-2">2.2 管理环境</h3>
+        <ul>
+        <li>测试机：经内网 SSH 跳板连接</li>
+        <li>MFT：<code>4.36.0-147</code>，Git SHA <code>7a24adf8c</code></li>
+        <li>MTUSB：Diolan U2C-12，USB ID <code>0abf:3370</code>，MST Serial <code>0x27F1</code></li>
+        <li>I²C 地址：<code>0x48</code></li>
+        <li>FNP 恢复态 PCI ID：<code>15b3:021e</code></li>
+        <li>FNP 恢复节点：<code>/dev/mst/mt542_pciconf0</code></li>
+        <li>MTUSB 节点：<code>/dev/mst/mtusb-1_0x48-ConnectX8</code></li>
+        </ul>
+        <p>本文不记录任何登录凭据。</p>
+        <h2 id="sec-3">3. 故障症状</h2>
+        <p>正常启动但 PCIe 不枚举时：</p>
+        <ul>
+        <li><code>lspci</code> 无 NVIDIA/Mellanox CX8。</li>
+        <li>MST 只能经 MTUSB/I²C 看见设备。</li>
+        <li><code>mcra ... 0x1a00000</code> 返回 <code>0x00000000</code>。</li>
+        <li><code>mcra ... 0x0a0304</code> 返回 <code>0xc0000000</code>。</li>
+        <li><code>flint --no_fw_ctrl q</code> 报 <code>ICMD interface is not supported</code>。</li>
+        <li><code>mlxconfig</code> 返回 rc 524，表现为 ICMD 版本无效/固件尚未初始化。</li>
+        </ul>
+        <p>这说明问题发生在固件完成 PCIe 静态配置之前，不是 Linux 驱动故障。</p>
+        <h2 id="sec-4">4. 处理过程</h2>
+        <h3 id="sec-4-3">4.1 尝试 CH347 作为 I²C 中继</h3>
+        <p>最初没有 MTUSB，使用 CH347 连接 CX8 的 I²C。普通 Linux CH347 驱动会把常见的 write-then-read 拆成带 STOP 的两次事务，而 CX8 寄存器/ICMD 访问需要 repeated START。因此修改了驱动：</p>
+        <ul>
+        <li>增加组合 write-read 事务。</li>
+        <li>增大缓冲区。</li>
+        <li>修正读取返回长度。</li>
+        <li>适配 Linux 6.8 的 remove 回调。</li>
+        </ul>
+        <p>CH347 最终可以完成基础 I²C 访问，但与 MFT 私有设备访问层的兼容性和事务时序仍不足以可靠完成 CX8 恢复，因此后续改用 MTUSB。</p>
+        <h3 id="sec-4-4">4.2 MTUSB 探测与 MFT 信号量问题</h3>
+        <p>插入 MTUSB 后，需要先卸载会占用适配器的内核驱动：</p>
+        <pre><code>sudo modprobe -r i2c-diolan-u2c
+sudo mst restart
+sudo mst status -v</code></pre>
+        <p>随后识别到：</p>
+        <pre><code>/dev/mst/mtusb-1
+/dev/mst/mtusb-1_0x48-ConnectX8</code></pre>
+        <p>在正常卡上，原版 MFT 经 MTUSB 访问 CX8 出现 rc 529，调查发现开源 mstflint 的 <code>device_supports_sem_lock_verify()</code> 未包含 ConnectX-8。补丁 <code>cx8-mtusb-sem-verify.patch</code> 增加 <code>DeviceConnectX8_HwId</code>。此外，保留了修改版 <code>mlxconfig-cx8</code>，原系统 <code>/usr/bin/mlxconfig</code> 未覆盖。</p>
+        <p>该补丁解决的是 MTUSB 二次信号量校验问题；它不能解决问题卡的 rc 524，因为后者是固件根本没有建立 ICMD。</p>
+        <h3 id="sec-4-5">4.3 FNP 强制进入 Flash Recovery</h3>
+        <p>将 FNP 短接后完全断电再上电，卡进入恢复态：</p>
+        <pre><code>/dev/mst/mt542_pciconf0
+18:00.0 [15b3:021e] ConnectX-8 Flash Recovery</code></pre>
+        <p>恢复态可以绕过运行固件，直接访问 Flash。这一步是后续备份和修复的关键。</p>
+        <h3 id="sec-4-6">4.4 从正常卡导出固件</h3>
+        <p>正常卡在 FNP/PCI recovery 下导出 FS5 镜像：</p>
+        <pre><code>flint -d /dev/mst/mt542_pciconf0 --no_fw_ctrl \
+  ri /home/test/cx8-backups/cx8-fnp-pci-fs5-40.42.8250.bin</code></pre>
+        <p>镜像信息：</p>
+        <ul>
+        <li>大小：7,540,736 字节</li>
+        <li>SHA-256：<code>0dddea1124fb20dde0613141ca0d74133e83b861d301537a5a8062073b5f48ca</code></li>
+        <li><code>flint -i ... verify</code>：成功，镜像可启动</li>
+        </ul>
+        <p>注意：这是 FS5 reduced image，不包含设备专属数据；镜像查询中 GUID/MAC 为 <code>N/A</code>。</p>
+        <h3 id="sec-4-7">4.5 首次重刷固件没有解决问题</h3>
+        <p>问题卡的型号、PSID、Flash 和固件版本与参考卡一致，因此执行：</p>
+        <pre><code>flint -d /dev/mst/mt542_pciconf0 --no_fw_ctrl \
+  -i cx8-fnp-pci-fs5-40.42.8250.bin -y burn</code></pre>
+        <p>烧录和完整 verify 均成功，问题卡 GUID/MAC 被保留。但解除 FNP、冷启动后仍然不枚举，关键寄存器仍为：</p>
+        <pre><code>0x1a00000 = 0x00000000
+0x0a0304  = 0xc0000000</code></pre>
+        <p>原因是普通 FS5 固件烧录保留了 DToC 中的设备数据，verify 输出也显示两个 <code>NV_DATA</code> 区域 CRC ignored：</p>
+        <pre><code>0x03e60000-0x03e7ffff  NV_DATA
+0x03e80000-0x03e9ffff  NV_DATA</code></pre>
+        <p>因此，固件代码已经更新，但错误 PCIe NVConfig 仍然存在。</p>
+        <h3 id="sec-4-8">4.6 备份正常卡与问题卡 NV_DATA</h3>
+        <p>正常卡两份 NV_DATA：</p>
+        <ul>
+        <li><code>0x03e60000</code>，长度 <code>0x20000</code></li>
+        <li><code>0x03e80000</code>，长度 <code>0x20000</code></li>
+        <li>两份内容完全一致</li>
+        <li>SHA-256：<code>f7a8c143f0f2bde6da9fdf2eba60c8552cc5dcf6833c18ae5283b3b62ae06602</code></li>
+        </ul>
+        <p>问题卡修复前两份 NV_DATA 不一致：</p>
+        <ul>
+        <li>第一份：<code>c6f1e1e3af2ef884ccb494808e5a12de27a9d8e17168d490e9162b408865ae55</code></li>
+        <li>第二份：<code>b5a41c3758763bbec72769fab4a2533bf2db0b6312d93d25a695f9e4b9e02260</code></li>
+        <li>与正常卡第一份相比约有 130,472 个字节不同</li>
+        </ul>
+        <p>问题卡修复前还进行了完整 64 MiB 原始 Flash 备份：</p>
+        <ul>
+        <li><code>problem-7c8c09dc2b96-full-before-nv-repair-20260715.bin</code></li>
+        <li>SHA-256：<code>3148001b641bceeabe6a31553b627de9c099b509f217fd944a26a9a1c7015ace</code></li>
+        </ul>
+        <h3 id="sec-4-9">4.7 尝试非 failsafe 参数及其失败原因</h3>
+        <p>曾按建议尝试：</p>
+        <pre><code>--ignore_dev_data --nofs -ocr --no_flash_verify</code></pre>
+        <p>结果：</p>
+        <ol>
+        <li><code>flint -ocr hw query</code> 确认 Flash 写保护已经是 <code>Disabled</code>，BP=<code>0000</code>、SRWD=<code>0</code>。</li>
+        <li>当前发行版 <code>flint</code> 只开放 <code>hw query</code>，<code>hw set</code> 报未知选项，因此没有执行写操作。</li>
+        <li><code>--ignore_dev_data</code> 被拒绝：<code>ignore_dev_data flag is not applicable with the given reduced image</code>。</li>
+        <li>MFT 帮助明确标注 <code>--ignore_dev_data</code> 为 FS3 only；CX8 使用 FS5。</li>
+        <li>将 64 MiB 原始 Flash dump 替换 NV 后交给 <code>flint -i</code>，又因物理 Flash dump 不是标准 FS5 镜像容器而报 <code>Invalid Image signature</code>。</li>
+        </ol>
+        <p>上述失败均发生在真正写入之前，没有额外破坏 Flash。</p>
+        <h3 id="sec-4-10">4.8 最终修复：只写两个 NV_DATA 分区</h3>
+        <p>由于已有完整 Flash 和原 NV_DATA 恢复点，最终使用 <code>flint wb</code> 只擦写两个目标区域：</p>
+        <div class="danger"><strong>危险：</strong><code>flint wb</code> 会直接擦写持久化 Flash。没有完整备份，或尚未核对地址、长度、板型、PSID、固件和 FNP 状态时，不要执行下面的命令。</div>
+        <pre><code>flint -d /dev/mst/mt542_pciconf0 -ocr \
+  wb nv_data_1-0x03e60000.bin 0x03e60000
+
+flint -d /dev/mst/mt542_pciconf0 -ocr \
+  wb nv_data_2-0x03e80000.bin 0x03e80000</code></pre>
+        <p>写入后用 <code>rb</code> 读回，并用 <code>cmp</code> 与正常卡文件逐字节比较。两份读回文件 SHA-256 都是：</p>
+        <pre><code>f7a8c143f0f2bde6da9fdf2eba60c8552cc5dcf6833c18ae5283b3b62ae06602</code></pre>
+        <p>问题卡自己的 GUID/MAC 没有被覆盖，因为 DEV_INFO 区域未写入。</p>
+        <h3 id="sec-4-11">4.9 冷启动恢复</h3>
+        <p>操作顺序：</p>
+        <ol>
+        <li>完全断电。</li>
+        <li>解除 FNP 短接。</li>
+        <li>重新给 CX8 和主机上电。</li>
+        </ol>
+        <p>修复后：</p>
+        <pre><code>/dev/mst/mt4131_pciconf0    1a:00.0    mlx5_0
+/dev/mst/mt4131_pciconf0.1  1a:00.1    mlx5_1</code></pre>
+        <p>下图记录了卡正常枚举时的 MST PCI 配置节点。截图当时显示 <code>/dev/mst/mt4131_pciconf0</code> 对应 <code>0000:1a:00.0</code>，证明主机已经能够通过 PCI configuration cycles 访问 CX8。</p>
+        <figure><a href="/assets/cx8-repair/mst-pci-node.png" target="_blank" rel="noopener"><img src="/assets/cx8-repair/mst-pci-node.png" alt="ConnectX-8 恢复后的 MST 与 PCI 节点" width="1620" height="290" loading="lazy" decoding="async" /></a><figcaption>ConnectX-8 恢复后的 MST 与 PCI 节点</figcaption></figure>
+        <p>关键寄存器：</p>
+        <pre><code>0x1a00000 = 0x11a02000
+0x0a0304  = 0x00000000</code></pre>
+        <p>与故障态相比，固件已经完成启动和 PCIe 静态配置，两个 PF 重新枚举。</p>
+        <p>当前非 FNP 状态下 <code>flint</code> 对 PCI 节点返回 <code>MFE_NO_FLASH_DETECTED</code>；这不否定修复结果，FNP recovery 下的 Flash 查询、固件 verify 和原始读回均已成功。</p>
+        <h3 id="sec-4-12">4.10 卡上网络端口状态基线</h3>
+        <p>下图分别查询 <code>/dev/mst/mt4131_pciconf0</code> 和 <code>.1</code>。两者固件均为 <code>40.42.8250</code>、MFT 为 <code>4.36.0-147</code>，端口 State 为 <code>Disable</code>，Supported Cable Speed 为 0，诊断建议为 <code>Cable is unplugged</code>。这说明截图时没有插网络线；它是端口介质状态，不是 PCIe 修复失败。</p>
+        <figure><a href="/assets/cx8-repair/mlxlink-port-status.png" target="_blank" rel="noopener"><img src="/assets/cx8-repair/mlxlink-port-status.png" alt="ConnectX-8 两个逻辑设备的 mlxlink 端口状态" width="833" height="1286" loading="lazy" decoding="async" /></a><figcaption>ConnectX-8 两个逻辑设备的 mlxlink 端口状态</figcaption></figure>
+        <h2 id="sec-5">5. 下游设备导致 POST 卡 92 的后续问题</h2>
+        <p>修复后发现：CX8 switch 下游接 NVIDIA GPU 可以启动；接 NVMe SSD、Broadcom PCIe switch 或构造回环时，主机可能卡在 POST 92。</p>
+        <p>判断：</p>
+        <ul>
+        <li>POST 92 是 BIOS PCI Bus 初始化阶段，故障发生在 OS 启动之前。</li>
+        <li>PCIe 必须是无环树；switch 下游接回自身是非法拓扑，不应继续测试。</li>
+        <li>当前正常卡 NV_DATA 很可能针对 NVIDIA GPU/x16 DSP 拓扑；它不是 GPU、SSD、级联 switch 都通用的配置。</li>
+        <li>SSD 需要正确的 x4/x4×4 bifurcation、PERST 和参考时钟。</li>
+        <li>级联 Broadcom switch 还需要足够 bus number、MMIO、Segment/AER/DPC 和正确 subordinate bus 配置。</li>
+        <li>固件 <code>40.42.8250</code> 是较早的开发版。NVIDIA 后续固件专门修过 PCIe switch 手工改 width/speed/ASPM 后 PERST# 未正确断言、导致下游设备掉线的问题。</li>
+        </ul>
+        <p>官方静态资料：</p>
+        <ul>
+        <li>ConnectX-8 用户手册 PDF，第 72 页附近：</li>
+        <p><a href="https://docs.nvidia.com/networking/display/nvidia-connectx-8-supernic-user-manual.pdf">https://docs.nvidia.com/networking/display/nvidia-connectx-8-supernic-user-manual.pdf</a></p>
+        <li>ConnectX-8 固件 40.49.1014 Release Notes PDF，第 36 页，Bug <code>4823907 / NVbug 5742181</code>：</li>
+        <p><a href="https://docs.nvidia.com/nvidia-connectx-8-supernic-firmware-release-notes-v40-49-1014.pdf">https://docs.nvidia.com/nvidia-connectx-8-supernic-firmware-release-notes-v40-49-1014.pdf</a></p>
+        </ul>
+        <p>官方给旧固件的 PERST 临时方案为：</p>
+        <pre><code>mlxconfig -d &lt;device&gt; set PCI_BUS10_CONTROL_EN=1
+mlxconfig -d &lt;device&gt; set PCI_BUS10_PERST_SOURCE=2
+mlxconfig -d &lt;device&gt; set PCI_BUS10_PERST_GPIO=8</code></pre>
+        <p>但本卡是内部开发 OPN/PSID，不能在未核对原理图 GPIO 和当前配置前直接照抄。也不能盲刷公开量产固件。实测没用。</p>
+        <h2 id="sec-6">6. 经验总结</h2>
+        <ol>
+        <li>改 CX8 PCIe hierarchy/width/speed 前，必须先备份完整 <code>mlxconfig -e q</code>、raw NVConfig、NV_DATA 和固件。</li>
+        <li>必须保留 OOB 管理路径；PCIe 配错后，正常 PCI 节点会完全消失。</li>
+        <li><code>flint burn</code> 成功不代表 NVConfig 已恢复；FS5 的设备数据默认会被保留。</li>
+        <li>reduced image 不包含 GUID/MAC/NV_DATA，不能配合 FS3 的 <code>--ignore_dev_data</code> 思路。</li>
+        <li>FNP + PCI recovery 是最可靠的 Flash 恢复路径。</li>
+        <li>原始写 NV_DATA 前，必须备份完整 Flash，并确认地址、长度、PSID、固件和板型全部匹配。</li>
+        <li>正常卡 NV_DATA 只适合同板型、同 PSID、同目标拓扑的恢复；不同下游场景应分别保存配置。</li>
+        <li>不要构造 PCIe switch 回环。</li>
+        </ol>
+      </article>
+    </main>
+    <footer class="site-footer"><span>© 2026 我的博客</span><span>由 <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a> 托管</span></footer>
+  </div>
+</body>
+</html>

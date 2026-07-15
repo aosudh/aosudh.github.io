@@ -33,6 +33,11 @@
 
         <!-- ↓↓↓ 新增文章：复制下面这个 <li> 块，改链接/标题/日期/摘要即可 ↓↓↓ -->
         <li class="post-item">
+          <a class="post-link" href="/posts/connectx8-pcie-nvdata-recovery.html">ConnectX-8 PCIe 配置改崩后的完整恢复：CH347、MTUSB、FNP 与 NV_DATA</a>
+          <p class="post-meta">2026-07-15</p>
+          <p class="post-summary">照官网手册改完 mlxconfig PCIe 参数，CX8 直接从总线消失：从 CH347 repeated START、MTUSB 信号量、FNP Flash Recovery、固件重刷无效，一路追到 FS5 双份 NV_DATA，最终原始读写恢复枚举；附失败分支、关键寄存器与 POST 92 后续分析。</p>
+        </li>
+        <li class="post-item">
           <a class="post-link" href="/posts/mtt-s5000-single-and-8gpu-benchmark.html">MTT S5000 单卡与八卡实测：从 PCIe、FP8 到 MTLink 与 MCCL</a>
           <p class="post-meta">2026-07-14</p>
           <p class="post-summary">MTT S5000 单卡到八卡完整实测：PCIe 57.1 GB/s、FP8 899.4 TFLOP/s、Torch flash 372.6 TFLOP/s、全互联 MTLink P2P 35.7 GB/s，以及 8 卡 MCCL AllReduce 234.3 GB/s；附 DSL 兼容矩阵、profiling 结论和 mthreads-gmi CLI 吐槽。</p>
