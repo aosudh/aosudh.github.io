@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DGX Spark 与 Jetson Thor 实测：48 SM 与 20 SM，为什么有时接近、有时反转？ · 我的博客</title>
+  <meta name="description" content="从普通 FP32、低精度矩阵到 Q4 服务与视觉完整链，解释 Spark 和 Thor 的胜负为何随任务改变；附 TF32 内核追踪、特权 NCU、FP4 阶段计时及结论边界。" />
+  <link rel="canonical" href="https://aosudh.github.io/posts/spark-vs-thor.html" />
+  <meta property="og:title" content="DGX Spark 与 Jetson Thor 实测：48 SM 与 20 SM，为什么有时接近、有时反转？" />
+  <meta property="og:description" content="从普通 FP32、低精度矩阵到 Q4 服务与视觉完整链，解释 Spark 和 Thor 的胜负为何随任务改变；附 TF32 内核追踪、特权 NCU、FP4 阶段计时及结论边界。" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://aosudh.github.io/posts/spark-vs-thor.html" />
+  <meta property="og:image" content="https://aosudh.github.io/assets/img/spark-vs-thor/interpretation-precision.png" />
+  <meta property="article:published_time" content="2026-09-28" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <style>
+    .comparison .wrap { max-width: 980px; }
+    .comparison .post-content h1 { font-size: clamp(1.7rem, 3.6vw, 2.3rem); line-height: 1.4; }
+    .comparison h2, .comparison h3 { scroll-margin-top: 24px; }
+    .comparison .post-content a, .comparison .post-content code { overflow-wrap: anywhere; }
+    .comparison .toc { background: var(--bg-soft); border: 1px solid var(--border); padding: 20px 24px; border-radius: var(--radius); margin: 28px 0; }
+    .comparison .toc p { margin-bottom: 10px; }
+    .comparison .toc ol { margin: 0; padding-left: 1.5em; }
+    .comparison .table-wrap { overflow-x: auto; max-width: 100%; margin: 20px 0; }
+    .comparison .table-wrap table { min-width: 640px; margin-bottom: 0; }
+    .comparison caption { text-align: left; color: var(--text-muted); font-size: .9rem; padding: 0 0 10px; }
+    .comparison th { vertical-align: top; }
+    .comparison td { vertical-align: top; }
+    .comparison figure { margin: 28px 0; }
+    .comparison figure img { display: block; width: 100%; background: #fff; border: 1px solid var(--border); }
+    .comparison figcaption { color: var(--text-muted); font-size: .9rem; margin-top: 10px; }
+    @media (max-width: 600px) {
+      .comparison .toc { padding: 16px; }
+      .comparison .post-content th, .comparison .post-content td { padding: 8px; }
+    }
+  </style>
+</head>
+<body class="comparison">
+  <div class="wrap">
+    <header class="site-header">
+      <a class="site-title" href="/">我的博客</a>
+      <nav class="site-nav" aria-label="主导航"><a href="/">首页</a><a href="/about.html">关于</a></nav>
+    </header>
+    <main>
+      <a class="back-link" href="/">← 返回首页</a>
+      <article class="post-content">
+        <h1>DGX Spark 与 Jetson Thor 实测：48 SM 与 20 SM，为什么有时接近、有时反转？</h1>
+        <p class="post-meta"><time datetime="2026-09-28">2026-09-28</time> · 实验：2026 年 9 月 · 全文复核：9 月 27 日</p>
+        <nav class="toc" aria-label="文章目录"><p><strong>文章目录</strong></p><ol><li><a href="#hardware-balance">48 与 20，数的并不是同一种计算配置</a></li>
+<li><a href="#precision-reversal">同一 8192³ 形状，精度改变就会换位</a></li>
+<li><a href="#three-similarities">“一样快”至少有三种不同原因</a></li>
+<li><a href="#fp4-full-path">FP4 的优势，为什么走到完整链又反转？</a></li>
+<li><a href="#applications">从矩阵到聊天、图像和视频，排名怎样变化</a></li>
+<li><a href="#practical-choice">怎样据此选机</a></li>
+<li><a href="#method-limits">这些结论的适用边界</a></li></ol></nav>
+<p class="lead">DGX Spark 有 48 个 SM，Jetson Thor 有 20 个 SM，为什么有些测试几乎一样快，有些 Spark 领先三倍，有些又是 Thor 领先两倍？这次实测的答案是：<strong>SM 不是跨架构的等价算力单位；不同精度使用不同资源，而完整应用还要为矩阵乘法之外的工作付费。</strong></p>
+<p>在本次软件与负载下，Spark 更擅长关闭 TF32 的 FP32 运算、共同 Q4 语言模型服务，以及若干包含主机预处理的完整链路；Thor 更擅长 BF16/FP16 大矩阵、GPU 驻留 ResNet18 和 FP16 扩散生成。下面从资源配比解释这些反转，再看哪些“接近”其实是不同现象。</p>
+
+<h2 id="hardware-balance">48 与 20，数的并不是同一种计算配置</h2>
+<div class="table-wrap">
+<table>
+  <caption>本机硬件身份与官方规格；产品峰值不是本次实测成绩</caption>
+  <thead><tr><th scope="col">项目</th><th scope="col">DGX Spark / GB10</th><th scope="col">Jetson Thor / T5000</th></tr></thead>
+  <tbody>
+    <tr><th scope="row">运行时报告的 SM</th><td>48</td><td>20</td></tr>
+    <tr><th scope="row">CUDA core</th><td>6144</td><td>2560</td></tr>
+    <tr><th scope="row">计算能力</th><td>12.1</td><td>11.0</td></tr>
+    <tr><th scope="row">稀疏 FP4 峰值</th><td>1000 TFLOP/s</td><td>2070 TFLOP/s</td></tr>
+    <tr><th scope="row">内存带宽</th><td>273 GB/s</td><td>273 GB/s</td></tr>
+    <tr><th scope="row">每 SM 统一数据缓存 / 共享内存上限</th><td>128 / 100 KiB</td><td>256 / 228 KiB</td></tr>
+  </tbody>
+</table>
+</div>
+<p>资料来自 NVIDIA 的 <a href="https://docs.nvidia.com/dgx/dgx-spark/hardware.html">Spark 规格</a>、<a href="https://marketplace.nvidia.com/en-us/enterprise/robotics-edge/jetson-thor-developer-kit/">Thor 规格</a>、<a href="https://developer.nvidia.com/blog/introducing-nvidia-jetson-thor-the-ultimate-platform-for-physical-ai/">Thor 内存说明</a>及 <a href="https://docs.nvidia.com/cuda/cuda-programming-guide/05-appendices/compute-capabilities.html#shared-memory-capacity-per-compute-capability">CUDA 片上资源表</a>。两者同属 Blackwell，却属于不同实现分支。</p>
+<p>Spark 的普通 CUDA core 数量是 Thor 的 2.4 倍，Thor 的标称低精度矩阵吞吐反而是 Spark 的 2.07 倍。两边 FP4 宣传值<strong>都包含稀疏条件</strong>，差距不是只有一边“乘了二”。按报告的 SM 数归一，Thor 的标称 FP4 预算约为每 SM 4.97 倍，但这包含各产品的频率与运行条件，不能叫实测每周期倍率。</p>
+<p>理解吞吐，需要同时看“SM 数量 × 该操作每 SM 每周期能力 × 有效频率 × 实现兑现程度”。普通 FP32 与 Tensor 运算不是同一条路径。本次原生指令实验中，Spark 使用 warp 级寄存器 MMA，Thor 使用 CTA 级、借助 TMEM 的 <code>tcgen05.mma</code>；发射和累加组织不同，优化方法也不同。<a href="https://docs.nvidia.com/cuda/archive/13.0.0/parallel-thread-execution/index.html#tensorcore-5th-generation-family-instructions">PTX 指令定义</a>支持这种区分，无须借未经核实的 Tensor Core 数量传言解释结果。</p>
+<p>更大的片上工作区可以容纳不同分块，为流水与数据复用提供条件；是否更快，还取决于内核实际如何使用。官方 <a href="https://docs.nvidia.com/cutlass/4.2.1/media/docs/cpp/efficient_gemm.html">CUTLASS GEMM 说明</a>也把供数延迟、软件流水和缓存复用放在一起讨论。因此资源表能解释设计取向，却不能单独计算某个任务的最终加速比。</p>
+
+<h2 id="precision-reversal">同一 8192³ 形状，精度改变就会换位</h2>
+<div class="table-wrap">
+<table>
+  <caption>整机 GEMM 吞吐，单位 TFLOP/s；越高越快，不同精度不代表相同误差或模型质量</caption>
+  <thead><tr><th scope="col">路径</th><th scope="col">Spark</th><th scope="col">Thor</th><th scope="col">观察</th></tr></thead>
+  <tbody>
+    <tr><th scope="row">FP32，API 关闭 TF32</th><td>18.34</td><td>5.61</td><td>Spark 约 3.27 倍</td></tr>
+    <tr><th scope="row">FP32，API 允许 TF32</th><td>40.75</td><td>40.68</td><td>本形状接近</td></tr>
+    <tr><th scope="row">FP16</th><td>58.52</td><td>112.31</td><td>Thor 约 1.92 倍</td></tr>
+    <tr><th scope="row">BF16</th><td>59.23</td><td>114.41</td><td>Thor 约 1.93 倍</td></tr>
+    <tr><th scope="row">FP8 E4M3 × E4M3</th><td>152.80</td><td>285.03</td><td>Thor 约 1.87 倍</td></tr>
+    <tr><th scope="row">FP4，共同 cuBLASLt</th><td>312.93</td><td>389.06</td><td>Thor 约 1.24 倍</td></tr>
+  </tbody>
+</table>
+</div>
+<figure>
+  <img src="/assets/img/spark-vs-thor/interpretation-precision.png" alt="8192 立方方阵中，Thor 与 Spark 的跨精度吞吐比：FP32 偏 Spark，FP16、BF16、FP8、FP4 偏 Thor，TF32 接近" loading="lazy" decoding="async">
+  <figcaption>比值大于 1 表示 Thor 更快。这是不同精度路径的比较，不是同质量下的统一排行榜。</figcaption>
+</figure>
+<p><strong>普通运算资源偏 Spark、低精度矩阵资源偏 Thor，是反转方向最有依据的硬件解释。</strong>具体倍率还包含频率、分块、访存和库实现：共同 API 不保证共同 kernel，也不能把 3.27 倍全归给 2.4 倍 core 数量。核心矩阵的输入配对与数值验证边界见<a href="#method-limits">方法说明</a>。</p>
+
+<h2 id="three-similarities">“一样快”至少有三种不同原因</h2>
+<h3 id="memory-copy">第一种：内存吞吐预算相似</h3>
+<p>每个数组 1 GiB 的 copy，逻辑读写速率为 Spark 245.69、Thor 255.02 GB/s，仅差约 3.8%。两机官方内存带宽相同，更多 SM 不会自动扩宽内存通道。4 MiB 小工作集却测到约 1022/1010 GB/s，提示缓存作用。因此这些是逻辑流量，不能冒充实际 DRAM 字节计数，更不能由此断言所有模型都受同一个带宽瓶颈限制。</p>
+
+<h3 id="tf32-intersection">第二种：TF32 在某个形状形成交点</h3>
+<p>首轮 TF32 的 1024³、4096³、8192³，Spark 分别为 29.90、39.76、40.75 TFLOP/s，Thor 为 62.31、52.82、40.68。<strong>Thor 已经在小矩阵达到 62.31，所以大矩阵的 40.7 不是两机相同的硬件上限。</strong></p>
+<figure>
+  <img src="/assets/img/spark-vs-thor/interpretation-tf32-shapes.png" alt="首轮 TF32 三种方阵尺寸的吞吐和五批最小最大范围：Spark 随尺寸上升，Thor 下降，在 8192 方阵接近" loading="lazy" decoding="async">
+  <figcaption>本图保留首轮数据及五批范围；补充诊断单列。范围不是置信区间，也未进行统计等价检验。</figcaption>
+</figure>
+<p>补充普通计时在 8192³ 得到约 41.40/40.26，重现接近的量级；Thor 的 4096³ 本轮约 41.78，说明首轮 52.82 不是固定常数。trace 显示 Spark 使用 CUTLASS warp Tensor 路径，Thor 三种尺寸始终使用同一 CUTLASS 3.x、2-SM 内核，不能用“Thor 大矩阵换了内核族”解释下降。</p>
+<p>再看独立 NCU 采集：Thor 从 1024³ 到 8192³，实测 SM 周期频率从 1.097 升至 1.380 GHz，SM 活动比例从 69.27% 升至 99.90%，Tensor 活动比例却从 47.41% 降至 26.73%，TC 指标也从 50.82% 降至 29.31%。<strong>GPU 持续有工作，不等于矩阵管线持续有效工作。</strong>这次 profile 排除了“大格时钟更低”的解释，支持关注该实现的供数、流水依赖和同步。</p>
+<p>Tensor/TC 百分比以活跃周期为分母，SM 活动比例则以经过的周期为分母；它们不是数学峰值利用率，不能相加或用来换算跨机速度比，定义见 <a href="https://archive.docs.nvidia.com/nsight-compute/2025.3/ProfilingGuide/index.html#metrics-decoder">Nsight Compute 文档</a>。NCU 重放清缓存，<strong>其耗时没有复现普通热输入曲线的完整下降</strong>；它是机制旁证，不能替代正式计时。L2 命中率下降也不足以锁定 DRAM：本次没有有效 DRAM 字节与细分 stall，尚未隔离低活动的唯一根因。</p>
+<p>还有一项必须公开的失败：补充诊断虽然同代码、同 seed、同形状，保存的 12 对跨机 A/B 矩阵 SHA 却不同，<strong>严格相同输入配对门槛未通过</strong>。节点内数值校验有效，每格 NCU 输入也与本机普通诊断一致；两机计数只能展示各自实现，不能充当等输入的因果倍率。</p>
+
+<h3 id="short-attention">第三种：短复合操作没有兑现大矩阵优势</h3>
+<p>BF16 注意力 decode，B1/H8/D128、KV=2048、query 长度 1，Spark 约 25.0 µs，Thor 约 26.6 µs。数据读取、归一化和短操作调度都在路径中，并非持续占满矩阵单元的大方阵。换成 prefill 或不同 KV 长度，排名又会变化；这个接近不能解释成两机 Tensor 峰值相同。</p>
+
+<h2 id="fp4-full-path">FP4 的优势，为什么走到完整链又反转？</h2>
+<p>共同 cuBLASLt FP4 的四种方阵，Thor 均领先，幅度 1.24–1.47 倍，说明低精度优势确已传到完整 GEMM。但指令循环、GEMM、完整算子和模型请求，是四个不同层次。两机原生循环的稀疏性、累加链数和并行规模不同，不能相除排峰值；Thor 共同库 dense GEMM 达到 389.06，也已高于其本次两链微程序的 178.63。</p>
+<div class="table-wrap">
+<table>
+  <caption>GPU 驻留 BF16 输入：未融合的 FP4 在线量化、scale/打包、GEMM、bias+ReLU；毫秒，越低越好</caption>
+  <thead><tr><th scope="col">M × N × K</th><th scope="col">GEMM：Spark / Thor</th><th scope="col">完整路径：Spark / Thor</th></tr></thead>
+  <tbody>
+    <tr><th scope="row">128 × 1024 × 1024</th><td>0.01033 / 0.00707</td><td>0.15068 / 0.20235</td></tr>
+    <tr><th scope="row">1024 × 1024 × 1024</th><td>0.01888 / 0.01442</td><td>0.21603 / 0.27526</td></tr>
+  </tbody>
+</table>
+</div>
+<p>单独 GEMM 仅约占完整路径的 3%–9%，其余成本足以抵消 Thor 的乘法优势。阶段中位数不是可精确相加的逐样本分解，但已足够解释排名为何换位。这是本次未融合算子的完整链，不是模型端到端速度，也不是已搜索出的最优算法。</p>
+<p>严格配对的 1024³ dense/sparse 实验更进一步：同一份满足 paired 4:8 的合成数学输入，稀疏 GEMM 吞吐两机都提高约 13%（时延降低约 11%–12%）；含在线处理的完整路径，Spark 却从 0.17847 增至 0.20673 ms，Thor 从 0.25162 增至 0.30425 ms。在线压缩和布局处理超过了省下的时间。预先量化、离线压缩并反复复用权重可能不同，不能据此否定所有稀疏模型。</p>
+<p><strong>Q4_K_M 也不等于原生 W4A4/NVFP4。</strong>本次没有同一大模型原生 NVFP4 的共同端到端对照，不能用下面的 Q4 聊天成绩替代它。</p>
+
+<h2 id="applications">从矩阵到聊天、图像和视频，排名怎样变化</h2>
+<p>共同 llama.cpp、Qwen3-8B Q4_K_M，输入 2048、输出 128、并发 1，整体吞吐为 Spark 34.81、Thor 24.74 token/s；九格输入与并发组合中，Spark 领先 1.25–2.25 倍。这里按完整请求窗口统计输出，包含首次响应等待，不是单独 decode 峰值。该路线的固定权重和输入 token 身份有单独校验。</p>
+<p>长输入预填充可以集中处理很多 token，逐步生成却要等待上一步结果，并反复处理权重、注意力、小算子和服务调度。这解释了为什么大矩阵领先未必传到聊天速度；要把差距进一步分配给 CPU、访存或某条内核，仍需该模型的逐阶段测量，而不是拿一个 copy 点代替。</p>
+<p>换成 BF16/vLLM，输入 512/2048 的六格由 Thor 领先约 3.6%–10%；输入 8192、并发 4/8，又由 Spark 领先约 12%/17%。模型执行阶段、量化处理和引擎都影响排名，不能跨 Q4/BF16 表相除当作纯量化收益。vLLM 已核对关闭前缀缓存，但接口缺逐响应 <code>cached_tokens</code>，没有完整的逐请求缓存计数复核。</p>
+<div class="table-wrap">
+<table>
+  <caption>ResNet18，batch 1，FP32 权重加 FP16 autocast；范围扩大后发生反转</caption>
+  <thead><tr><th scope="col">计时范围</th><th scope="col">Spark</th><th scope="col">Thor</th></tr></thead>
+  <tbody>
+    <tr><th scope="row">GPU 驻留前向，同步 wall 计时</th><td>190.65 图/秒</td><td>675.19 图/秒</td></tr>
+    <tr><th scope="row">内存中 JPEG 解码至分类结果</th><td>57.29 图/秒</td><td>44.35 图/秒</td></tr>
+    <tr><th scope="row">真实 H.264 录制流软件解码至分类，服务时间</th><td>44.26 帧/秒</td><td>34.36 帧/秒</td></tr>
+  </tbody>
+</table>
+</div>
+<p>JPEG 链从内存中的压缩图像到 CPU 分类结果，不含磁盘、网络和模型初始化；这是一张固定图片的工程性能测试，不是标准分类精度评测。视频速率也不含文件加载及哈希记账，是未限速处理能力，不能承诺每帧 30 Hz 截止时间。四帧 SmolVLM 从<strong>预解码图像</strong>开始处理和生成，约 1.21/1.89 秒，未计视频解码，也不是视频原生模型的质量评测。</p>
+<p>Thor 同样有端到端优势：tiny-sd 的 512²、20 步 FP16 完整生成约 0.96 秒，对 Spark 约 3.28 秒；SmolVLA 采用 FP16 autocast，在合成观察下的离线动作预测则为 Spark 约 126、Thor 202 毫秒。网络与循环结构不同，单提示画图和离线动作都不能替代画质评价或机器人成功率。</p>
+
+<h2 id="practical-choice">怎样据此选机</h2>
+<p><strong>现有共同 Q4 服务、严格 FP32，以及主机预处理较重的已测路径，优先考虑 Spark；适配的 BF16/FP16 大矩阵、驻留 ResNet18 和 tiny-sd，Thor 更有优势。</strong>部署时先固定目标模型、质量要求、输入长度和并发，再比较完整等待时间；不要先选一项峰值，再替应用寻找理由。</p>
+<p>固定 Q4 路线两小时连续测试均无服务错误，但这只证明该配置的持续性。Thor 的 120 W→MAXN→120 W 短程对照中，Q4 吞吐为 24.81→26.45→24.68 token/s，提升约 6.63%；BF16 GEMM 没有随 MAXN 提升。默认功耗档不足以解释所有差距，切换模式也不会普遍翻盘。</p>
+<p>更复杂的 Agentic 工作负载中，Thor 原始 BFCL 批次仍有 11 条连接失败。另一次独立新连接诊断完成了这 11 条，也不回填为原批次成功，且没有证明原错误的根因；两小时无错不能扩展成所有工作负载无错。</p>
+
+<h2 id="method-limits">这些结论的适用边界</h2>
+<p>共同底座使用内容相同的 ARM64 NVIDIA PyTorch 25.08 镜像，CUDA 13.0；宿主驱动、内核和 BSP 不同。<strong>同容器比较的是整机软件体验，不是隔离其他因素后的纯芯片比较。</strong>平台专用引擎另行比较，不混入共同基线。</p>
+<p>核心 GEMM 取五批每调用均值的中位数；FP4 共同库含五个独立进程。实测范围不是置信区间或 p99。核心大矩阵检查选定输出点的完整 K 长度 CPU FP64 参考，并核验全输出有限，未做全矩阵 FP64 对照。原 core 只保存生成协议和 seed，没有实际矩阵 SHA，不能追认为跨机逐字节相同输入；补充诊断的配对失败已在<a href="#tf32-intersection">TF32 部分</a>明确保留。</p>
+<p>普通微基准复用热输入，未锁定持续时钟；CUDA event 还可能包含同一 stream 的提交空隙。因此结果应读成该实现的稳态表现，不能一律叫剥离主机影响的纯内核极限。模型的小样本输出检查，也不构成泛化质量保证。</p>
+<p>本次没有墙插功率测量，不能给出可信的能耗/请求或能效胜者；也没有真实机器人、相机与传感器闭环。本文支持的是这些已测路径的选择：先看工作真正花在哪里，再判断更强的计算资源能否转化为用户等待时间的减少。</p>
+
+      </article>
+    </main>
+    <footer class="site-footer"><span>© 2026 我的博客</span><span>由 <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a> 托管</span></footer>
+  </div>
+</body>
+</html>
