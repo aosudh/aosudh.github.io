@@ -3,7 +3,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://aosudh.github.io/</loc>
-    <lastmod>2026-09-28</lastmod>
+    <lastmod>2026-10-22</lastmod>
   </url>
   <url>
     <loc>https://aosudh.github.io/about.html</loc>
@@ -56,5 +56,9 @@
   <url>
     <loc>https://aosudh.github.io/posts/spark-vs-thor.html</loc>
     <lastmod>2026-09-28</lastmod>
+  </url>
+  <url>
+    <loc>https://aosudh.github.io/posts/jetson-thor-flashing-guide.html</loc>
+    <lastmod>2026-10-22</lastmod>
   </url>
 </urlset>

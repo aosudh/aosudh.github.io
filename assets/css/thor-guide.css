@@ -1,0 +1,21 @@
+/* Thor guide only: preserve the site's shared light/dark palette. */
+.wrap { max-width: 1000px; }
+.post-content h1 { max-width: 28em; }
+.post-content { overflow-wrap: anywhere; }
+.post-content h2 { scroll-margin-top: 24px; border-top: 1px solid var(--border); padding-top: 28px; margin-top: 48px; }
+.post-content .muted { color: var(--text-muted); font-size: .92rem; }
+.table-scroll { overflow-x: auto; margin-bottom: 22px; }
+.table-scroll table { min-width: 680px; margin-bottom: 0; }
+.table-scroll th, .table-scroll td { vertical-align: top; min-width: 140px; }
+.post-content pre { overflow-wrap: normal; white-space: pre; }
+.downloads { font-weight: 600; }
+.part-links { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 28px; }
+.manual-toc { margin: 24px 0 32px; }
+.manual-toc summary { cursor: pointer; font-weight: 600; }
+.manual-toc ol { columns: 2; column-gap: 36px; padding-left: 24px; margin-top: 16px; }
+.manual-toc li { break-inside: avoid; font-size: .92rem; }
+@media (max-width: 600px) {
+  .post-content h1 { font-size: 1.65rem; }
+  .part-links { display: block; }
+  .manual-toc ol { columns: 1; }
+}
