@@ -1,0 +1,11 @@
+.post-content { overflow-wrap: anywhere; }
+.post-content .muted { color: var(--text-muted); font-size: .9rem; }
+.post-content .downloads { font-weight: 600; }
+.article-toc { margin: 24px 0 32px; }
+.article-toc h2 { margin-top: 0; }
+.article-toc ol { padding-left: 0; list-style: none; }
+.post-content .table-scroll { overflow-x: auto; margin-bottom: 18px; }
+.post-content .table-scroll table { margin-bottom: 0; min-width: 560px; }
+.post-content pre { overflow-wrap: normal; white-space: pre; }
+.post-content h2[id] { scroll-margin-top: 20px; }
+@media print { .site-nav, .back-link, .article-toc, .downloads { display: none; } .wrap { max-width: none; } .post-content pre { white-space: pre-wrap; } .post-content .table-scroll { overflow: visible; } }
