@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1050" viewBox="0 0 1200 1050" role="img" aria-labelledby="title desc">
+<title id="title">05 恢复过程：传输、启动与迁移是不同证据</title>
+<desc id="desc">历史日志字段与实机观察整理。两种 Linux initramfs 传输完成但没有取得 ARP/SSH 响应；随后使用 HTTP chainloader。80000000 暂存地址下首次 mainline 迁移中断，改 44000000 后成功。失败原因不由传输日志单独确定。</desc>
+<style>text{font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;fill:#15314b} .mono{font-family:Consolas,"SFMono-Regular",monospace}</style>
+<rect width="1200" height="1050" fill="#fff"/>
+<text x="48" y="54" font-size="30" font-weight="700" style="fill:#15314b">05  恢复过程：传完文件不等于启动成功</text>
+<text x="48" y="89" font-size="19" font-weight="700" style="fill:#087f8c">历史日志摘录 / 非现场截图</text>
+<text x="48" y="119" font-size="18" font-weight="400" style="fill:#52667a">2026-11-12 · 仅摘录已核验字段和观察结果；不是拼造的终端输出。</text>
+<text x="48" y="166" font-size="24" font-weight="700" style="fill:#15314b">A  两种 Linux initramfs：TFTP 完整，未取得管理响应</text>
+<rect x="48" y="188" width="536" height="180" rx="16" fill="#f1f6fa" stroke="#d7e2ec" stroke-width="1.5"/>
+<rect x="616" y="188" width="536" height="180" rx="16" fill="#f1f6fa" stroke="#d7e2ec" stroke-width="1.5"/>
+<text x="72" y="225" font-size="23" font-weight="700" style="fill:#15314b">官方 OpenWrt · Linux 6.18.60</text>
+<text x="72" y="263" font-size="21" font-weight="400" style="fill:#15314b">镜像传输：19,267,984 字节</text>
+<text x="72" y="300" font-size="21" font-weight="700" style="fill:#087f8c">TFTP 重传：0</text>
+<text x="72" y="340" font-size="20" font-weight="400" style="fill:#52667a">后续观察：未取得 ARP / SSH 响应</text>
+<text x="640" y="225" font-size="23" font-weight="700" style="fill:#15314b">Preview2 · Linux 6.18.39</text>
+<text x="640" y="263" font-size="20" font-weight="400" style="fill:#15314b" class="mono">transfer_bytes = 20310464</text>
+<text x="640" y="300" font-size="20" font-weight="700" style="fill:#087f8c" class="mono">tftp_retries = 0</text>
+<text x="640" y="340" font-size="20" font-weight="400" style="fill:#52667a" class="mono">ssh_access_obtained = false</text>
+<rect x="48" y="386" width="1104" height="86" rx="16" fill="#fff2e6" stroke="#f1d5bd" stroke-width="1.5"/>
+<text x="72" y="420" font-size="22" font-weight="700" style="fill:#b95a16">已证明：文件送达。尚未证明：Linux 成功启动。</text>
+<text x="72" y="452" font-size="19" font-weight="400" style="fill:#52667a">未取得串口启动日志，无法锁定停在 bootm、内核入口或驱动初始化。</text>
+<text x="48" y="523" font-size="24" font-weight="700" style="fill:#15314b">B  改用 HTTP chainloader 后：首次迁移中断与修正后成功</text>
+<rect x="48" y="545" width="492" height="196" rx="16" fill="#fff2e6" stroke="#f1d5bd" stroke-width="1.5"/>
+<rect x="660" y="545" width="492" height="196" rx="16" fill="#e8f6f5" stroke="#a9d7d5" stroke-width="1.5"/>
+<text x="72" y="582" font-size="23" font-weight="700" style="fill:#b95a16">首次 · FIT 暂存 0x80000000</text>
+<text x="72" y="623" font-size="22" font-weight="400" style="fill:#15314b" class="mono">phase = 1   done = 4 / 9</text>
+<text x="72" y="661" font-size="22" font-weight="400" style="fill:#15314b" class="mono">ok = 0      error = 0</text>
+<text x="72" y="704" font-size="20" font-weight="400" style="fill:#52667a">最后状态之后 HTTP / ARP 失联</text>
+<text x="684" y="582" font-size="23" font-weight="700" style="fill:#087f8c">修正 · FIT 暂存 0x44000000</text>
+<text x="684" y="623" font-size="22" font-weight="400" style="fill:#15314b" class="mono">phase = 3   ok = 1</text>
+<text x="684" y="661" font-size="22" font-weight="400" style="fill:#15314b" class="mono">error = 0   reboot = 0</text>
+<text x="684" y="704" font-size="20" font-weight="400" style="fill:#52667a">迁移完成，并回读启动文件与环境</text>
+<path d="M563 640 H631 M619 628 L631 640 L619 652" fill="none" stroke="#087f8c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="567" y="681" font-size="19" font-weight="700" style="fill:#087f8c">重入</text>
+<rect x="48" y="761" width="1104" height="171" rx="16" fill="#f1f6fa" stroke="#d7e2ec" stroke-width="1.5"/>
+<text x="72" y="798" font-size="23" font-weight="700" style="fill:#15314b">如何理解这组证据</text>
+<text x="72" y="833" font-size="20" font-weight="400" style="fill:#15314b">实测：改为 0x44000000 后迁移成功；后续系统写入、启动与读回均通过。</text>
+<text x="72" y="869" font-size="20" font-weight="400" style="fill:#52667a">推断：保存运行中 FIT 时的高地址访问可能解释首次中断；没有串口异常回溯。</text>
+<text x="72" y="905" font-size="20" font-weight="400" style="fill:#52667a">已排除的旧猜测：原厂二进制解压上限为 64 MiB，不能归因于“32 MiB 限制”。</text>
+<text x="48" y="968" font-size="17" font-weight="400" style="fill:#52667a">依据：TFTP 记录、preview2-result、mainline-migration-attempt1/2、启动项读回与二进制检查。</text>
+<text x="48" y="1000" font-size="17" font-weight="400" style="fill:#52667a">证据分层：传输完成 → 可访问恢复页 → 迁移成功 → 正常系统启动；每层都需要独立验证。</text>
+<metadata>{&quot;kind&quot;: &quot;historical-evidence-summary-not-screenshot&quot;, &quot;source_files&quot;: [&quot;tftpd64.log&quot;, &quot;preview2-result.json&quot;, &quot;mainline-migration-attempt1.json&quot;, &quot;mainline-migration-attempt2.json&quot;, &quot;reentry-44000000-inspection.json&quot;, &quot;official-firmware-install.json&quot;, &quot;stock-boot-readonly-report.json&quot;], &quot;personal_identifiers&quot;: &quot;omitted&quot;, &quot;rendering&quot;: &quot;source-checked SVG; no browser capture&quot;}</metadata>
+</svg>

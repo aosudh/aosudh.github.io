@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1090" viewBox="0 0 1200 1090" role="img" aria-labelledby="title desc">
+<title id="title">06 第三台无线故障：保留观察，限制结论</title>
+<desc id="desc">2026年11月15日第三台官方 OpenWrt 无线故障的历史字段摘要。连续运行180426.55秒，同一启动未整机重启；三个PCI无线设备控制命令失败，beacon命令返回负108。现场可用内存338560KiB、温度48.2到50.4摄氏度，最初触发日志已经滚出，因此没有确定根因。</desc>
+<style>text{font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;fill:#15314b} .mono{font-family:Consolas,"SFMono-Regular",monospace}</style>
+<rect width="1200" height="1090" fill="#fff"/>
+<text x="48" y="54" font-size="30" font-weight="700" style="fill:#15314b">06  第三台无线故障：约 50 小时后的现场证据</text>
+<text x="48" y="89" font-size="19" font-weight="700" style="fill:#087f8c">历史日志摘录 / 非现场截图</text>
+<text x="48" y="119" font-size="18" font-weight="400" style="fill:#52667a">2026-11-15 · 官方 SNAPSHOT r38208-4d5d291a26 / Linux 6.18.60</text>
+<rect x="48" y="153" width="352" height="159" rx="16" fill="#f1f6fa" stroke="#d7e2ec" stroke-width="1.5"/>
+<rect x="424" y="153" width="352" height="159" rx="16" fill="#f1f6fa" stroke="#d7e2ec" stroke-width="1.5"/>
+<rect x="800" y="153" width="352" height="159" rx="16" fill="#f1f6fa" stroke="#d7e2ec" stroke-width="1.5"/>
+<text x="72" y="187" font-size="20" font-weight="400" style="fill:#52667a">连续运行时间</text>
+<text x="72" y="230" font-size="26" font-weight="700" style="fill:#15314b">约 50 小时 7 分钟</text>
+<text x="72" y="274" font-size="19" font-weight="400" style="fill:#15314b">180426.55 秒 · 同一 boot</text>
+<text x="448" y="187" font-size="20" font-weight="400" style="fill:#52667a">现场可用内存</text>
+<text x="448" y="230" font-size="29" font-weight="700" style="fill:#15314b">338560 KiB</text>
+<text x="448" y="274" font-size="19" font-weight="400" style="fill:#15314b">约 330.6 MiB</text>
+<text x="824" y="187" font-size="20" font-weight="400" style="fill:#52667a">现场温度范围</text>
+<text x="824" y="230" font-size="29" font-weight="700" style="fill:#15314b">48.2–50.4°C</text>
+<text x="824" y="274" font-size="19" font-weight="400" style="fill:#15314b">读取时的传感器值</text>
+<rect x="48" y="336" width="1104" height="225" rx="16" fill="#fff2e6" stroke="#f1d5bd" stroke-width="1.5"/>
+<text x="72" y="374" font-size="24" font-weight="700" style="fill:#b95a16">直接观察：三个无线设备的控制通道均报错</text>
+<text x="72" y="414" font-size="22" font-weight="400" style="fill:#15314b" class="mono">0001:01:00.0   0002:01:00.0   0003:01:00.0</text>
+<text x="72" y="451" font-size="20" font-weight="400" style="fill:#15314b">反复出现 WMI_PDEV_BSS_CHAN_INFO_REQUEST 发送失败。</text>
+<text x="72" y="488" font-size="24" font-weight="700" style="fill:#b95a16" class="mono">beacon_command_error = -108</text>
+<text x="72" y="529" font-size="20" font-weight="400" style="fill:#52667a">同时出现发送队列无法清空、接收聚合无法停止；未发生整机重启。</text>
+<rect x="48" y="585" width="1104" height="184" rx="16" fill="#f1f6fa" stroke="#d7e2ec" stroke-width="1.5"/>
+<text x="72" y="624" font-size="24" font-weight="700" style="fill:#15314b">日志窗口的边界：最初触发事件已经滚出</text>
+<text x="72" y="665" font-size="21" font-weight="400" style="fill:#15314b" class="mono">uptime_seconds = 180426.55</text>
+<text x="72" y="701" font-size="21" font-weight="400" style="fill:#15314b" class="mono">ring_buffer_earliest_timestamp_seconds = 179627.927247</text>
+<text x="72" y="740" font-size="20" font-weight="400" style="fill:#52667a">现存窗口约 13 分钟；最早可见记录已经是故障后的重复报错。</text>
+<rect x="48" y="793" width="536" height="182" rx="16" fill="#e8f6f5" stroke="#a9d7d5" stroke-width="1.5"/>
+<rect x="616" y="793" width="536" height="182" rx="16" fill="#fff2e6" stroke="#f1d5bd" stroke-width="1.5"/>
+<text x="72" y="832" font-size="23" font-weight="700" style="fill:#087f8c">证据支持的判断</text>
+<text x="72" y="870" font-size="20" font-weight="400" style="fill:#15314b">异常集中在 ath12k / 无线固件控制通道。</text>
+<text x="72" y="906" font-size="20" font-weight="400" style="fill:#15314b">与 crash-flush / 通道关闭状态相符。</text>
+<text x="72" y="945" font-size="19" font-weight="400" style="fill:#52667a">-108 的机制说明不等于已经找出触发点。</text>
+<text x="640" y="832" font-size="23" font-weight="700" style="fill:#b95a16">仍不能下的结论</text>
+<text x="640" y="870" font-size="19" font-weight="400" style="fill:#15314b" class="mono">initial_trigger_identified = false</text>
+<text x="640" y="906" font-size="20" font-weight="400" style="fill:#15314b">不能锁定某个设置、补丁或硬件损坏。</text>
+<text x="640" y="945" font-size="19" font-weight="400" style="fill:#52667a">当前温度和内存不能排除更早瞬态异常。</text>
+<text x="48" y="1012" font-size="17" font-weight="400" style="fill:#52667a">依据：第三台 20261115-wireless-failure / diagnosis.json、dmesg、logread 与只读诊断记录。</text>
+<text x="48" y="1045" font-size="18" font-weight="400" style="fill:#52667a">本次只读保存故障现场；短时三频可用不能代替多日稳定性验证。</text>
+<metadata>{&quot;kind&quot;: &quot;historical-evidence-summary-not-screenshot&quot;, &quot;source_files&quot;: [&quot;20261115-wireless-failure/diagnosis.json&quot;, &quot;20261115-wireless-failure/dmesg.txt&quot;, &quot;20261115-wireless-failure/logread.txt&quot;, &quot;20261115-wireless-failure/无线掉线诊断.txt&quot;], &quot;personal_identifiers&quot;: &quot;omitted&quot;, &quot;rendering&quot;: &quot;source-checked SVG; no browser capture&quot;}</metadata>
+</svg>

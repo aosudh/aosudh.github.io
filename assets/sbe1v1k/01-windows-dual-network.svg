@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="820" viewBox="0 0 1200 820" role="img" aria-labelledby="title desc">
+<title id="title">01  Windows 双网卡与首次刷机的三个地址阶段</title>
+<desc id="desc">技术拓扑示意图。Wi-Fi 保持互联网；USB 直连路由器 Ethernet 1。11月12日首次刷机按阶段依次使用172.16.252.252/16进行DHCP与TFTP、192.168.255.2/24访问恢复页、192.168.1.2/24管理OpenWrt。11月19日的双地址方式是后续复用经验。</desc>
+<defs>
+  <marker id="arrow" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4.5 L0,9 Z" fill="#087f8c"/></marker>
+  <marker id="arrow-orange" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4.5 L0,9 Z" fill="#b95a16"/></marker>
+</defs>
+<style>text{font-family:'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif;fill:#15314b;font-size:20px} .mono{font-family:Consolas,'SFMono-Regular',monospace} .muted{fill:#52667a} .small{font-size:17px} .label{font-size:18px} .heading{font-size:24px;font-weight:700} .title{font-size:30px;font-weight:700}</style>
+<rect width="1200" height="820" fill="#fff"/>
+<text x="48" y="54" class="title">01  Windows 双网卡与首次刷机的三个地址阶段</text>
+<text x="48" y="88" class="muted label">示意图 · 11 月 12 日首次免拆流程；USB 不配默认网关，不桥接、不共享到日常局域网。</text>
+<rect x="48" y="128" width="350" height="284" rx="16" fill="#f8fbfd" stroke="#d7e2ec" stroke-width="1.5"/>
+<text x="74" y="169" class="heading">Windows 电脑</text>
+<rect x="72" y="191" width="302" height="92" rx="16" fill="#e8f6f5" stroke="#a9d7d5" stroke-width="1.5"/>
+<text x="94" y="225" style="fill:#087f8c">Wi-Fi：正常互联网出口</text>
+<text x="94" y="259" class="small muted">保留上级网络的 DHCP / 网关</text>
+<rect x="72" y="306" width="302" height="82" rx="16" fill="#e8f6f5" stroke="#a9d7d5" stroke-width="1.5"/>
+<text x="94" y="340" style="fill:#087f8c">USB 2.5G：隔离直连</text>
+<text x="94" y="371" class="small muted">IPv4 随刷机阶段切换，见下表</text>
+<rect x="490" y="191" width="284" height="92" rx="16" fill="#e8f6f5" stroke="#a9d7d5" stroke-width="1.5"/>
+<text x="632" y="227" class="heading" text-anchor="middle">现有上级路由器</text>
+<text x="632" y="260" class="small muted" text-anchor="middle">只负责电脑正常上网</text>
+<rect x="866" y="191" width="286" height="92" rx="16" fill="#fff" stroke="#d7e2ec" stroke-width="1.5"/>
+<text x="1009" y="227" class="heading" text-anchor="middle">互联网</text>
+<text x="1009" y="260" class="small muted" text-anchor="middle">检索资料 / 下载文件</text>
+<path d="M398 235 H490" fill="none" stroke="#087f8c" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="443" y="220" class="small" style="fill:#087f8c" text-anchor="middle">Wi-Fi</text>
+<path d="M774 235 H866" fill="none" stroke="#087f8c" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="532" y="306" width="620" height="106" rx="16" fill="#f1f6fa" stroke="#d7e2ec" stroke-width="1.5"/>
+<text x="558" y="342" class="heading">SBE1V1K · HW Rev 4.1</text>
+<text x="558" y="377" class="label" style="fill:#087f8c">Ethernet 1 / 2.5G LAN 直连；本阶段 WAN 不接上级网络。</text>
+<path d="M398 348 H532" fill="none" stroke="#087f8c" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="465" y="333" class="small" style="fill:#087f8c" text-anchor="middle">网线直连</text>
+<text x="48" y="458" class="heading">首次流程：依次切换，不是同时配置三个地址</text>
+<rect x="48" y="480" width="352" height="172" rx="16" fill="#e8f6f5" stroke="#a9d7d5" stroke-width="1.5"/>
+<text x="68" y="517" class="heading" style="fill:#087f8c">① 原厂 DHCP / TFTP</text>
+<text x="68" y="556" class="mono">172.16.252.252/16</text>
+<text x="68" y="593" class="label">Windows 运行 Tftpd64</text>
+<text x="68" y="628" class="small muted">DHCP 池从 172.16.252.10 开始</text>
+<rect x="424" y="480" width="352" height="172" rx="16" fill="#e8f6f5" stroke="#a9d7d5" stroke-width="1.5"/>
+<text x="444" y="517" class="heading" style="fill:#087f8c">② RAM HTTP 恢复</text>
+<text x="444" y="556" class="mono">192.168.255.2/24</text>
+<text x="444" y="593" class="label">路由器：192.168.255.1</text>
+<text x="444" y="628" class="small muted">先停止 Tftpd64，再备份 / 迁移</text>
+<rect x="800" y="480" width="352" height="172" rx="16" fill="#e8f6f5" stroke="#a9d7d5" stroke-width="1.5"/>
+<text x="820" y="517" class="heading" style="fill:#087f8c">③ OpenWrt 管理</text>
+<text x="820" y="556" class="mono">192.168.1.2/24</text>
+<text x="820" y="593" class="label">路由器：192.168.1.1</text>
+<text x="820" y="628" class="small muted">正常启动后核验 SSH / LuCI</text>
+<path d="M400 566 H424" fill="none" stroke="#087f8c" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M776 566 H800" fill="none" stroke="#087f8c" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="48" y="680" width="1104" height="106" rx="10" fill="#fff2e6" stroke="#f1d5bd" stroke-width="1.5"/>
+<text x="68" y="711" class="label" style="fill:#b95a16">11 月 19 日追加经验：192.168.1.10 + 192.168.255.2 双地址用于已刷设备的迁移复用。</text>
+<text x="68" y="744" class="label">这不是首次原厂 TFTP 的起始配置；访问恢复页需显式绑定 192.168.255.2 为源地址。</text>
+<text x="68" y="772" class="small muted">每轮先保存网卡基线，收尾按基线和用户要求恢复；不把“一律改 DHCP”当成通用规则。</text>
+</svg>

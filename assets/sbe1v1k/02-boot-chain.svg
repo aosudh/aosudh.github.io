@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+<title id="title">02  引导链：先区分恢复入口与普通启动</title>
+<desc id="desc">技术引导链示意图。原厂 APPSBL 可经 TFTP 将恢复引导装入 RAM，也可从 eMMC p40 启动第二级引导。最终方案加载 p25 内核与 p27 SquashFS，并使用独立 p29 ext4 配置区。</desc>
+<defs>
+  <marker id="arrow" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4.5 L0,9 Z" fill="#087f8c"/></marker>
+  <marker id="arrow-orange" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4.5 L0,9 Z" fill="#b95a16"/></marker>
+</defs>
+<style>text{font-family:'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif;fill:#15314b;font-size:20px} .mono{font-family:Consolas,'SFMono-Regular',monospace} .muted{fill:#52667a} .small{font-size:17px} .label{font-size:18px} .heading{font-size:24px;font-weight:700} .title{font-size:30px;font-weight:700}</style>
+<rect width="1200" height="760" fill="#fff"/>
+<text x="48" y="54" class="title">02  引导链：先区分恢复入口与普通启动</text>
+<text x="48" y="88" class="muted label">示意图 · 描述本次已验证的布局；分区号不是所有固件的通用约定。</text>
+<rect x="420" y="118" width="360" height="84" rx="16" fill="#15314b" stroke="#15314b" stroke-width="1.5"/>
+<text x="600" y="153" class="heading" style="fill:#fff" text-anchor="middle">原厂 APPSBL</text>
+<text x="600" y="182" class="small" style="fill:#dbe7f0" text-anchor="middle">保留原厂启动与恢复入口</text>
+<path d="M480 202 V241 H270 V292" fill="none" stroke="#087f8c" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M720 202 V241 H900 V292" fill="none" stroke="#087f8c" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="270" y="226" class="label" style="fill:#087f8c" text-anchor="middle">按 Reset 上电进入恢复路径</text>
+<text x="900" y="226" class="label" style="fill:#087f8c" text-anchor="middle">普通上电</text>
+<rect x="48" y="292" width="444" height="144" rx="16" fill="#e8f6f5" stroke="#a9d7d5" stroke-width="1.5"/>
+<text x="270" y="331" class="heading" text-anchor="middle">TFTP → RAM 恢复环境</text>
+<text x="270" y="368" class="label" text-anchor="middle">Windows 提供启动文件</text>
+<text x="270" y="403" class="label muted" text-anchor="middle">恢复页用于身份核对、备份与读回</text>
+<rect x="648" y="292" width="504" height="144" rx="16" fill="#e8f6f5" stroke="#a9d7d5" stroke-width="1.5"/>
+<text x="900" y="331" class="heading" text-anchor="middle">eMMC p40：配套第二级引导</text>
+<text x="900" y="368" class="label" text-anchor="middle">260922-p29 定制版本</text>
+<text x="900" y="403" class="label muted" text-anchor="middle">补充旧 QSDK 设备树信息与启动参数</text>
+<path d="M810 436 V472 H765 V510" fill="none" stroke="#087f8c" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M990 436 V472 H1035 V510" fill="none" stroke="#087f8c" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="648" y="510" width="234" height="99" rx="16" fill="#f1f6fa" stroke="#d7e2ec" stroke-width="1.5"/>
+<text x="765" y="550" class="heading" text-anchor="middle">p25 · kernel</text>
+<text x="765" y="583" class="label muted" text-anchor="middle">Linux 5.4 内核</text>
+<rect x="918" y="510" width="234" height="99" rx="16" fill="#f1f6fa" stroke="#d7e2ec" stroke-width="1.5"/>
+<text x="1035" y="550" class="heading" text-anchor="middle">p27 · rootfs</text>
+<text x="1035" y="583" class="label muted" text-anchor="middle">SquashFS 只读系统</text>
+<path d="M765 609 V633 H900 V660" fill="none" stroke="#087f8c" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M1035 609 V633 H900 V660" fill="none" stroke="#087f8c" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="648" y="660" width="504" height="66" rx="16" fill="#e8f6f5" stroke="#a9d7d5" stroke-width="1.5"/>
+<text x="900" y="701" class="label" style="fill:#087f8c" text-anchor="middle">p29 · ext4：独立 512 MiB 配置区</text>
+<rect x="48" y="490" width="444" height="236" rx="16" fill="#fff2e6" stroke="#f1d5bd" stroke-width="1.5"/>
+<text x="72" y="528" class="heading" style="fill:#b95a16">两个容易混淆的边界</text>
+<text x="72" y="571" class="label">① TFTP 传输完成 ≠ Linux 已成功启动</text>
+<text x="72" y="608" class="label">② 引导文件在 RAM ≠ 后续系统完全只读</text>
+<text x="72" y="654" class="label muted">必须继续检查管理连接、实际分区、</text>
+<text x="72" y="687" class="label muted">配置持久化与正常重启后的状态。</text>
+</svg>

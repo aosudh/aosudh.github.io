@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+<title id="title">04  物理口与最终接口角色对照</title>
+<desc id="desc">技术端口对照示意图，不是设备外观照片。Internet 标识口对应 eth0、10G WAN；Ethernet 1 对应 eth1、2.5G LAN；Ethernet 2 与 3 分别对应 eth2 与 eth3、1G LAN。</desc>
+<defs>
+  <marker id="arrow" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4.5 L0,9 Z" fill="#087f8c"/></marker>
+  <marker id="arrow-orange" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4.5 L0,9 Z" fill="#b95a16"/></marker>
+</defs>
+<style>text{font-family:'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif;fill:#15314b;font-size:20px} .mono{font-family:Consolas,'SFMono-Regular',monospace} .muted{fill:#52667a} .small{font-size:17px} .label{font-size:18px} .heading{font-size:24px;font-weight:700} .title{font-size:30px;font-weight:700}</style>
+<rect width="1200" height="700" fill="#fff"/>
+<text x="48" y="54" class="title">04  物理口与最终接口角色对照</text>
+<text x="48" y="88" class="muted label">拓扑示意 · 不是外观照片；请按机身文字认口，不按图中的左右排列认口。</text>
+<rect x="48" y="126" width="1104" height="433" rx="16" fill="#f8fbfd" stroke="#d7e2ec" stroke-width="1.5"/>
+<text x="72" y="166" class="heading">SBE1V1K · 本次最终 QWRT 配置</text>
+<rect x="72" y="201" width="228" height="243" rx="14" fill="#fff2e6" stroke="#e8bd9c" stroke-width="1.5"/>
+<text x="186" y="239" class="heading" text-anchor="middle">Internet</text>
+<rect x="142" y="262" width="88" height="53" rx="5" fill="#fff" stroke="#b95a16" stroke-width="1.5"/>
+<path d="M153 270 V281" stroke="#b95a16" stroke-width="3"/>
+<path d="M162 270 V281" stroke="#b95a16" stroke-width="3"/>
+<path d="M171 270 V281" stroke="#b95a16" stroke-width="3"/>
+<path d="M180 270 V281" stroke="#b95a16" stroke-width="3"/>
+<path d="M189 270 V281" stroke="#b95a16" stroke-width="3"/>
+<path d="M198 270 V281" stroke="#b95a16" stroke-width="3"/>
+<path d="M207 270 V281" stroke="#b95a16" stroke-width="3"/>
+<path d="M216 270 V281" stroke="#b95a16" stroke-width="3"/>
+<path d="M153 305 H170 V311 H202 V305 H219" fill="none" stroke="#b95a16" stroke-width="1.5"/>
+<text x="186" y="351" class="title" style="fill:#b95a16" text-anchor="middle">10G</text>
+<text x="186" y="391" class="mono" text-anchor="middle">eth0</text>
+<text x="186" y="424" class="label" style="fill:#b95a16" text-anchor="middle">WAN</text>
+<rect x="348" y="201" width="228" height="243" rx="14" fill="#e8f6f5" stroke="#9ccfcb" stroke-width="1.5"/>
+<text x="462" y="239" class="heading" text-anchor="middle">Ethernet 1</text>
+<rect x="418" y="262" width="88" height="53" rx="5" fill="#fff" stroke="#087f8c" stroke-width="1.5"/>
+<path d="M429 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M438 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M447 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M456 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M465 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M474 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M483 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M492 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M429 305 H446 V311 H478 V305 H495" fill="none" stroke="#087f8c" stroke-width="1.5"/>
+<text x="462" y="351" class="title" style="fill:#087f8c" text-anchor="middle">2.5G</text>
+<text x="462" y="391" class="mono" text-anchor="middle">eth1</text>
+<text x="462" y="424" class="label" style="fill:#087f8c" text-anchor="middle">LAN</text>
+<rect x="624" y="201" width="228" height="243" rx="14" fill="#e8f6f5" stroke="#9ccfcb" stroke-width="1.5"/>
+<text x="738" y="239" class="heading" text-anchor="middle">Ethernet 2</text>
+<rect x="694" y="262" width="88" height="53" rx="5" fill="#fff" stroke="#087f8c" stroke-width="1.5"/>
+<path d="M705 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M714 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M723 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M732 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M741 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M750 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M759 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M768 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M705 305 H722 V311 H754 V305 H771" fill="none" stroke="#087f8c" stroke-width="1.5"/>
+<text x="738" y="351" class="title" style="fill:#087f8c" text-anchor="middle">1G</text>
+<text x="738" y="391" class="mono" text-anchor="middle">eth2</text>
+<text x="738" y="424" class="label" style="fill:#087f8c" text-anchor="middle">LAN</text>
+<rect x="900" y="201" width="228" height="243" rx="14" fill="#e8f6f5" stroke="#9ccfcb" stroke-width="1.5"/>
+<text x="1014" y="239" class="heading" text-anchor="middle">Ethernet 3</text>
+<rect x="970" y="262" width="88" height="53" rx="5" fill="#fff" stroke="#087f8c" stroke-width="1.5"/>
+<path d="M981 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M990 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M999 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M1008 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M1017 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M1026 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M1035 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M1044 270 V281" stroke="#087f8c" stroke-width="3"/>
+<path d="M981 305 H998 V311 H1030 V305 H1047" fill="none" stroke="#087f8c" stroke-width="1.5"/>
+<text x="1014" y="351" class="title" style="fill:#087f8c" text-anchor="middle">1G</text>
+<text x="1014" y="391" class="mono" text-anchor="middle">eth3</text>
+<text x="1014" y="424" class="label" style="fill:#087f8c" text-anchor="middle">LAN</text>
+<path d="M186 444 V483" fill="none" stroke="#b95a16" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow-orange)"/>
+<text x="186" y="516" class="label" style="fill:#b95a16" text-anchor="middle">上级网络 / ISP</text>
+<path d="M462 444 V477 H1014 V444" fill="none" stroke="#087f8c" stroke-width="1.5"/>
+<path d="M738 444 V477" fill="none" stroke="#087f8c" stroke-width="1.5"/>
+<rect x="597" y="489" width="282" height="44" rx="10" fill="#e8f6f5" stroke="#9ccfcb" stroke-width="1.5"/>
+<text x="738" y="519" class="small" style="fill:#087f8c" text-anchor="middle">br-lan：eth1 + eth2 + eth3</text>
+<rect x="48" y="591" width="1104" height="78" rx="10" fill="#fff2e6" stroke="#f1d5bd" stroke-width="1.5"/>
+<text x="68" y="621" class="label" style="fill:#b95a16">注意：此 QWRT 首启默认口角色曾不同；初次访问可先接 1G LAN，修正后回到 Ethernet 1。</text>
+<text x="68" y="650" class="small muted">规格与协商速率不等于实测速率；本次未验证 10G WAN 满速吞吐。</text>
+</svg>

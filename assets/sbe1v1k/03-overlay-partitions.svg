@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+<title id="title">03  配置区修复：从 13.375 MiB 尾部转向独立 p29</title>
+<desc id="desc">技术存储示意图，非严格比例。p27 为 122 MiB，SquashFS 载荷占 108.625 MiB，剩余尾部为 13.375 MiB。最终方案以 fstools_ignore_partname=0 允许识别单独的 512 MiB p29 ext4。</desc>
+<defs>
+  <marker id="arrow" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4.5 L0,9 Z" fill="#087f8c"/></marker>
+  <marker id="arrow-orange" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4.5 L0,9 Z" fill="#b95a16"/></marker>
+</defs>
+<style>text{font-family:'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif;fill:#15314b;font-size:20px} .mono{font-family:Consolas,'SFMono-Regular',monospace} .muted{fill:#52667a} .small{font-size:17px} .label{font-size:18px} .heading{font-size:24px;font-weight:700} .title{font-size:30px;font-weight:700}</style>
+<rect width="1200" height="720" fill="#fff"/>
+<text x="48" y="54" class="title">03  配置区修复：从 13.375 MiB 尾部转向独立 p29</text>
+<text x="48" y="88" class="muted label">示意图 · 非严格比例；图中容量是分区 / 载荷大小，不是可用空间或吞吐量。</text>
+<rect x="48" y="120" width="1104" height="233" rx="16" fill="#fffaf6" stroke="#efd8c6" stroke-width="1.5"/>
+<text x="72" y="158" class="heading" style="fill:#b95a16">问题路径：独立 rootfs_data 被忽略，改用 rootfs 尾部</text>
+<text x="72" y="192" class="mono" style="fill:#b95a16">fstools_ignore_partname=1</text>
+<rect x="72" y="213" width="726" height="77" rx="8" fill="#e5eef5" stroke="#b9cbd9" stroke-width="1.5"/>
+<text x="435" y="244" class="label" text-anchor="middle">p27 · SquashFS 载荷</text>
+<text x="435" y="272" class="label" text-anchor="middle">108.625 MiB（113,901,568 字节）</text>
+<rect x="804" y="213" width="324" height="77" rx="8" fill="#ffdfc3" stroke="#dd985c" stroke-width="1.5"/>
+<text x="966" y="244" class="label" style="fill:#b95a16" text-anchor="middle">被选中的可写尾部</text>
+<text x="966" y="272" class="mono" style="fill:#b95a16" text-anchor="middle">13.375 MiB</text>
+<text x="72" y="326" class="label muted">p27 合计 122 MiB；现场读回发现配置不完整、无线缓存占用大，空间已十分紧张。</text>
+<rect x="48" y="383" width="1104" height="248" rx="16" fill="#f3fbfa" stroke="#bbdedb" stroke-width="1.5"/>
+<text x="72" y="422" class="heading" style="fill:#087f8c">修复路径：保留只读系统，启用独立 ext4 配置区</text>
+<text x="72" y="457" class="mono" style="fill:#087f8c">fstools_ignore_partname=0</text>
+<rect x="72" y="480" width="424" height="83" rx="8" fill="#e5eef5" stroke="#b9cbd9" stroke-width="1.5"/>
+<text x="284" y="514" class="heading" text-anchor="middle">p27 · rootfs</text>
+<text x="284" y="545" class="label muted" text-anchor="middle">只读系统与配置存储分开</text>
+<rect x="630" y="480" width="498" height="83" rx="8" fill="#d7f0ed" stroke="#7cbcb5" stroke-width="1.5"/>
+<text x="879" y="514" class="heading" style="fill:#087f8c" text-anchor="middle">p29 · rootfs_data</text>
+<text x="879" y="545" class="label" text-anchor="middle">独立 512 MiB · 兼容 Linux 5.4 的 ext4</text>
+<path d="M496 522 H630" fill="none" stroke="#087f8c" stroke-width="3" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="563" y="502" class="small" style="fill:#087f8c" text-anchor="middle">挂载 overlay</text>
+<text x="72" y="604" class="label muted">两个动作需配套：选择正确分区 + 使用内核支持的文件系统及特性。</text>
+<text x="48" y="674" class="small muted">本修复解决 QWRT 迁移时的配置区问题，不代表已证明此前主线 OpenWrt 无线掉线的根因。</text>
+</svg>
