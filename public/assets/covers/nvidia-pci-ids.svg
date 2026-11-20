@@ -14,7 +14,7 @@
 
   <rect x="28" y="24" width="144" height="26" rx="6" fill="#8b5cf6" fill-opacity="0.2" stroke="#a78bfa" stroke-opacity="0.5"/>
   <text x="40" y="42" fill="#ddd6fe" font-family="Consolas,monospace" font-size="13" font-weight="700">PCI ID DATABASE</text>
-  <text x="452" y="42" text-anchor="end" fill="#94a3b8" font-family="Consolas,monospace" font-size="12">332 ENTRIES</text>
+  <text x="452" y="42" text-anchor="end" fill="#94a3b8" font-family="Consolas,monospace" font-size="12">354 ENTRIES</text>
 
   <!-- Pseudo table -->
   <rect x="28" y="66" width="424" height="128" rx="10" fill="#151326" stroke="#4c1d95" stroke-opacity="0.7" stroke-width="1.4"/>
@@ -37,10 +37,10 @@
     <text x="436" y="146" text-anchor="end" fill="#a78bfa">B200</text>
 
     <line x1="40" y1="158" x2="440" y2="158" stroke="#312e81" stroke-opacity="0.7"/>
-    <text x="44" y="178" fill="#34d399" font-weight="700">10DE:3182</text>
+    <text x="44" y="178" fill="#34d399" font-weight="700">10DE:3041</text>
     <text x="164" y="178" fill="#e2e8f0">GR100</text>
-    <text x="260" y="178" fill="#94a3b8">Rubin · Next</text>
-    <text x="436" y="178" text-anchor="end" fill="#34d399">Roadmap</text>
+    <text x="260" y="178" fill="#94a3b8">Rubin · 10.7</text>
+    <text x="436" y="178" text-anchor="end" fill="#34d399">VR NVL72</text>
   </g>
 
   <text x="28" y="246" fill="#f8fafc" font-family="system-ui,'Microsoft YaHei',sans-serif" font-size="24" font-weight="700">NVIDIA PCI ID 全量对照</text>
