@@ -167,6 +167,59 @@
     transform: translateY(-1px);
   }
 
+  /* --- 历史老卡章节默认折叠（纯 CSS 防闪烁 + 与 TOC 联动） --- */
+  .markdown-section:has(> .legacy-fold-bar:not([data-expanded="true"])) > section.markdown-section {
+    display: none;
+  }
+  .legacy-fold-bar {
+    margin: 0.85rem 0 1.25rem;
+    padding: 0.9rem 1.05rem;
+    border: 1px dashed color-mix(in oklab, var(--primary) 42%, var(--line-divider));
+    border-radius: var(--radius-large);
+    background: color-mix(in oklab, var(--btn-regular-bg) 65%, transparent);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .legacy-fold-desc {
+    font-size: 0.88rem;
+    color: var(--content-meta);
+    line-height: 1.5;
+    flex: 1 1 260px;
+  }
+  .legacy-fold-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.48rem 0.95rem;
+    border-radius: 0.65rem;
+    border: 1px solid color-mix(in oklab, var(--primary) 50%, var(--line-divider));
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.16s ease, transform 0.16s ease;
+    white-space: nowrap;
+  }
+  .legacy-fold-btn:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+  }
+  .legacy-fold-bar[data-expanded="true"] .legacy-fold-btn {
+    background: var(--btn-regular-bg);
+    color: var(--btn-content);
+  }
+  .legacy-fold-arrow {
+    display: inline-block;
+    transition: transform 0.18s ease;
+  }
+  .legacy-fold-bar[data-expanded="true"] .legacy-fold-arrow {
+    transform: rotate(90deg);
+  }
+
   /* --- 图片画廊网格 --- */
   .image-grid {
     display: grid;

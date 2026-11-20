@@ -189,7 +189,9 @@ const useJapaneseBadge = siteConfig.toc.useJapaneseBadge;
 	import { throttle } from "./hooks/useTocScroll";
 	import {
 		generateTOCItems,
+		getFoldBarForHeading,
 		getTOCConfig,
+		isHeadingCollapsed,
 		scrollToHeading,
 	} from "./utils/toc-utils";
 
@@ -305,7 +307,9 @@ const useJapaneseBadge = siteConfig.toc.useJapaneseBadge;
 			wrapper?.classList.add("active-toc");
 			btn?.classList.remove("hide");
 
-			const headings = Array.from(allHeadings) as HTMLElement[];
+			const headings = (Array.from(allHeadings) as HTMLElement[]).filter(
+				(h) => !isHeadingCollapsed(h),
+			);
 			const config = getTOCConfig();
 			const tocItems = generateTOCItems(
 				headings.map((h) => ({
@@ -330,7 +334,18 @@ const useJapaneseBadge = siteConfig.toc.useJapaneseBadge;
 								? '<span class="floating-toc-dot"></span>'
 								: '<span class="floating-toc-dot-small"></span>';
 
-					return `<a href="#${item.id}" class="floating-toc-item" style="padding-left: ${indent}rem" data-level="${item.depth}">${badge}<span class="floating-toc-text">${item.text}</span></a>`;
+					let rowHtml = `<a href="#${item.id}" class="floating-toc-item" style="padding-left: ${indent}rem" data-level="${item.depth}">${badge}<span class="floating-toc-text">${item.text}</span></a>`;
+					const hEl = document.getElementById(item.id);
+					const foldBar = hEl ? getFoldBarForHeading(hEl) : null;
+					if (foldBar) {
+						const foldId = foldBar.getAttribute("data-fold-section") || "";
+						const isExpanded = foldBar.getAttribute("data-expanded") === "true";
+						const label = isExpanded
+							? foldBar.getAttribute("data-toc-open-label") || "收起历史架构目录"
+							: foldBar.getAttribute("data-toc-closed-label") || "展开历史架构目录";
+						rowHtml += `<button type="button" class="toc-fold-btn" data-toc-fold-target="${foldId}" aria-expanded="${isExpanded ? "true" : "false"}"><span class="toc-fold-btn-arrow">${isExpanded ? "▾" : "▸"}</span><span class="toc-fold-btn-text">${label}</span></button>`;
+					}
+					return rowHtml;
 				})
 				.join("");
 
@@ -355,6 +370,17 @@ const useJapaneseBadge = siteConfig.toc.useJapaneseBadge;
 			});
 
 			content?.addEventListener("click", (e) => {
+				const foldBtn = (e.target as Element).closest(".toc-fold-btn");
+				if (foldBtn instanceof HTMLButtonElement) {
+					e.preventDefault();
+					e.stopPropagation();
+					const foldId = foldBtn.getAttribute("data-toc-fold-target");
+					const toggleFn = (window as unknown as { toggleLegacyFold?: (id: string) => void }).toggleLegacyFold;
+					if (foldId && typeof toggleFn === "function") {
+						toggleFn(foldId);
+					}
+					return;
+				}
 				const link = (e.target as Element).closest("a");
 				if (link instanceof HTMLAnchorElement) {
 					e.preventDefault();
@@ -436,4 +462,7 @@ const useJapaneseBadge = siteConfig.toc.useJapaneseBadge;
 
 	document.addEventListener("DOMContentLoaded", initFloatingTOC);
 	document.addEventListener("astro:page-load", initFloatingTOC);
+	window.addEventListener("toc:refresh", () => {
+		floatingTOCInstance?.generateTOC();
+	});
 </script>

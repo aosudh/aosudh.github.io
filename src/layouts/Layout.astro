@@ -336,16 +336,71 @@ const bannerOffset =
 						wrap.parentNode.insertBefore(bar, wrap);
 					});
 				}
+
+				function updateFoldBarUI(bar) {
+					var expanded = bar.getAttribute('data-expanded') === 'true';
+					var btn = bar.querySelector('.legacy-fold-btn');
+					if (btn) {
+						btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+						var txtEl = btn.querySelector('.legacy-fold-btn-label');
+						var openLabel = bar.getAttribute('data-open-label') || '收起历史架构（Turing ~ Fermi）';
+						var closedLabel = bar.getAttribute('data-closed-label') || '展开 Ampere 前 6 代历史架构（681 项）';
+						if (txtEl) txtEl.textContent = expanded ? openLabel : closedLabel;
+					}
+				}
+
+				function toggleLegacyFold(foldId, forceState) {
+					var bar = document.querySelector('.legacy-fold-bar[data-fold-section="' + foldId + '"]');
+					if (!bar) return false;
+					var next = typeof forceState === 'boolean' ? forceState : (bar.getAttribute('data-expanded') !== 'true');
+					bar.setAttribute('data-expanded', next ? 'true' : 'false');
+					updateFoldBarUI(bar);
+					if (next) setupWideTables();
+					window.dispatchEvent(new CustomEvent('toc:refresh'));
+					return next;
+				}
+				window.toggleLegacyFold = toggleLegacyFold;
+
+				function setupLegacyFolds() {
+					document.querySelectorAll('.legacy-fold-bar[data-fold-section]').forEach(function (bar) {
+						updateFoldBarUI(bar);
+						var btn = bar.querySelector('.legacy-fold-btn');
+						if (btn && !btn.dataset.foldBound) {
+							btn.dataset.foldBound = '1';
+							btn.addEventListener('click', function () {
+								toggleLegacyFold(bar.getAttribute('data-fold-section'));
+							});
+						}
+					});
+					// 若 URL hash 直接指向折叠区内的老卡标题，自动展开
+					if (window.location.hash && window.location.hash.length > 1) {
+						try {
+							var target = document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
+							var parentSec = target && target.closest('section.markdown-section');
+							var outerSec = parentSec && parentSec.parentElement && parentSec.parentElement.closest('section.markdown-section');
+							var foldBar = outerSec && outerSec.querySelector(':scope > .legacy-fold-bar[data-fold-section]');
+							if (foldBar && foldBar.getAttribute('data-expanded') !== 'true') {
+								toggleLegacyFold(foldBar.getAttribute('data-fold-section'), true);
+							}
+						} catch (e) {}
+					}
+				}
+
+				function setupArticleEnhancements() {
+					setupLegacyFolds();
+					setupWideTables();
+				}
+
 				document.addEventListener('keydown', function (e) {
 					if (e.key === 'Escape') closeWideTable();
 				});
 				if (document.readyState === 'loading') {
-					document.addEventListener('DOMContentLoaded', setupWideTables);
+					document.addEventListener('DOMContentLoaded', setupArticleEnhancements);
 				} else {
-					setupWideTables();
+					setupArticleEnhancements();
 				}
-				document.addEventListener('swup:contentReplaced', setupWideTables);
-				document.addEventListener('astro:page-load', setupWideTables);
+				document.addEventListener('swup:contentReplaced', setupArticleEnhancements);
+				document.addEventListener('astro:page-load', setupArticleEnhancements);
 			})();
 		</script>
 	</body>

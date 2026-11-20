@@ -70,6 +70,28 @@ export class TOCManager {
 		);
 	}
 
+	private isHeadingCollapsed(heading: Element): boolean {
+		const ownSection = heading.closest("section.markdown-section");
+		if (!ownSection) return false;
+		let ancestor = ownSection.parentElement?.closest("section.markdown-section");
+		while (ancestor) {
+			const foldBar = ancestor.querySelector(":scope > .legacy-fold-bar[data-fold-section]");
+			if (foldBar && foldBar.getAttribute("data-expanded") !== "true") {
+				return true;
+			}
+			ancestor = ancestor.parentElement?.closest("section.markdown-section");
+		}
+		return false;
+	}
+
+	private getFoldBarForHeading(heading: Element): HTMLElement | null {
+		const ownSection = heading.closest("section.markdown-section");
+		if (!ownSection) return null;
+		const firstHeading = ownSection.querySelector(":scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6");
+		if (firstHeading !== heading) return null;
+		return ownSection.querySelector(":scope > .legacy-fold-bar[data-fold-section]") as HTMLElement | null;
+	}
+
 	private getAllHeadings(): HTMLElement[] {
 		const contentContainer = this.getContentContainer();
 		if (!contentContainer) {
@@ -77,7 +99,7 @@ export class TOCManager {
 		}
 		return Array.from(
 			contentContainer.querySelectorAll("h1, h2, h3, h4, h5, h6"),
-		);
+		).filter((h) => !this.isHeadingCollapsed(h));
 	}
 
 	private calculateMinDepth(headings: HTMLElement[]): number {
@@ -203,6 +225,31 @@ export class TOCManager {
 			  <div class="toc-label ${depth <= this.minDepth + 1 ? "toc-label-primary" : "toc-label-secondary"}">${headingText}</div>
         </a>
       `;
+
+			const foldBar = this.getFoldBarForHeading(heading);
+			if (foldBar) {
+				const foldId = this.escapeHtmlAttr(
+					foldBar.getAttribute("data-fold-section") || "",
+				);
+				const isExpanded = foldBar.getAttribute("data-expanded") === "true";
+				const label = isExpanded
+					? foldBar.getAttribute("data-toc-open-label") || "收起历史架构目录"
+					: foldBar.getAttribute("data-toc-closed-label") ||
+						"展开历史架构目录";
+				const escapedLabel = this.escapeHtmlAttr(label);
+				tocHTML += `
+        <button
+          type="button"
+          class="toc-fold-btn"
+          data-toc-fold-target="${foldId}"
+          aria-expanded="${isExpanded ? "true" : "false"}"
+          title="${escapedLabel}"
+        >
+          <span class="toc-fold-btn-arrow">${isExpanded ? "▾" : "▸"}</span>
+          <span class="toc-fold-btn-text">${escapedLabel}</span>
+        </button>
+      `;
+			}
 		});
 
 		tocHTML +=
@@ -407,6 +454,20 @@ export class TOCManager {
 		this.tocItems.forEach((item) => {
 			item.addEventListener("click", this.boundClickHandler!);
 		});
+		const tocContent = this.getTOCContentElement();
+		if (tocContent) {
+			tocContent.querySelectorAll<HTMLButtonElement>(".toc-fold-btn").forEach((btn) => {
+				btn.addEventListener("click", (e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					const foldId = btn.getAttribute("data-toc-fold-target");
+					const toggleFn = (window as unknown as { toggleLegacyFold?: (id: string) => void }).toggleLegacyFold;
+					if (foldId && typeof toggleFn === "function") {
+						toggleFn(foldId);
+					}
+				});
+			});
+		}
 	}
 
 	private unbindClickEvents(): void {

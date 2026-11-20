@@ -5,6 +5,34 @@
 import type { HeadingData, TOCConfig, TOCItem } from "../types/toc";
 import { getKatakanaBadge } from "./japanese-katakana";
 
+export function isHeadingCollapsed(heading: Element): boolean {
+	const ownSection = heading.closest("section.markdown-section");
+	if (!ownSection) return false;
+	let ancestor = ownSection.parentElement?.closest("section.markdown-section");
+	while (ancestor) {
+		const foldBar = ancestor.querySelector(
+			":scope > .legacy-fold-bar[data-fold-section]",
+		);
+		if (foldBar && foldBar.getAttribute("data-expanded") !== "true") {
+			return true;
+		}
+		ancestor = ancestor.parentElement?.closest("section.markdown-section");
+	}
+	return false;
+}
+
+export function getFoldBarForHeading(heading: Element): HTMLElement | null {
+	const ownSection = heading.closest("section.markdown-section");
+	if (!ownSection) return null;
+	const firstHeading = ownSection.querySelector(
+		":scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6",
+	);
+	if (firstHeading !== heading) return null;
+	return ownSection.querySelector(
+		":scope > .legacy-fold-bar[data-fold-section]",
+	) as HTMLElement | null;
+}
+
 /**
  * 从 DOM 中提取标题数据
  * @param containerSelector - 容器选择器
@@ -21,11 +49,13 @@ export function extractHeadings(
 	const headings = container.querySelectorAll(
 		"h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]",
 	);
-	return Array.from(headings).map((h) => ({
-		id: h.id,
-		text: (h.textContent || "").replace(/#+\s*$/, ""),
-		level: Number.parseInt(h.tagName[1], 10),
-	}));
+	return Array.from(headings)
+		.filter((h) => !isHeadingCollapsed(h))
+		.map((h) => ({
+			id: h.id,
+			text: (h.textContent || "").replace(/#+\s*$/, ""),
+			level: Number.parseInt(h.tagName[1], 10),
+		}));
 }
 
 /**

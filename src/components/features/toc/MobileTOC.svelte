@@ -38,6 +38,13 @@ const scrollToHeading = (id: string) => {
 	scrollToHeadingUtil(id);
 };
 
+const toggleFold = (foldId: string) => {
+	const fn = (window as unknown as { toggleLegacyFold?: (id: string) => void }).toggleLegacyFold;
+	if (typeof fn === "function") {
+		fn(foldId);
+	}
+};
+
 const navigateToPost = (url: string) => {
 	setPanelVisibility(false);
 	navigateToPage(url);
@@ -184,10 +191,12 @@ onMount(() => {
 	window.addEventListener("scroll", updateActiveHeading, {
 		passive: true,
 	});
+	window.addEventListener("toc:refresh", init);
 
 	return () => {
 		observer?.disconnect();
 		window.removeEventListener("scroll", updateActiveHeading);
+		window.removeEventListener("toc:refresh", init);
 
 		const w = window as unknown as {
 			swup?: {
@@ -316,6 +325,17 @@ const getActivePadding = (level: number): string => {
 					{/if}
 					<span class="toc-text">{item.text}</span>
 				</button>
+				{#if item.foldId}
+					<button
+						type="button"
+						onclick={() => toggleFold(item.foldId!)}
+						class="toc-fold-btn"
+						aria-expanded={item.foldExpanded}
+					>
+						<span class="toc-fold-btn-arrow">{item.foldExpanded ? "▾" : "▸"}</span>
+						<span class="toc-fold-btn-text">{item.foldLabel}</span>
+					</button>
+				{/if}
 			{/each}
 		</div>
 	{/if}

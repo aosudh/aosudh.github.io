@@ -635,7 +635,14 @@ Grace（`Tegra241 / TH500`，Neoverse V2 核心）与 Vera（`TB500`，自研 Ol
 | 228E | GA106 | sm_86 | **HD Audio** | GA106 High Definition Audio Controller | — | On-board HD Audio function of the GPU board (not a standalone product) | — |
 | 2291 | GA107 | sm_86 | **HD Audio** | GA107 High Definition Audio Controller | — | On-board HD Audio function of the GPU board (not a standalone product) | — |
 
-## 九、Turing（124 个 ID · sm_75 · 开放驱动支持起点）
+## 九、Ampere 之前的历史架构：Turing ← Fermi（6 代 · 681 项）
+
+<div class="legacy-fold-bar" id="legacy-pre-ampere" data-fold-section="legacy-pre-ampere" data-expanded="false" data-closed-label="展开 Ampere 前 6 代历史架构（681 项）" data-open-label="收起历史架构（Turing ~ Fermi）" data-toc-closed-label="展开 6 代老卡目录 (Turing~Fermi)" data-toc-open-label="收起 6 代老卡目录">
+  <div class="legacy-fold-desc">包含 <strong>Turing（124 · 开放驱动起点）</strong>、<strong>Volta（21）</strong>、<strong>Pascal（113）</strong>、<strong>Maxwell（91）</strong>、<strong>Kepler（197）</strong> 与 <strong>Fermi（135）</strong>，共 <strong>681 个</strong> PCI Device ID。为保持正文与目录清爽默认折叠，点击按钮（正文或目录中均可）一键展开 / 收起。</div>
+  <button type="button" class="legacy-fold-btn" aria-expanded="false"><span class="legacy-fold-arrow">▶</span><span class="legacy-fold-btn-label">展开 Ampere 前 6 代历史架构（681 项）</span></button>
+</div>
+
+### Turing（124 个 ID · sm_75 · 开放驱动支持起点）
 
 **NVIDIA Open GPU Kernel Modules（`620.73.04`）官方支持的最低代际**（共 **81 个** ID 在开放驱动列表内 ✓），涵盖 **TU102 / TU104 / TU106 / TU116 / TU117**（RTX 20 系、GTX 16 系、Quadro RTX 8000~3000、推理常青树 **Tesla T4 `1EB8/1EB9` & T4G `1EB4`**），并包含 Turing 特有的板载 **VirtualLink USB 3.1 + Type-C UCSI** 控制器及 HD Audio。
 
@@ -766,7 +773,7 @@ Grace（`Tegra241 / TH500`，Neoverse V2 核心）与 Vera（`TB500`，自研 Ol
 | 1AEC | TU116 | sm_75 | **USB 3.1** | TU116 USB 3.1 Host Controller | — | On-board VirtualLink USB/Type-C controller on Turing GPU | — |
 | 1AED | TU116 | sm_75 | **USB-C UCSI** | TU116 USB Type-C UCSI Controller | — | On-board VirtualLink USB/Type-C controller on Turing GPU | — |
 
-## 十、Volta（21 个 ID · sm_70 / 72 · 初代 Tensor Core）
+### Volta（21 个 ID · sm_70 / 72 · 初代 Tensor Core）
 
 **GV100** 单芯片（`sm_70`；Jetson AGX Xavier 嵌入式 `GV11B` 为 `sm_72`，其 PCIe RC 归入第二章）。虽不在开放内核模块支持列表内（仅闭源 R580 及之前分支支持），但在存量集群中 **V100 SXM2 16GB/32GB（`1DB0/1DB1`）**、**V100 PCIe 16GB/32GB（`1DB4/1DB6`）**、**V100S（`1DF6`）** 与 **DGX-1V / DGX Station（`1DBD/1DB2`）** 依然极常见。
 
@@ -794,7 +801,7 @@ Grace（`Tegra241 / TH500`，Neoverse V2 核心）与 Vera（`TB500`，自研 Ol
 | 1DF5 | GV100 | sm_70 | GPU | GV100GL [Tesla V100 SXM2 16GB] | V100 (gat/DCGM) |  | — |
 | 1DF6 | GV100 | sm_70 | GPU | GV100GL [Tesla V100S PCIe 32GB] | V100S (gat/DCGM) | DCGM: V100S 249W | — |
 
-## 十一、Pascal（113 个 ID · sm_60 / 61）
+### Pascal（113 个 ID · sm_60 / 61）
 
 数据中心 **GP100**（`sm_60`，Tesla P100 SXM2/PCIe，初代 HBM2 + NVLink 1.0 + 原生 FP16）与 **GP102–GP108**（`sm_61`，GTX 10 系 / TITAN Xp / Quadro P 系 / **Tesla P40 `1B38`、P10 `1B39`、P6 `1BB4`、P4 `1BB3`**）。
 
@@ -914,7 +921,7 @@ Grace（`Tegra241 / TH500`，Neoverse V2 核心）与 Vera（`TB500`，自研 Ol
 | 10F0 | GP104 | sm_61 | **HD Audio** | GP104 High Definition Audio Controller | — | On-board HD Audio function (not a standalone GPU) | — |
 | 10F1 | GP106 | sm_61 | **HD Audio** | GP106 High Definition Audio Controller | — | On-board HD Audio function (not a standalone GPU) | — |
 
-## 十二、Maxwell（91 个 ID · sm_50 / 52）
+### Maxwell（91 个 ID · sm_50 / 52）
 
 一代 Maxwell **GM107 / GM108**（`sm_50`，GTX 750/750 Ti、Tesla M10 `13BD`）与二代 Maxwell **GM200 / GM204 / GM206**（`sm_52`，GTX 980 Ti/TITAN X、**Tesla M60 `13F2`、M40 `17FD`、M6 `13F3`、M4 `1431`**）。
 
@@ -1012,7 +1019,7 @@ Grace（`Tegra241 / TH500`，Neoverse V2 核心）与 Vera（`TB500`，自研 Ol
 | 0FBA | GM206 | sm_52 | **HD Audio** | GM206 High Definition Audio Controller | — | On-board HD Audio function (not a standalone GPU) | — |
 | 0FBB | GM204 | sm_52 | **HD Audio** | GM204 High Definition Audio Controller | — | On-board HD Audio function (not a standalone GPU) | — |
 
-## 十三、Kepler（197 个 ID · sm_30 / 35 / 37）
+### Kepler（197 个 ID · sm_30 / 35 / 37）
 
 **GK104 / GK106 / GK107**（`sm_30`，GTX 600/700、Tesla K10 `118F` / K8 `1194`）、**GK110 / GK110B / GK180 / GK208**（`sm_35`，GTX 780/TITAN、**Tesla K20X / K40m / K40c / K40d**），以及独享 **`sm_37`**（双倍寄存器与共享内存）的双芯经典卡 **GK210 Tesla K80（`102D`）**；另收录 `0FA0/0FA5/0FA7`（GK11x FPGA / PEATRANS）。
 
@@ -1216,7 +1223,7 @@ Grace（`Tegra241 / TH500`，Neoverse V2 核心）与 Vera（`TB500`，自研 Ol
 | 0E1A | GK110 | sm_35 | **HD Audio** | GK110 High Definition Audio Controller | — | On-board HD Audio function (not a standalone GPU) | — |
 | 102D | GK210 | sm_37 | GPU | GK210GL [Tesla K80] | K80 (gat/DCGM) | DCGM: Tesla K80 148W | — |
 
-## 十四、Fermi（135 个 ID · sm_20 / 21）
+### Fermi（135 个 ID · sm_20 / 21）
 
 现代通用计算 GPU 的起点（首个支持原生 IEEE-754、ECC 显存与可配置 L1/L2 缓存的 CUDA 架构）：**GF100 / GF110**（`sm_20`，GTX 480/580、Tesla C2050/M2050/M2070/M2090）与 **GF104 / GF106 / GF108 / GF114 / GF116 / GF117 / GF119**（`sm_21`，GTX 460/560、GT 430/610 等）。
 
@@ -1358,7 +1365,7 @@ Grace（`Tegra241 / TH500`，Neoverse V2 核心）与 Vera（`TB500`，自研 Ol
 | 0E08 | GF119 | sm_21 | **HD Audio** | GF119 HDMI Audio Controller | — | On-board HD Audio function (not a standalone GPU) | — |
 | 0E0C | GF114 | sm_21 | **HD Audio** | GF114 HDMI Audio Controller | — | On-board HD Audio function (not a standalone GPU) | — |
 
-## 十五、Linux 主线内核、PCI-SIG 与多源核对方法论
+## 十、Linux 主线内核、PCI-SIG 与多源核对方法论
 
 ### 关键内核与规范实证
 

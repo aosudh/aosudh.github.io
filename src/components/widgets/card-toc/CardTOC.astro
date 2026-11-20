@@ -149,4 +149,8 @@ const tocDepth = siteConfig.toc.depth;
 	document.addEventListener("password:decrypted", () => {
 		setTimeout(initAllCardTOCs, 200);
 	});
+
+	window.addEventListener("toc:refresh", () => {
+		initAllCardTOCs();
+	});
 </script>

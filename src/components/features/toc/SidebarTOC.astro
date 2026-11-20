@@ -190,7 +190,12 @@ const { class: className } = Astro.props;
 			}
 		};
 
+		handleTocRefresh = () => {
+			this.init();
+		};
+
 		connectedCallback() {
+			window.addEventListener("toc:refresh", this.handleTocRefresh);
 			const element =
 				document.querySelector(".custom-md") ||
 				document.querySelector(".prose") ||
@@ -329,6 +334,7 @@ const { class: className } = Astro.props;
 		}
 
 		disconnectedCallback() {
+			window.removeEventListener("toc:refresh", this.handleTocRefresh);
 			this.sections.forEach((section) =>
 				this.observer.unobserve(section),
 			);

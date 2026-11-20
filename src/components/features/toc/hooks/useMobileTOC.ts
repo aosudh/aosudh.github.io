@@ -3,11 +3,16 @@
  * 处理移动端目录的状态管理和交互逻辑
  */
 
+import { getFoldBarForHeading, isHeadingCollapsed } from "../utils/toc-utils";
+
 export interface TOCItem {
 	id: string;
 	text: string;
 	level: number;
 	badge?: string;
+	foldId?: string;
+	foldExpanded?: boolean;
+	foldLabel?: string;
 }
 
 export interface PostItem {
@@ -54,14 +59,14 @@ export function generateTOCItems(config: TOCConfig): TOCItem[] {
 	let h1Count = 0;
 
 	headings.forEach((heading) => {
-		if (!heading.id) {
+		if (!heading.id || isHeadingCollapsed(heading)) {
 			return;
 		}
 
 		const level = Number.parseInt(heading.tagName.charAt(1), 10);
 
 		// 根据 depth 配置过滤标题
-		if (level > config.depth) {
+		if (level > config.depth + 1) {
 			return;
 		}
 
@@ -78,7 +83,16 @@ export function generateTOCItems(config: TOCConfig): TOCItem[] {
 			}
 		}
 
-		items.push({ id: heading.id, text, level, badge });
+		const foldBar = getFoldBarForHeading(heading);
+		const foldId = foldBar?.getAttribute("data-fold-section") || undefined;
+		const foldExpanded = foldBar?.getAttribute("data-expanded") === "true";
+		const foldLabel = foldBar
+			? foldExpanded
+				? foldBar.getAttribute("data-toc-open-label") || "收起历史架构"
+				: foldBar.getAttribute("data-toc-closed-label") || "展开历史架构"
+			: undefined;
+
+		items.push({ id: heading.id, text, level, badge, foldId, foldExpanded, foldLabel });
 	});
 
 	return items;

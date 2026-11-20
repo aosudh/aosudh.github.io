@@ -70,6 +70,30 @@
     .pci-chip.is-active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
     .pci-toolbar .pci-stat { font-size: 0.82rem; color: var(--text-muted); }
     .is-hidden-group { display: none !important; }
+    .legacy-chip-group { display: none; flex-wrap: wrap; gap: 6px; width: 100%; padding-top: 4px; border-top: 1px dashed var(--border); }
+    .legacy-chip-group.is-open { display: flex; }
+    .pci-chip-toggle { border-style: dashed !important; color: var(--accent) !important; font-weight: 600; }
+    .toc-legacy-btn {
+      display: inline-flex; align-items: center; gap: 6px; margin-top: 6px;
+      padding: 4px 10px; border: 1px dashed var(--accent); border-radius: 7px;
+      background: transparent; color: var(--accent); font-size: 0.82rem; font-weight: 600; cursor: pointer;
+    }
+    .toc-legacy-btn:hover { background: var(--bg); }
+    .toc-legacy-list { display: none; margin-top: 6px !important; padding-top: 6px !important; border-top: 1px dashed var(--border); }
+    .toc-legacy-list.is-open { display: block; }
+    .legacy-fold-bar {
+      margin: 1rem 0 1.2rem; padding: 12px 15px;
+      border: 1px dashed var(--accent); border-radius: 10px; background: var(--bg-soft);
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .legacy-fold-desc { font-size: 0.88rem; color: var(--text-muted); flex: 1 1 280px; }
+    .legacy-fold-btn {
+      padding: 7px 14px; border-radius: 8px; border: 1px solid var(--accent);
+      background: var(--accent); color: #fff; font-size: 0.84rem; font-weight: 600; cursor: pointer;
+    }
+    .legacy-fold-btn.is-open { background: var(--bg); color: var(--text); }
+    #legacyArchBody { display: none; }
+    #legacyArchBody.is-open { display: block; }
     @media (max-width: 760px) {
       .post-content .table-scroll.wide { width: calc(100vw - 24px); max-height: 70vh; }
     }
@@ -112,12 +136,15 @@
           <button type="button" class="pci-chip" data-filter-group="Hopper">Hopper (29)</button>
           <button type="button" class="pci-chip" data-filter-group="Ada Lovelace">Ada Lovelace (69)</button>
           <button type="button" class="pci-chip" data-filter-group="Ampere">Ampere (146)</button>
-          <button type="button" class="pci-chip" data-filter-group="Turing">Turing (124)</button>
-          <button type="button" class="pci-chip" data-filter-group="Volta">Volta (21)</button>
-          <button type="button" class="pci-chip" data-filter-group="Pascal">Pascal (113)</button>
-          <button type="button" class="pci-chip" data-filter-group="Maxwell">Maxwell (91)</button>
-          <button type="button" class="pci-chip" data-filter-group="Kepler">Kepler (197)</button>
-          <button type="button" class="pci-chip" data-filter-group="Fermi">Fermi (135)</button>
+          <button type="button" class="pci-chip-toggle" id="toggleLegacyChips">▸ 展开 Ampere 前 6 代 (Turing~Fermi · 681)</button>
+          <div class="legacy-chip-group" id="legacyChipGroup">
+            <button type="button" class="pci-chip" data-filter-group="Turing">Turing (124)</button>
+            <button type="button" class="pci-chip" data-filter-group="Volta">Volta (21)</button>
+            <button type="button" class="pci-chip" data-filter-group="Pascal">Pascal (113)</button>
+            <button type="button" class="pci-chip" data-filter-group="Maxwell">Maxwell (91)</button>
+            <button type="button" class="pci-chip" data-filter-group="Kepler">Kepler (197)</button>
+            <button type="button" class="pci-chip" data-filter-group="Fermi">Fermi (135)</button>
+          </div>
           </div>
         </div>
 
@@ -132,12 +159,16 @@
             <li><a href="#sec-hopper">六、Hopper (29)</a></li>
             <li><a href="#sec-ada-lovelace">七、Ada Lovelace (69)</a></li>
             <li><a href="#sec-ampere">八、Ampere (146)</a></li>
-            <li><a href="#sec-turing">九、Turing (124 · 开放驱动起点)</a></li>
-            <li><a href="#sec-volta">十、Volta (21)</a></li>
-            <li><a href="#sec-pascal">十一、Pascal (113)</a></li>
-            <li><a href="#sec-maxwell">十二、Maxwell (91)</a></li>
-            <li><a href="#sec-kepler">十三、Kepler (197)</a></li>
-            <li><a href="#sec-fermi">十四、Fermi (135)</a></li>
+            <li><a href="#sec-legacy-pre-ampere">九、历史 6 代：Turing ← Fermi (681，默认折叠)</a></li>
+          </ul>
+          <button type="button" class="toc-legacy-btn" id="tocLegacyToggle" aria-expanded="false">▸ 展开 Ampere 前 6 代目录（Turing ~ Fermi · 681）</button>
+          <ul class="toc-legacy-list" id="tocLegacyList">
+            <li><a href="#sec-turing">· Turing (124 · 开放驱动起点)</a></li>
+            <li><a href="#sec-volta">· Volta (21)</a></li>
+            <li><a href="#sec-pascal">· Pascal (113)</a></li>
+            <li><a href="#sec-maxwell">· Maxwell (91)</a></li>
+            <li><a href="#sec-kepler">· Kepler (197)</a></li>
+            <li><a href="#sec-fermi">· Fermi (135)</a></li>
           </ul>
         </nav>
 
@@ -717,7 +748,13 @@
 <tr data-group="Ampere"><td>2291</td><td>GA107</td><td>sm_86</td><td><strong>HD Audio</strong></td><td>GA107 High Definition Audio Controller</td><td>—</td><td>On-board HD Audio function of the GPU board (not a standalone product)</td><td>—</td></tr>
 </tbody>
 </table>
-</div><h2 id="sec-turing" data-group-box="Turing">九、Turing（124 个 ID · sm_75 · 开放驱动支持起点）</h2>
+</div><h2 id="sec-legacy-pre-ampere">九、Ampere 之前的历史架构：Turing ← Fermi（6 代 · 681 项）</h2>
+        <div class="legacy-fold-bar" id="legacyFoldBar">
+          <div class="legacy-fold-desc">包含 <strong>Turing (124)</strong>、<strong>Volta (21)</strong>、<strong>Pascal (113)</strong>、<strong>Maxwell (91)</strong>、<strong>Kepler (197)</strong> 与 <strong>Fermi (135)</strong>，共 <strong>681 个</strong> PCI Device ID。默认折叠；在上方搜索框输入老卡型号（如 V100 / T4 / P100 / K80）时也会自动展开匹配。</div>
+          <button type="button" class="legacy-fold-btn" id="mainLegacyToggle" aria-expanded="false">▶ 展开 Ampere 前 6 代历史架构（681 项）</button>
+        </div>
+        <div id="legacyArchBody">
+        <h3 id="sec-turing" data-group-box="Turing">Turing（124 个 ID · sm_75 · 开放驱动支持起点）</h3>
 <div class="table-scroll wide" id="sec-turing-tbl" data-group-box="Turing">
 <table>
 <caption>Turing · 124 个 device ID（10DE:xxxx）</caption>
@@ -849,7 +886,7 @@
 <tr data-group="Turing"><td>1AED</td><td>TU116</td><td>sm_75</td><td><strong>USB-C UCSI</strong></td><td>TU116 USB Type-C UCSI Controller</td><td>—</td><td>On-board VirtualLink USB/Type-C controller on Turing GPU</td><td>—</td></tr>
 </tbody>
 </table>
-</div><h2 id="sec-volta" data-group-box="Volta">十、Volta（21 个 ID · sm_70 / 72 · 初代 Tensor Core）</h2>
+</div><h3 id="sec-volta" data-group-box="Volta">Volta（21 个 ID · sm_70 / 72 · 初代 Tensor Core）</h3>
 <div class="table-scroll wide" id="sec-volta-tbl" data-group-box="Volta">
 <table>
 <caption>Volta · 21 个 device ID（10DE:xxxx）</caption>
@@ -878,7 +915,7 @@
 <tr data-group="Volta"><td>1DF6</td><td>GV100</td><td>sm_70</td><td>GPU</td><td>GV100GL [Tesla V100S PCIe 32GB]</td><td>V100S <span class="legend">(gat/DCGM)</span></td><td>DCGM: V100S 249W</td><td>—</td></tr>
 </tbody>
 </table>
-</div><h2 id="sec-pascal" data-group-box="Pascal">十一、Pascal（113 个 ID · sm_60 / 61）</h2>
+</div><h3 id="sec-pascal" data-group-box="Pascal">Pascal（113 个 ID · sm_60 / 61）</h3>
 <div class="table-scroll wide" id="sec-pascal-tbl" data-group-box="Pascal">
 <table>
 <caption>Pascal · 113 个 device ID（10DE:xxxx）</caption>
@@ -999,7 +1036,7 @@
 <tr data-group="Pascal"><td>10F1</td><td>GP106</td><td>sm_61</td><td><strong>HD Audio</strong></td><td>GP106 High Definition Audio Controller</td><td>—</td><td>On-board HD Audio function (not a standalone GPU)</td><td>—</td></tr>
 </tbody>
 </table>
-</div><h2 id="sec-maxwell" data-group-box="Maxwell">十二、Maxwell（91 个 ID · sm_50 / 52）</h2>
+</div><h3 id="sec-maxwell" data-group-box="Maxwell">Maxwell（91 个 ID · sm_50 / 52）</h3>
 <div class="table-scroll wide" id="sec-maxwell-tbl" data-group-box="Maxwell">
 <table>
 <caption>Maxwell · 91 个 device ID（10DE:xxxx）</caption>
@@ -1098,7 +1135,7 @@
 <tr data-group="Maxwell"><td>0FBB</td><td>GM204</td><td>sm_52</td><td><strong>HD Audio</strong></td><td>GM204 High Definition Audio Controller</td><td>—</td><td>On-board HD Audio function (not a standalone GPU)</td><td>—</td></tr>
 </tbody>
 </table>
-</div><h2 id="sec-kepler" data-group-box="Kepler">十三、Kepler（197 个 ID · sm_30 / 35 / 37）</h2>
+</div><h3 id="sec-kepler" data-group-box="Kepler">Kepler（197 个 ID · sm_30 / 35 / 37）</h3>
 <div class="table-scroll wide" id="sec-kepler-tbl" data-group-box="Kepler">
 <table>
 <caption>Kepler · 197 个 device ID（10DE:xxxx）</caption>
@@ -1303,7 +1340,7 @@
 <tr data-group="Kepler"><td>102D</td><td>GK210</td><td>sm_37</td><td>GPU</td><td>GK210GL [Tesla K80]</td><td>K80 <span class="legend">(gat/DCGM)</span></td><td>DCGM: Tesla K80 148W</td><td>—</td></tr>
 </tbody>
 </table>
-</div><h2 id="sec-fermi" data-group-box="Fermi">十四、Fermi（135 个 ID · sm_20 / 21）</h2>
+</div><h3 id="sec-fermi" data-group-box="Fermi">Fermi（135 个 ID · sm_20 / 21）</h3>
 <div class="table-scroll wide" id="sec-fermi-tbl" data-group-box="Fermi">
 <table>
 <caption>Fermi · 135 个 device ID（10DE:xxxx）</caption>
@@ -1448,6 +1485,7 @@
 </table>
 </div>
 
+        </div>
         <p class="legend">数据来源：pciutils/pciids (v2026.11.19)、NVIDIA/open-gpu-kernel-modules (620.73.04)、NVIDIA/gpu-admin-tools、NVIDIA/DCGM、NVIDIA/edk2-nvidia、torvalds/linux 与 CUDA 13.5 官方文档。更新日期：2026-11-20。</p>
       </article>
     </main>
@@ -1467,10 +1505,50 @@
       var tables = Array.prototype.slice.call(document.querySelectorAll('.table-scroll.wide'));
       var dataRows = Array.prototype.slice.call(document.querySelectorAll('tr[data-group]'));
       var activeGroup = 'ALL';
+      var legacyGroups = { Turing: 1, Volta: 1, Pascal: 1, Maxwell: 1, Kepler: 1, Fermi: 1 };
+      var legacyUserOpen = false;
+      var legacyBody = document.getElementById('legacyArchBody');
+      var legacyChipGroup = document.getElementById('legacyChipGroup');
+      var tocLegacyList = document.getElementById('tocLegacyList');
+      var btnMain = document.getElementById('mainLegacyToggle');
+      var btnToc = document.getElementById('tocLegacyToggle');
+      var btnChips = document.getElementById('toggleLegacyChips');
+
+      function setLegacyOpen(open, fromUser) {
+        if (fromUser) legacyUserOpen = open;
+        if (legacyBody) legacyBody.classList.toggle('is-open', open);
+        if (legacyChipGroup) legacyChipGroup.classList.toggle('is-open', open);
+        if (tocLegacyList) tocLegacyList.classList.toggle('is-open', open);
+        if (btnMain) {
+          btnMain.classList.toggle('is-open', open);
+          btnMain.setAttribute('aria-expanded', open ? 'true' : 'false');
+          btnMain.textContent = open ? '▼ 收起 Ampere 前 6 代历史架构（Turing ~ Fermi）' : '▶ 展开 Ampere 前 6 代历史架构（681 项）';
+        }
+        if (btnToc) {
+          btnToc.setAttribute('aria-expanded', open ? 'true' : 'false');
+          btnToc.textContent = open ? '▾ 收起 Ampere 前 6 代目录' : '▸ 展开 Ampere 前 6 代目录（Turing ~ Fermi · 681）';
+        }
+        if (btnChips) {
+          btnChips.textContent = open ? '▾ 收起历史 6 代' : '▸ 展开 Ampere 前 6 代 (Turing~Fermi · 681)';
+        }
+      }
+
+      [btnMain, btnToc, btnChips].forEach(function (b) {
+        if (b) b.addEventListener('click', function () {
+          setLegacyOpen(!(legacyBody && legacyBody.classList.contains('is-open')), true);
+        });
+      });
+
+      if (tocLegacyList) {
+        tocLegacyList.querySelectorAll('a').forEach(function (a) {
+          a.addEventListener('click', function () { setLegacyOpen(true, true); });
+        });
+      }
 
       function applyFilter() {
         var q = (input ? input.value : '').trim().toLowerCase();
         var hit = 0;
+        var legacyHit = 0;
         var visibleGroups = {};
         dataRows.forEach(function (tr) {
           var grp = tr.getAttribute('data-group');
@@ -1481,16 +1559,24 @@
           if (show) {
             hit++;
             visibleGroups[grp] = true;
+            if (legacyGroups[grp]) legacyHit++;
           }
         });
+        if (q && legacyHit > 0) {
+          setLegacyOpen(true, false);
+        } else if (legacyGroups[activeGroup]) {
+          setLegacyOpen(true, true);
+        } else if (!q && !legacyUserOpen) {
+          setLegacyOpen(false, false);
+        }
         boxes.forEach(function (el) {
           var g = el.getAttribute('data-group-box');
           var showBox = (activeGroup === 'ALL') ? (!q || !!visibleGroups[g]) : (g === activeGroup);
           el.classList.toggle('is-hidden-group', !showBox);
         });
         stat.textContent = (q || activeGroup !== 'ALL')
-          ? ('匹配 ' + hit + ' / ' + dataRows.length + ' 条')
-          : ('共 ' + dataRows.length + ' 条 · 支持关键词与代际一键过滤');
+          ? ('匹配 ' + hit + ' / ' + dataRows.length + ' 条' + (legacyHit > 0 && q ? '（含历史老卡 ' + legacyHit + ' 条，已自动展开）' : ''))
+          : ('共 ' + dataRows.length + ' 条 · Ampere 以前 6 代默认折叠，支持搜索自动展开');
       }
 
       if (input) input.addEventListener('input', applyFilter);
@@ -1501,7 +1587,7 @@
           applyFilter();
         });
       });
-      if (toggle) {
+            if (toggle) {
         var expanded = false;
         toggle.addEventListener('click', function () {
           expanded = !expanded;
