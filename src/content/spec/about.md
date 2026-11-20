@@ -14,7 +14,7 @@
 深挖 GPU↔GPU PCIe P2P、GPUDirect RDMA（DMA-BUF / nvidia-peermem）、NVLink-C2C 与 MTLink 互联带宽瓶颈，以及多卡 NCCL / MCCL AllReduce 通信效率；涵盖白盒与品牌 100G/400G 交换机（HPE / Celestica / Mellanox SN2100）的 SONiC / Onyx / ONIE 平台适配、端口拆分验证与带外运维体系。
 
 ### 04 · 底层固件逆向、恢复与硬件图谱库
-涉及 ConnectX-7/8/9 网卡固件二进制与 PSID 谱系逆向、CH347 / MTUSB / FS5 双份 NV_DATA 闪存级救砖、OpenRM / GSP-RM 驱动栈源码消融，以及 Jetson 载板设备树与嵌入式启动链排错；持续维护 354 项 NVIDIA GPU PCI Device ID（Ampere → Rubin）与 Jetson/Tegra 模组料号全量对照表。
+涉及 ConnectX-7/8/9 网卡固件二进制与 PSID 谱系逆向、CH347 / MTUSB / FS5 双份 NV_DATA 闪存级救砖、OpenRM / GSP-RM 驱动栈源码消融，以及 Jetson 载板设备树与嵌入式启动链排错；持续维护 1149 项 NVIDIA PCI Device ID（Fermi → Rubin × Grace/Vera × NVSwitch）与 Jetson/Tegra 模组料号全量对照表。
 
 ## 主页与联系
 
