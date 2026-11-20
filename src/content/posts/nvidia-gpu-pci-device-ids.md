@@ -2,7 +2,7 @@
 title: "NVIDIA PCI Device ID 全量对照：Fermi → Rubin × Grace / Vera × NVSwitch"
 published: 2026-06-24
 updated: 2026-11-20
-description: "全网最全一手实证 NVIDIA PCI Device ID 图谱（共 1149 项）：整合 pci.ids v2026.11.19、NVIDIA open-gpu-kernel-modules 620.73.04、gpu-admin-tools、DCGM、edk2-nvidia 与 Linux 主线源码，完整覆盖 11 代 CUDA GPU（Fermi → Rubin，1026 项）、Grace TH500 / Vera TB500 / Tegra SoC（40 项）、NVSwitch LR10/LS10（33 项）与 15B3 集群互联（NVLink-6/7/8 Switch · ConnectX-6~11 · BlueField-1~4，50 项）。"
+description: "全网最全一手实证 NVIDIA PCI Device ID 图谱（共 1149 项）：整合 pci.ids v2026.11.19、open-gpu-kernel-modules 620.73.04（含 g_nv_name_released.h 全部物理与 vGPU/MIG 子系统）、gpu-admin-tools、DCGM、edk2-nvidia 与 Linux 主线源码，深度考据 Rubin（10 项）与 Blackwell（91 项）全量 ID、细分 SKU 与具体用途，完整覆盖 Fermi → Rubin 11 代 GPU、Grace/Vera CPU 与 NVSwitch/15B3 互联。"
 image: "/assets/covers/nvidia-pci-ids.svg"
 category: "资料与随笔"
 tags: ["NVIDIA", "PCIe", "Rubin", "Blackwell", "Grace", "Vera", "NVSwitch", "速查表"]
@@ -11,42 +11,30 @@ draft: false
 ---
 
 > [!TIP]
-> **2026-11-20 超级扩充版（354 项 → 1149 项）**：除实时同步 `pci.ids v2026.11.19` 与 `open-gpu-kernel-modules 620.73.04` 外，本次深度挖掘了 **`NVIDIA/gpu-admin-tools`**、**`NVIDIA/DCGM`**、**`NVIDIA/edk2-nvidia`** 与 **`torvalds/linux`** 源码树，将范围从 Ampere → Rubin 全面扩展至 **11 代 CUDA GPU（Fermi → Rubin）**，并补全 **Grace（`TH500`）与 Vera（`TB500`）CPU Root Port**、**NVSwitch 全量 33 个 ID**，以及已迁入 `15B3` 的 **NVLink-6/7/8 Switch · ConnectX-10/11 NVLink-C2C · BlueField-4**。
+> **2026-11-20 Rubin × Blackwell 全量精校深度版（1149 项 · 17 表 Excel）**：在同步 `pci.ids v2026.11.19` 与 `open-gpu-kernel-modules 620.73.04` 的基础上，新增解析了 NVIDIA 驱动编译头文件 **`g_nv_name_released.h`（1,985 条物理+vGPU/MIG 映射）**、**`detect-self-hosted.h`**、**`NVIDIA/DCGM`**、**`NVIDIA/gpu-admin-tools`**、**`NVIDIA/edk2-nvidia`**、**`NVIDIA/nvtrust`** 与 **`torvalds/linux`**，为 **Rubin（10 项）与 Blackwell（91 项）全部 101 个 ID** 逐一补全了**可信官方型号、显存/功耗硬规格、具体用途定位与子系统（`SVID:SDID`）对照表**。Ampere 之前的 6 代历史架构（Turing → Fermi，681 项）支持在正文与目录中一键折叠/展开。
 >
 > 如需使用 **实时关键词过滤 + 架构快捷筛选 + 1520px 吸顶宽表**，推荐直接打开：[原版实时搜索宽表页（1149 条）](/legacy-posts/nvidia-gpu-pci-device-ids.html)；本文所有表格亦支持右上角 **「⤢ 宽屏展开表格」**。
 
-📊 **原始数据下载**：[下载最新全量多表 Excel（.xlsx · 16 个工作表 · 1149 个 PCI ID · 135 KB）](/assets/files/nvidia-gpu-pci-ids-ampere-to-rubin.xlsx)
+📊 **原始数据下载**：[下载最新全量多表 Excel（.xlsx · 17 个工作表 · 含 Blackwell/Rubin 子系统精解表 · 1149 个 PCI ID · 156 KB）](/assets/files/nvidia-gpu-pci-ids-ampere-to-rubin.xlsx)
 
 > [!NOTE]
-> **本次扩大搜索的 6 项硬核一手发现（`pci.ids` 尚未收录或未标明的关键情报）**
-> 1. **Grace CPU（`TH500`）6 个隐藏 PCI ID 与 Vera CPU（`TB500`）5 个 Root Port 实锤**：`open-gpu-kernel-modules` 的 `nvcst.h` 直接定义了 Grace **`22B1 / 22B2 / 22B3 / 22B4 / 22B8 / 22B9`**（均未进入 `pci.ids`）与 Vera **`2F95–2F99`**（`CS_NVIDIA_TB500`，与 Grace 共享 I/O Coherent + PCIe Atomics 配置），同时确认 **`2F88` = `T256 (N1)` 客户端 Arm SoC**、**`3400` = `T268`**、**`22D1` = `T254`**。
-> 2. **NVIDIA PCI Device ID Bit-6（`+0x40`）硬件分配规律**：从 `NVIDIA/edk2-nvidia`（`TH500GpuDxe/efihand/DriverBinding.c`）源码实锤——数据中心单芯的 `+0x00~0x3F` 段用于 **Endpoint（PCIe/SXM）**，`+0x41~0x7F` 段用于 **Self-Hosted（Grace/Vera C2C）**；并首次确认 **`GB120` 在 TH500 上的预留段为 `3341–337F`**、**`GR100` Endpoint 段为 `3000–303F`**。
-> 3. **Rubin 子系统与 DCGM Profile 落锤**：CUDA 13.5 确认 **`sm_107`（CC 10.7）**；`gpu-admin-tools` 揭示 **`3002:2277`** 为非 C2C SXM、**`3041:221A`**（`VR NVL72`，已入 `open-gpu 620.73.04` ✓）与 **`307E:221A`** 为 GR100 C2C+SXM、**`30FF:221B/221C`** 为 GR102 C2C+SXM；DCGM 已收录 `3041 / 307E / 307F`。
-> 4. **NVSwitch 从 `10DE` 迁入 `15B3` 的分水岭**：`open-gpu nvswitch.c` 定义了 **LR10（17 个 ID：`1AE8, 1AF0–1AFF`）** 与 **LS10 "Laguna"（16 个 ID：`22A0–22AF`）**，而 `pci.ids v2026.11.19` 显示 **NVLink-6 / 7 / 8 Switch（`15B3:D2F8 / D2FA / D2FC`）** 已正式并入 Mellanox/NVIDIA Networking `15B3` 交换芯片段位！
-> 5. **Linux 主线 `drivers/pci/quirks.c` 实锤两个新硬件段**：**`10DE:2E00–2E3F`（GB20B / Spark / N1X 全段）** 与 **`15B3:2101`（ConnectX-10 NVLink-C2C）** 均需强制启用 PCIe ATS，用于无标准 CXL 配置空间下发起类 `CXL.cache` 一致性操作。
-> 6. **Hopper / Blackwell 隐藏 ID 与 DCGM 内部代号补完**：`gpu-admin-tools` 补出未入 `pci.ids` 的 **`2309`（H20）**，并将 `2343 / 2345` 正式转正为 **GH200**；DCGM `diag-skus.yaml` 补齐了 **`GB300 NVL Bianca (1399W)` / `Galaxy (1299W)`**、**`RTX 6000D LC (249W)`**、**`Scout H100`**、**`SkinnyJoe`** 与 11 代老卡（K80/M60/P100/V100/T4）官方诊断基线。
+> **本次一手源码交叉核对的核心发现（零传闻，全源码实锤）**
+> 1. **`g_nv_name_released.h` 一手实锤 Rubin & Blackwell 真实可用显存与 MIG/vGPU 切分**：`3041`（`NVIDIA VR NVL72`）内置 `2304–230A` 共 7 档 MIG/vCS（实锤 **280 GB 可用 HBM4**）；`31C2`（`GB300 NVL72`）实锤 **278 GB 可用 HBM3e**（物理区分 **`21F1` Bianca 1399W** 与 **`20E5` Galaxy 1299W**）；`3182`（`B300 SXM6 AC`）实锤 **269 GB 可用 HBM3e**；`2BB5`（`RTX PRO 6000 Server`）内置 **102 档 vGPU/MIG + 2 档云游戏切片**；`2BB9`（`RTX 6000D`）实锤 **2×42 GB MIG** 与 **249W 液冷 LC（`2279`）**。
+> 2. **`detect-self-hosted.h` 硬编码 Self-Hosted C2C 分区**：`open-gpu` 内核代码明确将 `2940–297F`（GB100）、`31C0–31FF` + 特例 **`31A1`**（GB110 Max-Q）、`3040–307F`（GR100）与 `30C0–30FF`（GR102）归为 Grace/Vera C2C Self-Hosted 段。
+> 3. **Grace CPU（`TH500`）6 个隐藏 PCI ID 与 Vera CPU（`TB500`）5 个 Root Port**：`TH500` 的 `22B1/22B2/22B3/22B4/22B8/22B9` 从未出现在 `pci.ids`，全部藏在 `open-gpu` `nvcst.h` 中；`TB500` 的 `2F95–2F99` 已同时落地 `pci.ids` 与 `nvcst.h`。
+> 4. **NVLink-6/7/8 Switch 与 ConnectX-10/11 C2C 迁入 `15B3`**：从 Vera Rubin 起，机架级 NVLink 交换芯片迁入 Mellanox/NVIDIA Networking 段位（`15B3:D2F8/D2FA/D2FC`），`15B3:2101`（ConnectX-10 NVLink-C2C）与 `10DE:2E00–2E3F`（GB20B/Spark/N1X）均在 Linux `drivers/pci/quirks.c` 中强制启用 PCIe ATS 模拟 `CXL.cache`。
+> 5. **明确区分已证实 ID vs 传闻/未分配**：截至 `2026-11-20`，`Rubin Ultra（GR150 / Kyber NVL576，2027 H2）`、`消费级 Rubin（GR20x）` 与 `RTX 5080 SUPER / 5070 Ti SUPER` **均未分配公开 PCI ID**；原 late-2025 预告的 **Rubin CPX（128GB GDDR7 Prefill）** 已在 GTC 2026 主路线图中调整让位于 HBM4 + Groq 3 LPU/LPX 推理架构。
 
-## 一、总览、架构 × SM × Hex 段位与 Bit-6 分配规律
+## 一、架构 × SM / Compute Capability 与 Bit-6（+0x40）硬件分配规律
 
-### 1.1 全站收录总量分布（1149 项）
-
-- **`10DE` CUDA GPU（11 代全量 · Fermi → Rubin）**：**1026 项**（其中 `open-gpu-kernel-modules 620.73.04` 官方支持 **299 项**，覆盖 Turing → Rubin）
-  - 新一代（按最新倒序）：**Rubin** `10` · **Blackwell / Ultra** `91` · **Hopper** `29` · **Ada** `69` · **Ampere** `146`
-  - 经典历代：**Turing** `124`（开放驱动起点）· **Volta** `21` · **Pascal** `113` · **Maxwell** `91` · **Kepler** `197` · **Fermi** `135`
-- **`10DE` Grace（`TH500`）· Vera（`TB500`）· Tegra / Thor / N1 CPU & SoC**：**40 项**（Grace 6 + Vera 5 + Tegra/Thor/Spark/N1 29）
-- **`10DE` NVSwitch（Gen2 LR10 + Gen3 LS10）**：**33 项**（LR10 17 + LS10 16）
-- **`15B3` 集群互联与新一代 NVLink Switch**：**50 项**（NVLink-6/7/8 Switch · ConnectX-6~11 · BlueField-1~4 · Quantum / Spectrum）
-
-### 1.2 全架构 × SM / Compute Capability × PCI Hex 段位速查
-
-| 架构 | 芯片 | SM | CC | PCI Hex 段位（10DE） | 代表产品 | 关键特性 / 备注 |
+| 架构 | 芯片 | SM | CC | PCI Hex 段位 | 代表产品 | 备注 |
 | --- | --- | --- | --- | --- | --- | --- |
-| Rubin (DC) | GR100 / GR102 | sm_107 | 10.7 | 3000–307F (GR100) / 3080–30FF (GR102) | VR NVL72 (3041), PCIe Faber (3021), R100/R200 | CUDA 13.4/13.5 GA (sm_107a/107f); 328 KB SMEM; HBM4, NVLink 6; open-gpu 620.x |
-| Blackwell (Spark/N1X) | GB10 / GB20B | sm_121 | 12.1 | 2E00–2E3F (Linux quirks ATS) | DGX Spark (GB10), RTX Spark N1X (5120/6144-core) | sm_121a; 强制 PCIe ATS 模拟 CXL.cache |
-| Blackwell (Consumer/Pro) | GB202/203/205/206/207 | sm_120 | 12.0 | 2B80–2DFF, 2F00–2F7F | RTX 50 / 5070 SUPER, RTX PRO 6000/5500/5000 | mma.sync (非 tcgen05); FP4/FP6; 另有 GB20C SDM |
-| Blackwell (Thor/T268) | GB10B (T264 / T268) | sm_110 | 11.0 | 2B00 (T264), 3400 (T268) | Jetson AGX Thor, DRIVE Thor, T268 | CUDA 13.0 由 sm_101 改名; 另有 GB10C |
-| Blackwell Ultra (DC) | GB110 / GB112 / GB120 | sm_103 | 10.3 | 3180–327F, 3300–337F | B300 (3182), GB300 Bianca/Galaxy (31C2), GB300-252 (31C3) | sm_103a/103f; 1400W 级; edk2 确认 GB120 段 3341–337F |
-| Blackwell (DC) | GB100 / GB102 | sm_100 | 10.0 | 2900–297F (GB100) / 2980–29FF (GB102) | B100, B200, GB200 NVL72 (2941) | TMEM, tcgen05, 2-SM MMA; sm_100a/100f |
+| Rubin (DC) | GR100 / GR102 | sm_107 | 10.7 | 3000–307F (GR100) / 3080–30FF (GR102) | VR NVL72 (3041), PCIe Faber (3021), R100/R200 | CUDA 13.4/13.5 GA (sm_107a/107f); 328 KB SMEM; 288GB HBM4 (280GB 可用), NVLink 6; open-gpu 620.x |
+| Blackwell (Spark/N1X) | GB10 / GB20B | sm_121 | 12.1 | 2E00–2E3F (Linux quirks ATS) | DGX Spark (GB10), RTX Spark N1X (5120/6144-core) | sm_121a; 强制 PCIe ATS 模拟 CXL.cache; 128GB 统一 LPDDR5X |
+| Blackwell (Consumer/Pro) | GB202/203/205/206/207 | sm_120 | 12.0 | 2B80–2DFF, 2F00–2F7F | RTX 50 / 5070 SUPER, RTX PRO 6000/5500/5000/4500/4000/2000 | mma.sync (非 tcgen05); FP4/FP6; 另有 GB20C 车载虚拟化 |
+| Blackwell (Thor/T268) | GB10B (T264 / T268) | sm_110 | 11.0 | 2B00 (T264), 3400 (T268) | Jetson AGX Thor (2070 FP4 TFLOPS), DRIVE Thor, T268 | CUDA 13.0 由 sm_101 改名; 另有 GB10C |
+| Blackwell Ultra (DC) | GB110 / GB112 / GB120 | sm_103 | 10.3 | 3180–327F, 3300–337F | B300 (3182), GB300 Bianca/Galaxy (31C2), GB300-252 (31C3) | sm_103a/103f; 288GB HBM3e; 1400W 级; edk2 确认 GB120 段 3341–337F |
+| Blackwell (DC) | GB100 / GB102 | sm_100 | 10.0 | 2900–297F (GB100) / 2980–29FF (GB102) | B100, B200 (180/168GB), GB200 NVL72 (2941), DRIVE P2021 (29BB) | TMEM, tcgen05, 2-SM MMA; sm_100a/100f; nvtrust CC 架构 10 |
 | Hopper | GH100 | sm_90 | 9.0 | 2300–237F (+ 23B0/23F0) | H100, H200, H800, H20/H20-3e, GH200 (2342/2345/2348) | WGMMA, TMA; sm_90a; 2301–233F EP vs 2341–237F SH |
 | Ada Lovelace | AD102/103/104/106/107 | sm_89 | 8.9 | 2680–28FF | RTX 40 系, RTX 6000 Ada, L40/L40S/L20/L4/L2 | FP8 Transformer Engine |
 | Ampere (Orin) | GA10B (T234) | sm_87 | 8.7 | SoC 集成 (RP: 229A/9C/9E) | Jetson AGX Orin, DRIVE Orin | Tegra 嵌入式 iGPU |
@@ -59,23 +47,24 @@ draft: false
 | Kepler | GK104–107 / GK110–208 / GK210 | sm_30 / 35 / 37 | 3.0 / 3.5 / 3.7 | 0FC0–103F, 1180–12BF | GTX 600/700, Tesla K10/K20/K40 (3.5), K80 (3.7) | Dynamic Parallelism; GK210 (K80) 独享 sm_37 |
 | Fermi | GF100/110 · GF104–119 | sm_20 / 21 | 2.0 / 2.1 | 06C0–06FF, 0DC0–107F | GTX 480/580, Tesla C2050/M2090 (2.0), GTX 460/560 (2.1) | 初代 IEEE-754 + ECC + L1/L2 缓存 CUDA 架构 |
 
-### 1.3 数据中心 GPU Bit-6（`+0x40`）Endpoint vs Self-Hosted 分配规律
+### 数据中心 GPU Bit-6（`+0x40`）Endpoint vs Self-Hosted 分配规律
 
-从 `NVIDIA/edk2-nvidia`（`Silicon/NVIDIA/Server/TH500/Drivers/TH500GpuDxe/efihand/DriverBinding.c`）与 `NVIDIA/gpu-admin-tools`（`gpu/devid_chips.py`）提取的硬件级分段规则——拿到一个陌生 `10DE:xxxx`，只看低字节是否 `>= 0x40`（或 `>= 0xC0`）就能秒判它属于传统 PCIe/SXM 卡还是 **Grace / Vera C2C 超级芯片**：
+来自 **`NVIDIA/open-gpu-kernel-modules` `kernel-open/nvidia/detect-self-hosted.h`** 与 **`NVIDIA/edk2-nvidia` `TH500GpuDxe/DriverBinding.c`** 的双源码交叉确认：从 Hopper 起，数据中心芯片按 **Bit-6（`+0x40`）** 严格区分独立主机直连（Endpoint，x86/HGX）与 Grace/Vera C2C 一致性内存耦合（Self-Hosted）：
 
-| 芯片家族 | Recovery / 保留 | Endpoint 段（+0x00，PCIe/SXM） | Self-Hosted 段（+0x40，Grace/Vera C2C） | 源码实证 | 典型实例 |
+| 芯片家族 | Recovery / 保留基准 | Endpoint 段（`+0x00`） | Self-Hosted C2C 段（`+0x40`） | 源码来源 | 典型实例 |
 | --- | --- | --- | --- | --- | --- |
-| GH100 (Hopper) | 0x2300 (Recovery) | 0x2301 – 0x233F | 0x2341 – 0x237F | edk2-nvidia TH500GpuDxe | 2330 H100 SXM (EP) vs 2342/2345/2348 GH200 (SH) |
-| GB100 (Blackwell) | 0x2900 (Reserved A) | 0x2901 – 0x293F | 0x2941 – 0x297F | edk2-nvidia TH500GpuDxe | 2901 B200 (EP) vs 2941/297E GB200 (TH500 SH) |
-| GB102 (Blackwell) | 0x2980 (Reserved A) | 0x2981 – 0x29BF | 0x29C1 – 0x29FF | edk2-nvidia TH500GpuDxe | 29BB/29BC (EP) vs 29C1–29FF (TH500 SH) |
-| GB110 (Blackwell Ultra) | 0x3180 (Reserved A) | 0x3181 – 0x31BF (特例 31A1=SH) | 0x31C1 – 0x31FF (+ 31A1) | edk2-nvidia TH500GpuDxe | 3182 B300 (EP) vs 31C2/31C3 GB300 & 31A1 MaxQ (SH) |
+| GH100 (Hopper) | 0x2300 (Recovery) | 0x2301 – 0x233F | 0x2340 – 0x237F | detect-self-hosted.h + edk2 | 2330 H100 SXM (EP) vs 2342/2345/2348 GH200 (SH) |
+| GB100 (Blackwell) | 0x2900 (Reserved A) | 0x2901 – 0x293F | 0x2940 – 0x297F | detect-self-hosted.h + edk2 | 2901/2909 B200 (EP) vs 2941/297E GB200 (TH500 SH) |
+| GB102 (Blackwell) | 0x2980 (Reserved A) | 0x2981 – 0x29BF | 0x29C0 – 0x29FF | edk2-nvidia TH500GpuDxe | 29BB DRIVE P2021 / 29BC B100 (EP) vs 29C1–29FF (TH500 SH) |
+| GB110 (Blackwell Ultra) | 0x3180 (Reserved A) | 0x3181 – 0x31BF (特例 31A1=SH) | 0x31C0 – 0x31FF (+ 31A1) | detect-self-hosted.h + edk2 | 3182 B300 (EP) vs 31C2/31C3 GB300 & 31A1 MaxQ (SH) |
 | GB120 (Blackwell Ultra) | 0x3300 / 0x3340 | 0x3301 – 0x333F | 0x3341 – 0x337F | edk2-nvidia TH500GpuDxe | edk2 明确预留 TH500+GB120 SH 段 3341–337F |
-| GR100 (Rubin) | 0x3000 (Reserved A) | 0x3000 – 0x303F | 0x3041 – 0x307F | edk2 + gpu-admin-tools | 3002 SXM / 3021 PCIe Faber (EP) vs 3041 VR NVL72 / 307E / 307F (Vera SH) |
-| GR102 (Rubin) | 0x3080 (Reserved A) | 0x3081 – 0x30BF | 0x30C1 – 0x30FF | gpu-admin-tools | 30C0 Reserved B / 30FF [221B/221C] C2C+SXM (Vera SH) |
+| GR100 (Rubin) | 0x3000 (Reserved A) | 0x3000 – 0x303F | 0x3040 – 0x307F | detect-self-hosted.h + edk2 | 3002 SXM / 3021 PCIe Faber (EP) vs 3041 VR NVL72 / 307E / 307F (Vera SH) |
+| GR102 (Rubin) | 0x3080 (Reserved A) | 0x3081 – 0x30BF | 0x30C0 – 0x30FF | detect-self-hosted.h + gat | 30C0 Reserved B / 30FF [221B/221C] C2C+SXM (Vera SH) |
 
-## 二、Grace（TH500）· Vera（TB500）· Tegra / Thor / N1 CPU & SoC（40 个 `10DE` ID）
+## 二、Grace（`TH500`）· Vera（`TB500`）· Tegra / Thor / N1 CPU & SoC（40 项）
 
-本节汇总 NVIDIA 自研 Arm 数据中心 CPU（**Grace `TH500`**、**Vera `TB500`**）以及边缘/客户端 Arm SoC（**Thor `T264`**、**`T268`**、**`T256 (N1)`**、**`T254`**、**GB10**、**Orin `T234`**、**Xavier `T194`**、**Parker `T186`**、**X1 `T210`**）在 PCIe 总线上暴露的 Root Port / Bridge 设备 ID。其中 **Grace 全部 6 个 ID（`22B1–22B4, 22B8–22B9`）目前尚未收录进 `pci.ids`**，直接提取自 `NVIDIA/open-gpu-kernel-modules` 的 `src/nvidia/arch/nvalloc/common/inc/nvcst.h`。
+> [!IMPORTANT]
+> Grace（`TH500`）的 6 个 Root Port ID（`22B1–22B4 / 22B8 / 22B9`）和 Thor（`T264`）的 `22D6 / 22DA` 并未录入 `pci.ids`，全部提取自 `open-gpu-kernel-modules` 的 `src/nvidia/inc/kernel/core/nvcst.h`；Vera（`TB500`）的 `2F95–2F99` 与 N1 客户端 SoC `2F88`（`T256`）则已在 `pci.ids v2026.11.19` 与 `nvcst.h` 中双双落地。
 
 | ID | 平台 / CPU | 内部代号 | 功能 | pci.ids 名称 | 驱动 / 官方定义 | 技术说明 | 来源 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -122,7 +111,7 @@ draft: false
 
 ### Grace / Vera 非 PCI 关键硬件标识（Linux 主线 `nvidia_cspmu.c` & `edk2-nvidia`）
 
-Grace（`Tegra241 / TH500`，Neoverse V2 核心）与 Vera（`TB500`，自研 Olympus 核心 + 不对称 SMT + OCP Caliptra Root of Trust）的片上互联与性能计数器并非全挂在 PCI 配置空间，而是通过 **ACPI / Arm CoreSight PMU（CSPMU）** 与 **SMMUv3 CMDQV（`tegra241-cmdqv.c`）** 暴露（`edk2-nvidia` `Dsdt_TH500.asl` 亦含 `NVDA2006` 等 ACPI HID）：
+Grace（`Tegra241 / TH500`，Neoverse V2 核心）与 Vera（`TB500`，88 核自研 Olympus 核心 + 不对称 SMT + OCP Caliptra Root of Trust）的片上互联与性能计数器通过 **ACPI / Arm CoreSight PMU（CSPMU）** 与 **SMMUv3 CMDQV（`tegra241-cmdqv.c`）** 暴露：
 
 | Arm CSPMU Product ID | Linux `perf` PMU 名称 | 适用平台 | 监控域与关键特性 |
 | --- | --- | --- | --- |
@@ -179,7 +168,7 @@ Grace（`Tegra241 / TH500`，Neoverse V2 核心）与 Vera（`TB500`，自研 Ol
 
 ### 3.2 `15B3` 配套高速互联核心表（NVLink-6/7/8 Switch · ConnectX-6~11 · BlueField-1~4 · Quantum / Spectrum）
 
-在大规模 Grace/Blackwell/Vera Rubin 集群的 `lspci` 中，除 `10DE` 外还会密集出现 **`15B3`（Mellanox / NVIDIA Networking）** 设备——特别值得注意的是，**从 NVLink-6 Switch（Vera Rubin）起，机架级 NVLink 交换芯片的 PCI ID 已正式并入 `15B3:D2F8/D2FA/D2FC`**，而 **ConnectX-10/11（`15B3:2101/2102`）** 更是直接原生支持 **NVLink-C2C**：
+在大规模 Grace/Blackwell/Vera Rubin 集群的 `lspci` 中，除 `10DE` 外还会密集出现 **`15B3`（Mellanox / NVIDIA Networking）** 设备——**从 NVLink-6 Switch（Vera Rubin）起，机架级 NVLink 交换芯片的 PCI ID 已正式并入 `15B3:D2F8/D2FA/D2FC`**，而 **ConnectX-10/11（`15B3:2101/2102`）** 更是原生支持 **NVLink-C2C**：
 
 | Vendor | ID | 产品家族 | 芯片 / ASIC | 功能角色 | pci.ids 名称（v2026.11.19） | 说明 / Linux 实证 |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -234,141 +223,169 @@ Grace（`Tegra241 / TH500`，Neoverse V2 核心）与 Vera（`TB500`，自研 Ol
 | 15B3 | CF86 | Spectrum-7 | Spectrum-7 | Eth Switch | Spectrum-7 | Spectrum-7 (含 027E Tile) |
 | 15B3 | C788 | Spectrum-8 | Spectrum-8 | Eth Switch | Spectrum-8 | Spectrum-8 (含 027F Tile) |
 
-## 四、Rubin（10 个 ID · sm_107 / CC 10.7）
+## 四、Rubin（10 个 ID · sm_107 / CC 10.7 · 深度一手考据）
 
-截至 **2026-11-20**，结合 `pci.ids v2026.11.19`、`NVIDIA/open-gpu-kernel-modules 620.73.04`、`NVIDIA/gpu-admin-tools`、`NVIDIA/edk2-nvidia`、`NVIDIA/DCGM` 与 **CUDA 13.5 GA** 官方文档，Rubin 已从半年前的 2 个占位 ID 扩充至 **10 个**，且多条底层实锤均已落地：
+截至 **2026-11-20**，交叉核验 **`pci.ids v2026.11.19`**（实时比对 `pci-ids.ucw.cz` 零新增、`systemd hwdb` 零额外）、**`NVIDIA/open-gpu-kernel-modules 620.73.04`**（含编译头文件 **`g_nv_name_released.h`** 与 **`detect-self-hosted.h`**）、**`NVIDIA/gpu-admin-tools`**、**`NVIDIA/edk2-nvidia`**、**`NVIDIA/DCGM`** 与 **CUDA 13.5 GA** 官方文档，Rubin 代际目前**全球公开可信的一手 PCI Device ID 共 10 个**（GR100 7 个 + GR102 3 个），每一项的具体形态、显存/MIG 切分与用途均已逐条实锤：
 
-- **官方 Compute Capability = `sm_107`（CC 10.7，含 `sm_107a` / `sm_107f`）**：每 SM 共享内存扩至 328 KB、引入 TMA 细粒度同步与增强型 `tcgen05.mma` 仿真 FP64，Windows 端放弃传统 TCC 模式。
-- **Endpoint vs Self-Hosted 分段清晰**：`edk2-nvidia` 确认 `3000–303F` 为 GR100 Endpoint（含 `3002` subsys `2277` 非 C2C SXM、`3021` `PCIe Faber`），`3041–307F` 为 Vera+Rubin Self-Hosted C2C（含首个进入开放驱动 `620.73.04` 的 **`3041` `NVIDIA VR NVL72`**、`307E` 与 `307F` 均已进入 DCGM 诊断 profile）；GR102 的 **`30FF`**（subsys `221B/221C`）也在 `gpu-admin-tools` 标明 `has_c2c + is_sxm`。
-- **内核驱动架构已实装**：`open-gpu` 已合入 `arch/rubin/kern_gpu_gr100.c`（20× CE、8× Graphics、FSP/SPDM/TDISP、`VR-BM` 许可位、`kbifDoCxlReset_GR100` CXL 复位 HAL）与 `kern_gpu_gr102.c`。
+- **官方架构与算力实证**：Compute Capability = **`sm_107`（CC 10.7，含 `sm_107a` / `sm_107f`）**；TSMC 3nm 双裸片 CoWoS-L 封装（336B 晶体管，GR100 = 2× GR102 dielet，每 dielet 4×NVDEC / 4×NVJPG / 1×OFA）；单卡 **288 GB HBM4**（22 TB/s）、**50 PFLOPS NVFP4**、**NVLink 6（3.6 TB/s）**、每 SM 328 KB 共享内存。
+- **首发量产 `3041` 的 MIG/vGPU 显存实锤**：`open-gpu 620.73.04` 的 `g_nv_name_released.h` 不仅收录了物理卡 `10DE:3041 · 10DE:221A`（`NVIDIA VR NVL72`），还完整列出了 **`2304–230A` 共 7 档 MIG/vCS 子系统 ID**（`1-35C / 1-70C / 2-70C / 3-140C / 4-140C / 7-280C / 280C`），直接从 NVIDIA 驱动源码层面实锤单卡可用 HBM4 容量为 **280 GB**（288 GB 物理）并支持 7 切分多租户虚拟化。
+- **Endpoint vs Self-Hosted 硬编码分区**：`kernel-open/nvidia/detect-self-hosted.h` 明确硬编码 `0x3040–0x307F` 为 GR100 Self-Hosted（Vera C2C）、`0x30C0–0x30FF` 为 GR102 Self-Hosted；非 C2C 端点段 `3000–303F` 含 **`3002`**（`subsys 2277` 非 C2C SXM）与 **`3021`**（`PCIe Faber`）。
 
-| ID | 芯片 | SM | 功能 | pci.ids 名称 | 产品名（官方 / 社区） | 说明 / 子系统 / 功耗 / 驱动注解 | 开放驱动 |
+| ID | 芯片 | SM | 功能 | pci.ids 名称 | 产品名（官方 / 社区） | 用途 / 规格 / 子系统 / 一手来源 | 开放驱动 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 3000 | GR100 | sm_107 | GPU | GR100 [Reserved Dev ID A] | — | GR100 Endpoint Reserved A (edk2: 3000–303F = GR100 Endpoint; open-gpu arch/rubin/kern_gpu_gr100.c) | — |
-| 3002 | GR100 | sm_107 | GPU | GR100 | — | GR100 Endpoint SXM (non-C2C); gat: SXM (subsys 2277) | — |
-| 3021 | GR100 | sm_107 | GPU | GR100 [PCIe Faber] | GR100 PCIe (Faber) (社区) | Rubin GR100 PCIe form-factor / platform codename 'Faber' (in 3000–303F Endpoint range) | — |
-| 3040 | GR100 | sm_107 | GPU | GR100 [Reserved Dev ID B] | — | GR100 Self-Hosted Reserved B (3040–307F = Vera+Rubin C2C Self-Hosted range) | — |
-| 3041 | GR100 | sm_107 | GPU | GR100 [VR NVL72] | NVIDIA VR NVL72 | Vera Rubin NVL72; first shipping Rubin SKU in open-gpu 620.73.04; gat: C2C+SXM (subsys 221A); DCGM Rubin profile | ✓ |
-| 307E | GR100 | sm_107 | GPU | GR100 | — | GR100 Vera+Rubin C2C variant; gat: C2C+SXM (subsys 221A); DCGM Rubin profile | — |
-| 307F | GR100 | sm_107 | GPU | GR100 | — | GR100 Vera+Rubin Self-Hosted variant; DCGM Rubin profile | — |
-| 3080 | GR102 | sm_107 | GPU | GR102 [Reserved Dev ID A] | — | GR102 Endpoint Reserved A (open-gpu arch/rubin/kern_gpu_gr102.c) | — |
-| 30C0 | GR102 | sm_107 | GPU | GR102 [Reserved Dev ID B] | — | GR102 Self-Hosted Reserved B — GR100 package = 2× GR102 dies | — |
-| 30FF | GR102 | sm_107 | GPU | GR102 | — | GR102 Vera+Rubin C2C variant; gat: C2C+SXM (subsys 221B/221C) | — |
+| 3000 | GR100 | sm_107 | GPU | GR100 [Reserved Dev ID A] | — | 【硅前保留·Endpoint】GR100 Endpoint 保留基准 ID（edk2-nvidia 划定 3000–303F 为非 C2C 端点段；open-gpu 落地 arch/rubin/kern_gpu_gr100.c） | — |
+| 3002 | GR100 | sm_107 | GPU | GR100 | — | 【数据中心·x86 HGX SXM】GR100 非 C2C 独立 SXM 形态（gpu-admin-tools 实锤 is_sxm、subsys 10DE:2277），用于常规 HGX/x86 主机侧 Rubin 算力节点；尚未进入 open-gpu 620.73.04 发行列表 | — |
+| 3021 | GR100 | sm_107 | GPU | GR100 [PCIe Faber] | GR100 PCIe (Faber) (社区) | 【数据中心·PCIe 扩展卡】GR100 PCIe 形态/平台，pci.ids 标注代号 'PCIe Faber'（位于 3000–303F Endpoint 段），面向标准机架服务器的 PCIe 推理与计算部署；尚未进入开放驱动 | — |
+| 3040 | GR100 | sm_107 | GPU | GR100 [Reserved Dev ID B] | — | 【硅前保留·Self-Hosted】GR100 Self-Hosted 保留基准 ID（detect-self-hosted.h 划定 3040–307F 为 Vera+Rubin C2C 一致性内存段） | — |
+| 3041 | GR100 | sm_107 | GPU | GR100 [VR NVL72] | NVIDIA VR NVL72 | 【旗舰机架·超大规模 AI 训练/Agentic 推理】Vera Rubin NVL72 首发量产 ID（open-gpu 620.73.04 ✓ / DCGM ✓）；物理 subsys 221A（has_c2c+is_sxm），双芯 TSMC 3nm 336B 晶体管·288GB HBM4 (22TB/s)·50 PFLOPS NVFP4·NVLink 6 (3.6TB/s)；g_nv_name_released.h 含 2304–230A 7 档 MIG/vCS（实锤 280GB 可用显存，1-35C~7-280C） | ✓ |
+| 307E | GR100 | sm_107 | GPU | GR100 | — | 【数据中心·Vera+Rubin 变体/验证】GR100 Self-Hosted C2C+SXM 变体（gpu-admin-tools subsys 221A，DCGM 已内置 Rubin 诊断 profile），用于 Vera Rubin 平台验证与 OEM 定制 | — |
+| 307F | GR100 | sm_107 | GPU | GR100 | — | 【数据中心·Vera+Rubin 内部/诊断】GR100 Self-Hosted 段末尾 ID（DCGM 已内置 Rubin 诊断 profile，detect-self-hosted.h 纳入 3040–307F 区间），尚未在 pci.ids 赋予产品名 | — |
+| 3080 | GR102 | sm_107 | GPU | GR102 [Reserved Dev ID A] | — | 【硅前保留·GR102 Endpoint】GR102 基础硅片 Endpoint 保留基准（open-gpu 落地 arch/rubin/kern_gpu_gr102.c；GR100 封装由 2× GR102 裸片组成，每 dielet 含 4×NVDEC/4×NVJPG/1×OFA） | — |
+| 30C0 | GR102 | sm_107 | GPU | GR102 [Reserved Dev ID B] | — | 【硅前保留·GR102 Self-Hosted】GR102 Self-Hosted 保留基准（detect-self-hosted.h 划定 30C0–30FF 为 GR102 C2C 段） | — |
+| 30FF | GR102 | sm_107 | GPU | GR102 | — | 【数据中心·GR102 Vera+Rubin 变体】GR102 Self-Hosted C2C+SXM 变体（gpu-admin-tools 实锤 has_c2c+is_sxm，subsys 10DE:221B / 221C），用于单裸片/定制 Vera+Rubin 平台验证 | — |
 
-### Rubin 架构与路线图速览（2026-11）
+### Rubin 架构硬件规格与路线图可信度边界（2026-11 实证）
 
-| 代号 / 维度 | 定位与最新状态（2026-11） |
+| 代号 / 维度 | 实锤状态、硬件规格与用途定位（严格区分已证实 vs 规划中） |
 | --- | --- |
-| **GR100（7 IDs）** | Rubin 数据中心旗舰双芯封装：`3041`（`NVIDIA VR NVL72`，`subsys 221A`，open-gpu 620.73.04 ✓ / DCGM ✓）、`307E`（`221A` C2C / DCGM ✓）、`307F`（DCGM ✓）、`3021`（`PCIe Faber`）、`3002`（`2277` SXM 非 C2C）、`3000/3040`（Reserved A/B） |
-| **GR102（3 IDs）** | Rubin 基础硅片（GR100 = 2× GR102）：`3080/30C0`（Reserved A/B）、`30FF`（`subsys 221B/221C`，C2C+SXM），驱动落地 `arch/rubin/kern_gpu_gr102.c` |
-| **GR150 / GR20x / GR21x** | 后续量产数据中心 die（GR150，CoWoP/SXM8，~2027）、消费级 Rubin（GR20x）与 Rubin CPX 长上下文 Prefill 加速器（GR21x，GDDR7），PCI ID 尚未公开 |
-| **Vera CPU（TB500）** | 自研 Olympus 核心 + 不对称 SMT + Caliptra RoT；PCIe Root Port `10DE:2F95–2F99`；通过 NVLink-C2C + PCI-SIG CXL DVSEC 与 Rubin 耦合 |
-| **Compute Capability** | **`sm_107`（CC 10.7，含 `sm_107a` / `sm_107f`）** —— CUDA 13.4 预览 / **CUDA 13.5 GA**；328 KB SMEM、TMA 细粒度同步、`tcgen05.mma` 仿真 FP64，Windows 弃用 TCC |
-| **互联与交换** | 288 GB HBM4（13–22 TB/s）；NVLink 6（3.6 TB/s）配套 **`15B3:D2F8` NVLink-6 Switch**、**ConnectX-9（`15B3:1025`）** 与 **BlueField-4（`15B3:A2DD–A2DF`）** |
+| **GR100（7 个公开 ID）** | **已量产进入开放驱动 `620.73.04`**：TSMC 3nm 双裸片 CoWoS-L 封装（336B 晶体管），288 GB HBM4（12-Hi，22 TB/s，驱动实锤 **280 GB 可用**），50 PFLOPS NVFP4，NVLink 6（3.6 TB/s）。主力 **`3041`**（`NVIDIA VR NVL72`，`221A` + 7 档 MIG/vCS `2304–230A`）用于 72 卡液冷整柜前沿大模型训练与 Agentic 推理；**`3002`**（`2277` SXM 非 C2C）与 **`3021`**（`PCIe Faber`）覆盖独立 x86/PCIe 服务器；`307E / 307F` 已入 DCGM 诊断。 |
+| **GR102（3 个公开 ID）** | **驱动源码已落地 `kern_gpu_gr102.c`**：GR100 封装基础裸片（GR100 = 2× GR102 dielet，每 dielet 4×NVDEC/4×NVJPG/1×OFA）；`3080 / 30C0` 为 Endpoint/Self-Hosted 保留基准，**`30FF`**（`subsys 221B/221C`）为 Vera+Rubin C2C+SXM 验证变体。 |
+| **Rubin Ultra（GR150 · H2 2027）** | **路线图已官宣，尚无公开 PCI ID**：面向 Kyber 机架（NVL576，~600 kW 级），采用 4 颗计算裸片封装，~100 PFLOPS NVFP4，最高 **1 TB HBM4e**，配套 `15B3:D2FA` NVLink-7 Switch 与 BlueField-4 KV-Cache 卸载。 |
+| **Rubin CPX（路线图已调整）** | **尚无公开 PCI ID，GTC 2026 已移出核心路线图**：原 2025 年底预告为 128 GB GDDR7 长上下文 Prefill 专用卡（NVL144 CPX），GTC 2026 转向高密度 HBM4 集群 + Groq 3 LPU/LPX 低延迟解码架构。 |
+| **消费级 Rubin（GR20x）** | **尚无公开 PCI ID**：仍处于未来路线阶段，目前所有公开 `30xx` ID 全部属于数据中心 GR100/GR102。 |
+| **配套 Vera CPU 与互联** | **Vera CPU（`TB500`）**：88 核自研 Olympus 核心 + 不对称 SMT + Caliptra RoT，PCIe RP `10DE:2F95–2F99`；整柜配套 36× Vera CPU + 36× **NVLink-6 Switch（`15B3:D2F8`）** + **ConnectX-9（`15B3:1025`）** + **BlueField-4（`15B3:A2DD–A2DF`）**。 |
 
-## 五、Blackwell & Blackwell Ultra（91 个 ID · sm_100 / 103 / 110 / 120 / 121）
+## 五、Blackwell & Blackwell Ultra（91 个 ID · sm_100 / 103 / 110 / 120 / 121 · 全量用途与子系统实证）
 
-一个代号、五个 SM，叠加 **DCGM / gpu-admin-tools / edk2-nvidia / Linux quirks.c** 交叉实证后细节全部打通：
+Blackwell 是 NVIDIA 史上横跨产品形态最广的一代（**一个代号、5 个 SM、91 个一手实证 PCI ID**），涵盖超大规模数据中心液冷整柜（`GB100 / GB110`）、个人桌面超算（`DGX Station GB300` / `DGX Spark GB10`）、企业级虚拟化服务器（`RTX PRO 6000/4500 Server` 与中国合规 `RTX 6000D`）、专业工作站与工业宽温 MXM 嵌入模块、Arm AI PC（`RTX Spark N1X`）、具身智能机器人（`Jetson AGX Thor`）及消费级 GeForce RTX 50 全系：
 
-- **数据中心 GB100 / GB102（`sm_100`）**：`2901` / `2909` / `290A`（B200），`2941`（GB200，DCGM 1199W，Linux `nvgrace-gpu` VFIO 白名单），`297E`（`subsys 2046` C2C+SXM），`2924/2925`（PCIe 样片），`29F1`（GB102 SXM）。
-- **Blackwell Ultra GB110 / GB112 / GB120（`sm_103`）**：`3182`（B300 SXM6 AC 1099W），`3183/3184`（B300 SXM `22F2/22F3`），`31A1`（GB300 MaxQ 1199W C2C），`31C2`（**GB300 NVL Bianca 1399W** / **Galaxy `[20E5]` 1299W**，`nvgrace-gpu` 白名单），`31C3`（**GB300-252** 252 GB HBM3e），`3224/323E`（GB112 SXM `215F`），`3340`（`edk2-nvidia` 确认 `3341–337F` 为 `TH500+GB120`）。
-- **Thor / T268（`sm_110`）**：`2B00`（`CS_NVIDIA_T264` Thor iGPU）、`3400`（`nvcst.h` 实锤为 `CS_NVIDIA_T268` Tegra RP iGPU）；`open-gpu rmconfig.h` 还出现了 `GB10C` 与 `GB20C`（SDM iGPU）。
-- **消费 / 专业工作站 GB202–GB207（`sm_120`）**：含新增 **RTX PRO 5500 Blackwell（`2BBD` 84GB ECC ✓）**、GB203 **RTX 5070（`2C09` ✓）**、首个 **RTX 5070 SUPER（`2F02`）**、DCGM 实证的 **RTX PRO 6000 Max-Q（`2BB4` 代号 `Galaxy TS2`）** 与 **RTX 6000D LC（`2BB9:2279` 249W）**。
-- **DGX Spark / RTX Spark N1X（`sm_121` · GB10 / GB20B）**：Linux 主线 `drivers/pci/quirks.c` 明确规定 **`0x2E00–0x2E3F` 全段强制启用 PCIe ATS 以发出类 `CXL.cache` 一致性操作**；含 `2E03/2E06/2E13` 三款 N1X 开放驱动 ID 与 `2E12` GB10。（对应的 PCIe Root Port / Bridge ID 归入第二章 Grace/Vera/Tegra 表。）
+- **数据中心 Blackwell（`GB100 / GB102` · `sm_100`）**：`2901`（HGX/DGX B200 180GB，含 1000W/999W/850W 三种板卡与 8 档 MIG）、`2909`（HGX B200 168GB `22EB`，7×24GB 均分 MIG 专用）、`2941`（GB200 NVL72/36，186GB 可用 HBM3e，Linux `nvgrace-gpu` VFIO 白名单，1199W）、`2920 / 29BC`（B100 700W/850W/350W）、`29BB`（**DRIVE P2021** 自动驾驶 50W）。
+- **数据中心 Blackwell Ultra（`GB110 / GB112 / GB120` · `sm_103`）**：`3182`（HGX B300 SXM6 风冷 1099W，269GB 可用 HBM3e）、`31C2`（**GB300 NVL72**，278GB 可用 HBM3e；子系统区分 **`21F1` Bianca 1399W** 与 **`20E5` Galaxy 1299W**）、`31C3`（**DGX Station GB300-252**，252GB HBM3e + 496GB LPDDR5X = 748GB 桌面超算）、`31A1`（**GB300 Max-Q 1199W**，`detect-self-hosted.h` 专门硬编码的 C2C 特例）、`3183/3184/3224/323E/3340`（SXM 定制与 `GB112 / GB120` 预留）。
+- **专业工作站 / 虚拟化服务器 / 中国合规（`GB202GL / GB203GL / GB206GL` · `sm_120`）**：`2BB5`（RTX PRO 6000 Server 96GB 600W，内置 **102 档 vGPU/MIG + 云游戏 slice**）、`2BB9`（RTX 6000D 中国合规 84GB，含 **249W 液冷 LC `2279`** 与 **2×42GB MIG**）、`2BBD`（RTX PRO 5500 84GB ECC 600W ✓）、`2BB3`（RTX PRO 5000 一 ID 双容量：`204D` 48GB / `227A` 72GB + 26 档 vGPU）、`2C3A`（RTX PRO 4500 Server 单槽 32GB 165W + 46 档 vGPU）、`2C31/2C34/2C33/2D30`（4500/4000/4000 SFF/2000）及 `2C77/2C79/2D79/2DF9`（MXM 3.1 工业嵌入模块）。
+- **消费级 GeForce RTX 50 & 移动 / 端侧（`sm_120 / 110 / 121`）**：完整区分桌面分档双硅片（`RTX 5070`: GB203 `2C09` vs GB205 `2F04`；`RTX 5060`: GB205 `2F06` vs GB206 `2D05`）、中国合规两代改款（`5090 D 2B87` 32GB vs `5090 D V2 2B8C` 24GB）、未发售首个 SUPER（`2F02` RTX 5070 SUPER，**截至 2026-11 尚无 5080/5070 Ti SUPER 官宣或公开 ID**）、Arm AI PC（`RTX Spark N1X` `2E03/2E06/2E13`）、个人超算（`DGX Spark GB10` `2E12`）与机器人（`Jetson AGX Thor` `2B00` 2,070 FP4 TFLOPS）。
 
-| ID | 芯片 | SM | 功能 | pci.ids 名称 | 产品名（官方 / 社区） | 说明 / 子系统 / 功耗 / 驱动注解 | 开放驱动 |
+| ID | 芯片 | SM | 功能 | pci.ids 名称 | 产品名（官方 / 社区） | 用途 / 规格 / 子系统 / 一手来源 | 开放驱动 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 2900 | GB100 | sm_100 | GPU | GB100 [Reserved Dev ID A] | — | Reserved/internal dev ID — not publicly mapped to a shipping product | — |
-| 2901 | GB100 | sm_100 | GPU | GB100 [B200] | NVIDIA B200 | DCGM: B200 DevId 20da [20DA] 850W; B200 DevId 1999 [1999] 1000W; B200 DevId 199B10DE [199B] 999W；gat: SXM (subsys 1999/199B/199D/20DA) | ✓ |
-| 2909 | GB100 | sm_100 | GPU | GB100 [HGX B200 168GB] | NVIDIA B200 | DCGM: HGX B200 168GB 1000W | ✓ |
-| 290A | GB100 | sm_100 | GPU | GB100 [B200] | B200 (GB100 variant) (社区) | Datacenter B200 variant (confirmed B200 in gpu-admin-tools & pci.ids v2026.11.19) | — |
-| 2920 | GB100 | sm_100 | GPU | GB100 [TS4 / B100] | B100 (TS4 sample) (社区) | DCGM: TS4 700W; B100 DevId 197f [197F] 850W；gat: SXM (subsys 197F/20DE) | — |
-| 2924 | GB100 | sm_100 | GPU | GB100 | — | GB100 PCIe sample/variant; gat: PCIe (subsys 18B6/20D4) | — |
-| 2925 | GB100 | sm_100 | GPU | GB100 | — | GB100 PCIe sample/variant; gat: PCIe (subsys 18B7) | — |
-| 293D | GB100 | sm_100 | GPU | GB100 | — | GB100 PCIe/SXM variant; gat: PCIe+SXM (subsys 18B6/197F/1999) | — |
-| 2940 | GB100 | sm_100 | GPU | GB100 [Reserved Dev ID B] | — | Reserved/internal dev ID — not publicly mapped to a shipping product | — |
-| 2941 | GB100 | sm_100 | GPU | GB100 [HGX GB200] | NVIDIA GB200 | Grace+Blackwell GB200 (edk2: TH500+GB100 2941–297F); Linux nvgrace-gpu VFIO (0x2941); gat: C2C+SXM; DCGM 1199W | ✓ |
-| 297E | GB100 | sm_100 | GPU | GB100 | — | TH500+GB100 Self-Hosted C2C variant; gat: C2C+SXM (subsys 2046) | — |
-| 2980 | GB102 | sm_100 | GPU | GB102 [Reserved Dev ID A] | — | Reserved/internal dev ID — not publicly mapped to a shipping product | — |
-| 29BB | GB102 | sm_100 | GPU | GB102 [DRIVE P2021] | NVIDIA DRIVE P2021 | DCGM: P2021 50W | ✓ |
-| 29BC | GB102 | sm_100 | GPU | GB102 [B100] | B100 (GB102 variant) (社区) | DCGM: B100 350W；gat: C2C+SXM+PCIe (subsys 1997/1998/1985/2045) | — |
-| 29C0 | GB102 | sm_100 | GPU | GB102 [Reserved Dev ID B] | — | Reserved/internal dev ID — not publicly mapped to a shipping product | — |
-| 29F1 | GB102 | sm_100 | GPU | GB102 | — | GB102 SXM variant; gat: SXM (subsys 20DC) | — |
-| 3180 | GB110 | sm_103 | GPU | GB110 [Reserved Dev ID A] | — | Reserved/internal dev ID — not publicly mapped to a shipping product | — |
-| 3182 | GB110 | sm_103 | GPU | GB110 [B300 SXM6 AC] | NVIDIA B300 SXM6 AC | B300 SXM6 AC; gat: SXM (subsys 20E5/20E6/220C); DCGM B300 1099W | ✓ |
-| 3183 | GB110 | sm_103 | GPU | GB110 | — | GB110 B300 SXM variant; gat: SXM (subsys 22F2) | — |
-| 3184 | GB110 | sm_103 | GPU | GB110 | — | GB110 B300 SXM variant; gat: SXM (subsys 22F3) | — |
-| 31A1 | GB110 | sm_103 | GPU | GB110 [GB300 MaxQ] | GB300 Max-Q (社区) | GB300 Max-Q (edk2: TH500+GB110 special ID); gat: C2C+SXM (subsys 2274); DCGM 1199W | — |
-| 31C0 | GB110 | sm_103 | GPU | GB110 [Reserved Dev ID B] | — | Reserved/internal dev ID — not publicly mapped to a shipping product | — |
-| 31C2 | GB110 | sm_103 | GPU | GB110 [GB300] | NVIDIA GB300 | Grace+GB300 NVL (edk2: 31C1–31FF); Linux nvgrace-gpu VFIO (0x31C2); DCGM Bianca 1399W / Galaxy [20E5] 1299W | ✓ |
-| 31C3 | GB110 | sm_103 | GPU | GB110 [GB300-252] | NVIDIA GB300 / NVIDIA GB300-252 | GB300-252 (252 GB HBM3e, DGX Station GB300 class); gat: C2C+SXM (subsys 23AB) | ✓ |
-| 31FE | GB110 | sm_103 | GPU | GB110 | — | GB110 SXM variant; gat: SXM (subsys 20E5) | — |
-| 3200 | GB112 | sm_103 | GPU | GB112 | — | Blackwell-Ultra (B300/GB300 class) internal/sample variant — no public SKU | — |
-| 3224 | GB112 | sm_103 | GPU | GB112 | — | GB112 SXM variant; gat: SXM (subsys 215F) | — |
-| 323E | GB112 | sm_103 | GPU | GB112 | — | GB112 SXM variant; gat: SXM (subsys 215F) | — |
-| 3340 | GB120 | sm_103 | GPU | GB120 | — | GB120 Reserved (edk2: TH500+GB120 Self-Hosted range = 3341–337F) | — |
-| 2B00 | GB10B | sm_110 | GPU | GB10B [Jetson AGX Thor] | — | Jetson AGX Thor iGPU (CS_NVIDIA_T264 in open-gpu nvcst.h) | — |
-| 3400 | GB10B | sm_110 | GPU | GB10B [Tegra RP iGPU] | Tegra RP iGPU (GB10B) (社区) | T268 Tegra RP iGPU (CS_NVIDIA_T268 in open-gpu nvcst.h; GB10B in pci.ids) | — |
-| 2B85 | GB202 | sm_120 | GPU | GB202 [GeForce RTX 5090] | NVIDIA GeForce RTX 5090 |  | ✓ |
-| 2B87 | GB202 | sm_120 | GPU | GB202 [GeForce RTX 5090 D] | NVIDIA GeForce RTX 5090 D |  | ✓ |
-| 2B8C | GB202 | sm_120 | GPU | GB202 [GeForce RTX 5090 D V2] | NVIDIA GeForce RTX 5090 D v2 |  | ✓ |
-| 2BB1 | GB202 | sm_120 | GPU | GB202GL [RTX PRO 6000 Blackwell Workstation Edition] | NVIDIA RTX PRO 6000 Blackwell Workstation Edition |  | ✓ |
-| 2BB2 | GB202 | sm_120 | GPU | GB202GL [RTX PRO 6000D Blackwell Workstation Edition] | — |  | — |
-| 2BB3 | GB202 | sm_120 | GPU | GB202GL [RTX PRO 5000 Blackwell / RTX PRO 5000 72GB Blackwell] | NVIDIA RTX PRO 5000 Blackwell / NVIDIA RTX PRO 5000 72GB Blackwell | DCGM: rtx5000 349W | ✓ |
-| 2BB4 | GB202 | sm_120 | GPU | GB202GL [RTX PRO 6000 Blackwell Max-Q Workstation Edition] | NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition | RTX PRO 6000 Max-Q Workstation; DCGM codename 'Galaxy TS2' 299W | ✓ |
-| 2BB5 | GB202 | sm_120 | GPU | GB202GL [RTX PRO 6000 Blackwell Server Edition] | NVIDIA RTX PRO 6000 Blackwell Server Edition | RTX PRO 6000 Server Edition; DCGM PG153 SKU 210 600W | ✓ |
-| 2BB9 | GB202 | sm_120 | GPU | GB202GL [RTX 6000D] | NVIDIA RTX 6000D | RTX 6000D China SKU (DCGM 600W / RTX6000D LC [2279] 249W) | ✓ |
-| 2BBC | GB202 | sm_120 | GPU | GB202GL [RTX PRO 6000D Blackwell Max-Q Workstation Edition] | — |  | — |
-| 2BBD | GB202 | sm_120 | GPU | GB202GL [RTX PRO 5500 Blackwell Workstation Edition] | NVIDIA RTX PRO 5500 Blackwell Workstation Edition | RTX PRO 5500 Blackwell Workstation (84 GB GDDR7 ECC); added in open-gpu 620.x | ✓ |
-| 2C02 | GB203 | sm_120 | GPU | GB203 [GeForce RTX 5080] | NVIDIA GeForce RTX 5080 |  | ✓ |
-| 2C05 | GB203 | sm_120 | GPU | GB203 [GeForce RTX 5070 Ti] | NVIDIA GeForce RTX 5070 Ti |  | ✓ |
-| 2C09 | GB203 | sm_120 | GPU | GB203 [GeForce RTX 5070] | NVIDIA GeForce RTX 5070 | GB203-based RTX 5070 SKU alongside GB205 (2F04); in open-gpu README | ✓ |
-| 2C18 | GB203 | sm_120 | GPU | GB203M / GN22 [GeForce RTX 5090 Max-Q / Mobile] | NVIDIA GeForce RTX 5090 Laptop GPU |  | ✓ |
-| 2C19 | GB203 | sm_120 | GPU | GB203M / GN22 [GeForce RTX 5080 Max-Q / Mobile] | NVIDIA GeForce RTX 5080 Laptop GPU |  | ✓ |
-| 2C2C | GB203 | sm_120 | GPU | GB6-256(N22W-ES-A1) | GN22 Mobile/Workstation 256-bit ES-A1 (社区) | GB203 range (2Cxx) engineering sample — N22W-ES-A1 | — |
-| 2C31 | GB203 | sm_120 | GPU | GB203GL [RTX PRO 4500 Blackwell] | NVIDIA RTX PRO 4500 Blackwell |  | ✓ |
-| 2C33 | GB203 | sm_120 | GPU | GB203GL [RTX PRO 4000 Blackwell SFF Edition] | NVIDIA RTX PRO 4000 Blackwell SFF Edition |  | ✓ |
-| 2C34 | GB203 | sm_120 | GPU | GB203GL [RTX PRO 4000 Blackwell] | NVIDIA RTX PRO 4000 Blackwell |  | ✓ |
-| 2C38 | GB203 | sm_120 | GPU | GB203GLM [RTX PRO 5000 Blackwell Generation Laptop GPU] | NVIDIA RTX PRO 5000 Blackwell Generation Laptop GPU |  | ✓ |
-| 2C39 | GB203 | sm_120 | GPU | GB203GLM [RTX PRO 4000 Blackwell Generation Laptop GPU] | NVIDIA RTX PRO 4000 Blackwell Generation Laptop GPU |  | ✓ |
-| 2C3A | GB203 | sm_120 | GPU | GB203GL [RTX PRO 4500 Blackwell Server Edition] | NVIDIA RTX PRO 4500 Blackwell Server Edition | DCGM: GB203 164W | ✓ |
-| 2C58 | GB203 | sm_120 | GPU | GB203M / GN22-X11 [GeForce RTX 5090 Max-Q / Mobile] | NVIDIA GeForce RTX 5090 Laptop GPU |  | ✓ |
-| 2C59 | GB203 | sm_120 | GPU | GB203M / GN22-X9 [GeForce RTX 5080 Max-Q / Mobile] | NVIDIA GeForce RTX 5080 Laptop GPU |  | ✓ |
-| 2C77 | GB203 | sm_120 | GPU | GB203GLM [RTX PRO 5000 Blackwell Embedded GPU] | NVIDIA RTX PRO 5000 Blackwell Embedded GPU |  | ✓ |
-| 2C79 | GB203 | sm_120 | GPU | GB203GLM [RTX PRO 4000 Blackwell Embedded GPU] | NVIDIA RTX PRO 4000 Blackwell Embedded GPU |  | ✓ |
-| 2D04 | GB206 | sm_120 | GPU | GB206 [GeForce RTX 5060 Ti] | NVIDIA GeForce RTX 5060 Ti |  | ✓ |
-| 2D05 | GB206 | sm_120 | GPU | GB206 [GeForce RTX 5060] | NVIDIA GeForce RTX 5060 |  | ✓ |
-| 2D18 | GB206 | sm_120 | GPU | GB206M [GeForce RTX 5070 Max-Q / Mobile] | NVIDIA GeForce RTX 5070 Laptop GPU |  | ✓ |
-| 2D19 | GB206 | sm_120 | GPU | GB206M [GeForce RTX 5060 Max-Q / Mobile] | NVIDIA GeForce RTX 5060 Laptop GPU |  | ✓ |
-| 2D2C | GB206 | sm_120 | GPU | GB6-128 (N22Y-ES-A1) | GN22 Mobile/Workstation 128-bit ES-A1 (社区) | GB206 range (2Dxx) engineering sample — N22Y-ES-A1 | — |
-| 2D30 | GB206 | sm_120 | GPU | GB206GL [RTX PRO 2000 Blackwell] | NVIDIA RTX PRO 2000 Blackwell |  | ✓ |
-| 2D39 | GB206 | sm_120 | GPU | GB206GLM [RTX PRO 2000 Blackwell Generation Laptop GPU] | NVIDIA RTX PRO 2000 Blackwell Generation Laptop GPU |  | ✓ |
-| 2D58 | GB206 | sm_120 | GPU | GB206M [GeForce RTX 5070 Max-Q / Mobile] | NVIDIA GeForce RTX 5070 Laptop GPU |  | ✓ |
-| 2D59 | GB206 | sm_120 | GPU | GB206M [GeForce RTX 5060 Max-Q / Mobile] | NVIDIA GeForce RTX 5060 Laptop GPU |  | ✓ |
-| 2D79 | GB206 | sm_120 | GPU | GB206GLM [RTX PRO 2000 Blackwell Embedded GPU] | NVIDIA RTX PRO 2000 Blackwell Embedded GPU |  | ✓ |
-| 2D83 | GB207 | sm_120 | GPU | GB207 [GeForce RTX 5050] | NVIDIA GeForce RTX 5050 |  | ✓ |
-| 2D98 | GB207 | sm_120 | GPU | GB207M [GeForce RTX 5050 Max-Q / Mobile] | NVIDIA GeForce RTX 5050 Laptop GPU |  | ✓ |
-| 2DB8 | GB207 | sm_120 | GPU | GB207GLM [RTX PRO 1000 Blackwell Generation Laptop GPU] | NVIDIA RTX PRO 1000 Blackwell Generation Laptop GPU |  | ✓ |
-| 2DB9 | GB207 | sm_120 | GPU | GB207GLM [RTX PRO 500 Blackwell Generation Laptop GPU] | NVIDIA RTX PRO 500 Blackwell Generation Laptop GPU |  | ✓ |
-| 2DD8 | GB207 | sm_120 | GPU | GB207M [GeForce RTX 5050 Max-Q / Mobile] | NVIDIA GeForce RTX 5050 Laptop GPU |  | ✓ |
-| 2DF9 | GB207 | sm_120 | GPU | GB207GLM [RTX PRO 500 Blackwell Embedded GPU] | NVIDIA RTX PRO 500 Blackwell Embedded GPU |  | ✓ |
-| 2F02 | GB205 | sm_120 | GPU | GB205 [GeForce RTX 5070 SUPER] | GeForce RTX 5070 SUPER (社区) | First RTX 50 SUPER PCI ID surfaced in pci.ids (v2026.11.19) | — |
-| 2F04 | GB205 | sm_120 | GPU | GB205 [GeForce RTX 5070] | NVIDIA GeForce RTX 5070 |  | ✓ |
-| 2F06 | GB205 | sm_120 | GPU | GB205 [GeForce RTX 5060] | NVIDIA GeForce RTX 5060 |  | ✓ |
-| 2F18 | GB205 | sm_120 | GPU | GB205M [GeForce RTX 5070 Ti Mobile] | NVIDIA GeForce RTX 5070 Ti Laptop GPU |  | ✓ |
-| 2F38 | GB205 | sm_120 | GPU | GB205GLM [RTX PRO 3000 Blackwell Generation Laptop GPU] | NVIDIA RTX PRO 3000 Blackwell Generation Laptop GPU |  | ✓ |
-| 2F58 | GB205 | sm_120 | GPU | GB205M [GeForce RTX 5070 Ti Mobile] | NVIDIA GeForce RTX 5070 Ti Laptop GPU |  | ✓ |
-| 22E8 | GB202 | sm_120 | **HD Audio** | GB202 High Definition Audio Controller | — | On-board HD Audio function of the GPU board (not a standalone product) | — |
-| 22E9 | GB203 | sm_120 | **HD Audio** | GB203 High Definition Audio Controller | — | On-board HD Audio function of the GPU board (not a standalone product) | — |
-| 22EB | GB206 | sm_120 | **HD Audio** | GB206 High Definition Audio Controller | — | On-board HD Audio function of the GPU board (not a standalone product) | — |
-| 22EC | GB207 | sm_120 | **HD Audio** | GB207 High Definition Audio Controller | — | On-board HD Audio function of the GPU board (not a standalone product) | — |
-| 2F80 | GB205 | sm_120 | **HD Audio** | GB205 High Definition Audio Controller | — | On-board HD Audio function of the GPU board (not a standalone product) | — |
-| 2E02 | GB20B | sm_121 | GPU | GB20B [JMJWOA-Generic-GPU] | — | GB20B / Spark N1X pre-prod ID (Linux quirks.c: 2E00–2E3F requires PCIe ATS for CXL.cache) | — |
-| 2E03 | GB20B | sm_121 | GPU | GB20B [RTX Spark N1X (6144-core Blackwell RTX GPU)] | NVIDIA RTX Spark N1X (6144-core Blackwell RTX GPU) | Graduated from JMJWOA-Generic-GPU into open-gpu; Linux quirks.c ATS range 2E00–2E3F | ✓ |
-| 2E06 | GB20B | sm_121 | GPU | GB20B [RTX Spark N1X (5120-core Blackwell RTX GPU)] | NVIDIA RTX Spark N1X (5120-core Blackwell RTX GPU) | Client Arm+Blackwell N1X SoC (5120 CUDA cores); Linux quirks.c ATS range 2E00–2E3F | ✓ |
-| 2E12 | GB10 | sm_121 | GPU | GB20B [GB10] | NVIDIA GB10 | DGX Spark GB10 (GB20B die); Linux quirks.c ATS range 2E00–2E3F | ✓ |
-| 2E13 | GB20B | sm_121 | GPU | GB20B [RTX Spark N1X (6144-core Blackwell RTX GPU)] | NVIDIA RTX Spark N1X (6144-core Blackwell RTX GPU) | Client Arm+Blackwell N1X SoC (6144 CUDA cores); Linux quirks.c ATS range 2E00–2E3F | ✓ |
-| 2E2A | GB20B | sm_121 | GPU | GB20B [JMJWOA-Generic-GPU] | — |  | — |
+| 2900 | GB100 | sm_100 | GPU | GB100 [Reserved Dev ID A] | — | 【硅前保留·Endpoint】GB100 Endpoint 保留基准 ID（edk2-nvidia 划定 2901–293F 为非 C2C 端点段） | — |
+| 2901 | GB100 | sm_100 | GPU | GB100 [B200] | NVIDIA B200 | 【旗舰数据中心·HGX/DGX B200 训练与推理】8 卡 HGX/DGX B200 主力 ID（open-gpu ✓）；180GB HBM3e·8TB/s·NVLink 5 (1.8TB/s)；物理 subsys 1999(PG525-220 1000W)/199B(999W)/20DA(850W 低功耗风冷)，另含 21D7–21EA 8 档 MIG/vCS（1-23CME~7-180C） | ✓ |
+| 2909 | GB100 | sm_100 | GPU | GB100 [HGX B200 168GB] | NVIDIA B200 | 【数据中心·MIG 均分型 HGX B200 168GB】HGX B200 168GB 专属 ID（open-gpu ✓ subsys 22EB，DCGM 1000W）；168GB HBM3e 精确对应 7×24GB 均分 MIG 切分，面向多租户云推理与细分算力租赁 | ✓ |
+| 290A | GB100 | sm_100 | GPU | GB100 [B200] | B200 (GB100 variant) (社区) | 【数据中心·B200 变体】gpu-admin-tools 与 pci.ids v2026.11.19 均确认为数据中心 B200 SKU（2901–293F Endpoint 段），尚未单独出现在 open-gpu 620.73.04 README | — |
+| 2920 | GB100 | sm_100 | GPU | GB100 [TS4 / B100] | B100 (TS4 sample) (社区) | 【数据中心·HGX B100 (700W/850W)】面向既有 700W 风冷 HGX 机箱原位升级的 B100 SXM（DCGM 代号 'TS4' 700W / subsys 197F 850W；gat subsys 197F/20DE is_sxm），用于过渡期 AI 训练与大批量推理 | — |
+| 2924 | GB100 | sm_100 | GPU | GB100 | — | 【数据中心·GB100 PCIe 样片/定制】GB100 PCIe 形态 ID（gpu-admin-tools 实锤 is_pcie，subsys 18B6/20D4），非公开零售 SKU，用于 PCIe 平台验证或超大规模定制 | — |
+| 2925 | GB100 | sm_100 | GPU | GB100 | — | 【数据中心·GB100 PCIe 样片/定制】GB100 PCIe 形态 ID（gpu-admin-tools 实锤 is_pcie，subsys 18B7），内部/合作验证形态 | — |
+| 293D | GB100 | sm_100 | GPU | GB100 | — | 【数据中心·GB100 混合形态验证】gpu-admin-tools 同时记录 PCIe(18B6) 与 SXM(197F/1999) 子系统，属 GB100 工程/Bring-up 通用验证 ID | — |
+| 2940 | GB100 | sm_100 | GPU | GB100 [Reserved Dev ID B] | — | 【硅前保留·Self-Hosted】GB100 Self-Hosted 保留基准 ID（detect-self-hosted.h 划定 2940–297F 为 Grace+GB100 C2C 段） | — |
+| 2941 | GB100 | sm_100 | GPU | GB100 [HGX GB200] | NVIDIA GB200 | 【旗舰机架·GB200 NVL72/NVL36 超大规模训练与推理】Grace+Blackwell 超级芯片主力 ID（open-gpu ✓ / Linux nvgrace-gpu VFIO ✓ / DCGM 1199W）；186GB 可用 HBM3e·NVLink-C2C 900GB/s；含 6 物理子系统（2046/20CA/20D5/21C9/21CA/22C4）及 20CB–20D2 8 档 MIG/vCS（1-23CME~7-186C） | ✓ |
+| 297E | GB100 | sm_100 | GPU | GB100 | — | 【数据中心·GB200 C2C 变体】TH500+GB100 Self-Hosted C2C+SXM 变体（gpu-admin-tools subsys 2046，detect-self-hosted.h 纳入 2940–297F），用于 GB200 工程验证 | — |
+| 2980 | GB102 | sm_100 | GPU | GB102 [Reserved Dev ID A] | — | 【硅前保留·GB102 Endpoint】GB102 Endpoint 保留基准 ID（edk2-nvidia 划定 2981–29BF 为 GB102 端点段） | — |
+| 29BB | GB102 | sm_100 | GPU | GB102 [DRIVE P2021] | NVIDIA DRIVE P2021 | 【汽车自动驾驶·DRIVE P2021】GB102 车载/自动驾驶计算平台官方 ID（open-gpu ✓ subsys 10DE:207C，DCGM 目标功耗 50W），用于 NVIDIA DRIVE 自动驾驶域控与车载 AI 研发验证 | ✓ |
+| 29BC | GB102 | sm_100 | GPU | GB102 [B100] | B100 (GB102 variant) (社区) | 【数据中心·GB102 B100 (350W)】GB102 精简功耗 B100 变体（DCGM 350W；gpu-admin-tools 录有 PCIe 1997/1998、SXM 1985、C2C 2045），面向低功耗数据中心推理/测试 | — |
+| 29C0 | GB102 | sm_100 | GPU | GB102 [Reserved Dev ID B] | — | 【硅前保留·GB102 Self-Hosted】GB102 Self-Hosted 保留基准 ID（edk2-nvidia 划定 29C1–29FF 为 TH500+GB102 C2C 段） | — |
+| 29F1 | GB102 | sm_100 | GPU | GB102 | — | 【数据中心·GB102 SXM 变体】GB102 SXM 形态 ID（gpu-admin-tools 实锤 is_sxm，subsys 20DC），位于 29C1–29FF 段，未公开发售 | — |
+| 3180 | GB110 | sm_103 | GPU | GB110 [Reserved Dev ID A] | — | 【硅前保留·GB110 Endpoint】Blackwell Ultra GB110 Endpoint 保留基准 ID（edk2-nvidia 划定 3181–31BF 为非 C2C 端点段，特例 31A1 除外） | — |
+| 3182 | GB110 | sm_103 | GPU | GB110 [B300 SXM6 AC] | NVIDIA B300 SXM6 AC | 【旗舰数据中心·HGX B300 风冷 SXM6】8 卡 HGX B300 主力 ID（open-gpu ✓ subsys 20E6，DCGM 1099W，最高 1100W）；288GB HBM3e 12-Hi (8TB/s)·FP4 推理与长思维链强化；g_nv_name_released.h 含 22CB–22D2 8 档 MIG/vCS（实锤 269GB 可用显存，1-34CME~7-269C） | ✓ |
+| 3183 | GB110 | sm_103 | GPU | GB110 | — | 【数据中心·B300 SXM 变体】GB110 B300 独立 SXM 变体（gpu-admin-tools 实锤 is_sxm，subsys 22F2），面向 OEM/液冷或定制 HGX B300 基板 | — |
+| 3184 | GB110 | sm_103 | GPU | GB110 | — | 【数据中心·B300 SXM 变体】GB110 B300 独立 SXM 变体（gpu-admin-tools 实锤 is_sxm，subsys 22F3），面向特定区域或客户定制 SXM 模块 | — |
+| 31A1 | GB110 | sm_103 | GPU | GB110 [GB300 MaxQ] | GB300 Max-Q (社区) | 【旗舰机架·GB300 Max-Q 能效版】能效上限版 Grace+GB300（detect-self-hosted.h 与 edk2-nvidia 均专门硬编码 0x31A1 为 Self-Hosted C2C 特例；gat subsys 2274 C2C+SXM，DCGM 1199W），面向功耗受限机房的 GB300 集群部署 | — |
+| 31C0 | GB110 | sm_103 | GPU | GB110 [Reserved Dev ID B] | — | 【硅前保留·GB110 Self-Hosted】GB110 Self-Hosted 保留基准 ID（detect-self-hosted.h 划定 31C0–31FF 为 Grace+GB110 C2C 段） | — |
+| 31C2 | GB110 | sm_103 | GPU | GB110 [GB300] | NVIDIA GB300 | 【旗舰机架·GB300 NVL72 液冷超算】72 卡全液冷 GB300 NVL72 主力 ID（open-gpu ✓ / Linux nvgrace-gpu VFIO ✓）；288GB HBM3e (278GB 可用)·每机架 20TB HBM3e·132–155kW；物理 subsys 区分 21F1 (Bianca 1399W) 与 20E5 (Galaxy 1299W)，另含 22D3–22DA 8 档 MIG/vCS（1-35CME~7-278C） | ✓ |
+| 31C3 | GB110 | sm_103 | GPU | GB110 [GB300-252] | NVIDIA GB300 / NVIDIA GB300-252 | 【桌面 AI 超算·DGX Station GB300】桌面级 Grace+GB300 超算主力 ID（open-gpu ✓）；subsys 23AB = NVIDIA GB300-252（252GB HBM3e @ 7.1TB/s + 496GB LPDDR5X = 748GB 一致性内存，20 PFLOPS FP4，~1600W），用于本地 1T 参数推理与 200B–400B 微调；另含 subsys 22F8 (GB300) | ✓ |
+| 31FE | GB110 | sm_103 | GPU | GB110 | — | 【数据中心·GB110 内部/验证】GB110 SXM 变体（gpu-admin-tools subsys 20E5 is_sxm，位于 31C0–31FF 段），用于 GB300 平台验证 | — |
+| 3200 | GB112 | sm_103 | GPU | GB112 | — | 【硅前保留·GB112】Blackwell Ultra 衍生芯片 GB112 基准 ID（open-gpu rmconfig.h 已开启 RMCFG_CHIP_GB112=1），具体商用形态尚未官宣 | — |
+| 3224 | GB112 | sm_103 | GPU | GB112 | — | 【数据中心·GB112 SXM 变体】GB112 SXM 形态 ID（gpu-admin-tools 实锤 is_sxm，subsys 215F），尚未进入 open-gpu 发行表 | — |
+| 323E | GB112 | sm_103 | GPU | GB112 | — | 【数据中心·GB112 SXM 变体】GB112 SXM 形态 ID（gpu-admin-tools 实锤 is_sxm，subsys 215F），工程/验证变体 | — |
+| 3340 | GB120 | sm_103 | GPU | GB120 | — | 【硅前保留·GB120 Self-Hosted】edk2-nvidia 明确预留 3341–337F 为 TH500+GB120 Self-Hosted C2C 段（3340 为段基准），尚无量产产品公开 | — |
+| 2B00 | GB10B | sm_110 | GPU | GB10B [Jetson AGX Thor] | — | 【具身智能/机器人·Jetson AGX Thor】Tegra T264 (CS_NVIDIA_T264) 集成 Blackwell iGPU；14 核 Neoverse-V3AE + 128GB LPDDR5X (273GB/s)·2,070 FP4 TFLOPS (稀疏)·40–130W 可调；用于人形机器人、自主移动机器人与端侧物理 AI | — |
+| 3400 | GB10B | sm_110 | GPU | GB10B [Tegra RP iGPU] | Tegra RP iGPU (GB10B) (社区) | 【嵌入式/车载 SoC·T268】open-gpu nvcst.h 实锤为 CS_NVIDIA_T268 Tegra Root Port iGPU（pci.ids 归入 GB10B），用于下一代 Tegra/DRIVE 嵌入式平台（open-gpu rmconfig.h 同步出现 GB10C/GB20C 车载虚拟化芯片） | — |
+| 2B85 | GB202 | sm_120 | GPU | GB202 [GeForce RTX 5090] | NVIDIA GeForce RTX 5090 | 【消费旗舰·4K 极限游戏/本地 AI 开发】GeForce RTX 5090（open-gpu ✓）；21,760 CUDA·32GB GDDR7 (512-bit, 1.79TB/s)·575W·PCIe 5.0 x16；旗舰 4K 路径追踪游戏、DLSS 4、个人大模型/文生视频推理 | ✓ |
+| 2B87 | GB202 | sm_120 | GPU | GB202 [GeForce RTX 5090 D] | NVIDIA GeForce RTX 5090 D | 【中国合规旗舰·RTX 5090 D】面向中国市场出口合规初代版（open-gpu ✓）；21,760 CUDA·32GB GDDR7 (512-bit)·575W，通过固件/AI TOPS 限速满足出口规则，定位高端游戏与 3D 渲染 | ✓ |
+| 2B8C | GB202 | sm_120 | GPU | GB202 [GeForce RTX 5090 D V2] | NVIDIA GeForce RTX 5090 D v2 | 【中国合规改款·RTX 5090 D V2】GB202-240 改款（open-gpu ✓）；保留 21,760 CUDA 但显存缩减为 24GB GDDR7 (384-bit)·575W，进一步降低带宽/容量以合规满足中国高端游戏与创作市场 | ✓ |
+| 2BB1 | GB202 | sm_120 | GPU | GB202GL [RTX PRO 6000 Blackwell Workstation Edition] | NVIDIA RTX PRO 6000 Blackwell Workstation Edition | 【专业旗舰工作站·RTX PRO 6000 Workstation】桌塔工作站满血旗舰（open-gpu ✓ subsys 204B，覆 Dell/HP/NVIDIA/Lenovo）；24,064 CUDA·96GB GDDR7 ECC (512-bit, 1.79TB/s)·600W 双槽主动散热；面向本地 70B+ 大模型开发、工业仿真、8K 影视特效与数字孪生 | ✓ |
+| 2BB2 | GB202 | sm_120 | GPU | GB202GL [RTX PRO 6000D Blackwell Workstation Edition] | — | 【中国合规专业工作站·RTX PRO 6000D Workstation】中国市场合规版工作站 SKU（pci.ids 已录，尚未单独入 open-gpu README）；基于削减版 GB202 (84GB GDDR7 / 448-bit / 无 NVLink)，满足国内企业工作站 AI 与 CAD 需求 | — |
+| 2BB3 | GB202 | sm_120 | GPU | GB202GL [RTX PRO 5000 Blackwell / RTX PRO 5000 72GB Blackwell] | NVIDIA RTX PRO 5000 Blackwell / NVIDIA RTX PRO 5000 72GB Blackwell | 【专业工作站·RTX PRO 5000 (48GB / 72GB)】一 ID 双容量（open-gpu ✓，DCGM 349W 目标，300W 级）；14,080 CUDA；subsys 204D = 48GB 版，subsys 227A = 72GB 版（g_nv_name_released.h 含 26 档 vGPU/MIG 2324–2372，2Q~72Q），面向多卡工作站本地 AI 推理、渲染与仿真 | ✓ |
+| 2BB4 | GB202 | sm_120 | GPU | GB202GL [RTX PRO 6000 Blackwell Max-Q Workstation Edition] | NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition | 【多卡静音工作站·RTX PRO 6000 Max-Q】低功耗单塔多卡旗舰（open-gpu ✓ subsys 204C；DCGM 代号 'Galaxy TS2' 299W，标称 300W）；保持 96GB GDDR7 ECC 大显存但功耗减半，专为单机 2–4 卡密集插槽工作站与低噪实验室设计 | ✓ |
+| 2BB5 | GB202 | sm_120 | GPU | GB202GL [RTX PRO 6000 Blackwell Server Edition] | NVIDIA RTX PRO 6000 Blackwell Server Edition | 【企业级全能服务器卡·RTX PRO 6000 Server】数据中心被动散热旗舰 PCIe 卡（open-gpu ✓ subsys 204E/220B；DCGM 'PG153 SKU 210' 600W）；96GB GDDR7 ECC·支持 4×24GB MIG；g_nv_name_released.h 含 102 档 vGPU/MIG（2160–23A2，2GB~96GB Q/A/B/C/E）+ 21A6/21A7 云游戏切片，覆盖企业 LLM 推理、Omniverse 渲染、VDI 与云游戏 | ✓ |
+| 2BB9 | GB202 | sm_120 | GPU | GB202GL [RTX 6000D] | NVIDIA RTX 6000D | 【中国合规数据中心推理卡·RTX 6000D】中国出口合规服务器/工作站 GPU（open-gpu ✓）；19,968 CUDA·84GB GDDR7 (448-bit, ~1.4TB/s, 无 NVLink)；物理 subsys 2091/2092 (600W) 与 2279 (DCGM 'RTX6000D LC' 249W 液冷低功耗版)；含 12 档 MIG/vGPU（实锤 2×42GB MIG）+ 22EE/22EF 云游戏切片 | ✓ |
+| 2BBC | GB202 | sm_120 | GPU | GB202GL [RTX PRO 6000D Blackwell Max-Q Workstation Edition] | — | 【中国合规多卡工作站·RTX PRO 6000D Max-Q】中国合规 84GB 版低功耗 Max-Q 工作站形态（pci.ids 已录，尚未单独入 open-gpu README），面向国内多卡工作站部署 | — |
+| 2BBD | GB202 | sm_120 | GPU | GB202GL [RTX PRO 5500 Blackwell Workstation Edition] | NVIDIA RTX PRO 5500 Blackwell Workstation Edition | 【专业工作站·RTX PRO 5500 (84GB ECC)】2026 年 9 月新增大显存工作站主力（open-gpu 620.x ✓ subsys 23AE，覆 Dell/HP/NVIDIA/Lenovo）；21,760 CUDA·84GB GDDR7 ECC (416-bit)·600W·支持 2×42GB MIG；填补 5000(72GB) 与 6000(96GB) 之间空白，面向中型企业大模型微调与重度渲染 | ✓ |
+| 2C02 | GB203 | sm_120 | GPU | GB203 [GeForce RTX 5080] | NVIDIA GeForce RTX 5080 | 【次旗舰游戏/创作·RTX 5080】GB203 满血桌面卡（open-gpu ✓）；10,752 CUDA·16GB GDDR7 (256-bit, 960GB/s)·360W·PCIe 5.0 x16；定位 4K 高帧游戏、视频剪辑（双 9 代 NVENC 4:2:2）与轻量本地 AI | ✓ |
+| 2C05 | GB203 | sm_120 | GPU | GB203 [GeForce RTX 5070 Ti] | NVIDIA GeForce RTX 5070 Ti | 【高端游戏/性价比 AI·RTX 5070 Ti】GB203 精简桌面卡（open-gpu ✓）；8,960 CUDA·16GB GDDR7 (256-bit, 896GB/s)·300W；2K/4K 游戏与 16GB 大显存个人 AI/Stable Diffusion 热门卡 | ✓ |
+| 2C09 | GB203 | sm_120 | GPU | GB203 [GeForce RTX 5070] | NVIDIA GeForce RTX 5070 | 【中高端游戏·RTX 5070 (GB203 分档版)】利用更大 GB203 硅片屏蔽而成的 RTX 5070 第二分档（open-gpu ✓，与 GB205 2F04 规格对齐：6,144 CUDA·12GB GDDR7 192-bit·250W），用于优化晶圆良率供应 | ✓ |
+| 2C18 | GB203 | sm_120 | GPU | GB203M / GN22 [GeForce RTX 5090 Max-Q / Mobile] | NVIDIA GeForce RTX 5090 Laptop GPU | 【旗舰游戏本·RTX 5090 Laptop】GB203M / GN22 移动旗舰（open-gpu ✓）；10,496 CUDA·24GB GDDR7 (256-bit)·95–175W；定位顶级移动游戏与便携式本地大模型推理（标准/Max-P 分支） | ✓ |
+| 2C19 | GB203 | sm_120 | GPU | GB203M / GN22 [GeForce RTX 5080 Max-Q / Mobile] | NVIDIA GeForce RTX 5080 Laptop GPU | 【高端游戏本·RTX 5080 Laptop】GB203M / GN22 移动高端（open-gpu ✓）；7,680 CUDA·16GB GDDR7 (256-bit)·80–175W；面向 2K/4K 旗舰游戏本与移动内容创作 | ✓ |
+| 2C2C | GB203 | sm_120 | GPU | GB6-256(N22W-ES-A1) | GN22 Mobile/Workstation 256-bit ES-A1 (社区) | 【工程样品·GB203M ES】pci.ids 标注 'GB6-256(N22W-ES-A1)'，256-bit 位宽 GB203M (RTX 5080/5090 Laptop 级) 早期工程样品，非量产零售 ID | — |
+| 2C31 | GB203 | sm_120 | GPU | GB203GL [RTX PRO 4500 Blackwell] | NVIDIA RTX PRO 4500 Blackwell | 【中高端专业工作站·RTX PRO 4500】单槽/双槽企业主力（open-gpu ✓ subsys 2051，覆四大 OEM）；10,496 CUDA·32GB GDDR7 ECC (256-bit)·200W；定位 3D CAD/BIM、中等规模本地 AI 推理与多屏可视化 | ✓ |
+| 2C33 | GB203 | sm_120 | GPU | GB203GL [RTX PRO 4000 Blackwell SFF Edition] | NVIDIA RTX PRO 4000 Blackwell SFF Edition | 【紧凑型工作站·RTX PRO 4000 SFF】半高双槽小机箱专业卡（open-gpu ✓ subsys 2053，覆四大 OEM）；8,960 CUDA·24GB GDDR7 ECC·70W 无需外接供电；专为 SFF 紧凑工作站、医疗影像主机与边缘机柜设计 | ✓ |
+| 2C34 | GB203 | sm_120 | GPU | GB203GL [RTX PRO 4000 Blackwell] | NVIDIA RTX PRO 4000 Blackwell | 【单槽专业工作站·RTX PRO 4000】全高单槽主流专业卡（open-gpu ✓ subsys 2052，覆四大 OEM）；8,960 CUDA·24GB GDDR7 ECC·140W；面向建筑工程、工业设计、广播广电与 AI 推理 | ✓ |
+| 2C38 | GB203 | sm_120 | GPU | GB203GLM [RTX PRO 5000 Blackwell Generation Laptop GPU] | NVIDIA RTX PRO 5000 Blackwell Generation Laptop GPU | 【旗舰移动工作站·RTX PRO 5000 Laptop】移动工作站顶级卡（open-gpu ✓）；10,496 CUDA·24GB GDDR7 ECC (256-bit, 896GB/s)·80–175W；面向现场 AI 开发、重度 3D 渲染与便携式仿真 | ✓ |
+| 2C39 | GB203 | sm_120 | GPU | GB203GLM [RTX PRO 4000 Blackwell Generation Laptop GPU] | NVIDIA RTX PRO 4000 Blackwell Generation Laptop GPU | 【高端移动工作站·RTX PRO 4000 Laptop】移动工作站次旗舰（open-gpu ✓）；7,680 CUDA·16GB GDDR7 ECC (256-bit, 896GB/s)·38.7 TFLOPS FP32 / 1,334 AI TOPS·80–175W；面向移动 CAD/CAE 与实时光线追踪 | ✓ |
+| 2C3A | GB203 | sm_120 | GPU | GB203GL [RTX PRO 4500 Blackwell Server Edition] | NVIDIA RTX PRO 4500 Blackwell Server Edition | 【企业推理/虚拟化服务器卡·RTX PRO 4500 Server】单槽低功耗服务器 PCIe 5.0 卡（open-gpu ✓ subsys 21F4；DCGM 164W，标称 165W）；32GB GDDR7 (800GB/s)·g_nv_name_released.h 含 46 档 vGPU/MIG（2295–22C2，2GB~32GB），专为小模型 LLM 推理、向量数据库 (Milvus/cuVS)、Metropolis 视觉 AI 与视频转码优化 | ✓ |
+| 2C58 | GB203 | sm_120 | GPU | GB203M / GN22-X11 [GeForce RTX 5090 Max-Q / Mobile] | NVIDIA GeForce RTX 5090 Laptop GPU | 【旗舰轻薄游戏本·RTX 5090 Laptop (Max-Q/GN22-X11)】RTX 5090 Laptop 第二移动 ID（open-gpu ✓，pci.ids 标 GN22-X11），用于不同功耗/OEM 配置（如轻薄 Max-Q 或特定主板识别） | ✓ |
+| 2C59 | GB203 | sm_120 | GPU | GB203M / GN22-X9 [GeForce RTX 5080 Max-Q / Mobile] | NVIDIA GeForce RTX 5080 Laptop GPU | 【高端轻薄游戏本·RTX 5080 Laptop (Max-Q/GN22-X9)】RTX 5080 Laptop 第二移动 ID（open-gpu ✓，pci.ids 标 GN22-X9），用于不同 TGP/OEM 平台区分 | ✓ |
+| 2C77 | GB203 | sm_120 | GPU | GB203GLM [RTX PRO 5000 Blackwell Embedded GPU] | NVIDIA RTX PRO 5000 Blackwell Embedded GPU | 【工业嵌入式 MXM·RTX PRO 5000 Embedded】MXM 3.1 Type B (82×105mm) 工业模块（open-gpu ✓）；10,496 CUDA·24GB GDDR7 ECC (896GB/s)·最高 ~150W·5+ 年长生命周期/宽温可选；面向医疗成像、航空航天、国防与高端边缘 AI 盒 | ✓ |
+| 2C79 | GB203 | sm_120 | GPU | GB203GLM [RTX PRO 4000 Blackwell Embedded GPU] | NVIDIA RTX PRO 4000 Blackwell Embedded GPU | 【工业嵌入式 MXM·RTX PRO 4000 Embedded】MXM 3.1 Type B 工业模块（open-gpu ✓）；7,680 CUDA·16GB GDDR7 ECC (896GB/s)·最高 ~150W·长生命周期；用于工业检测、机器人上位机与舰载/车载加固计算 | ✓ |
+| 2D04 | GB206 | sm_120 | GPU | GB206 [GeForce RTX 5060 Ti] | NVIDIA GeForce RTX 5060 Ti | 【甜品游戏/16GB 轻量 AI·RTX 5060 Ti】GB206 桌面主力（open-gpu ✓）；4,608 CUDA·8GB / 16GB GDDR7 (128-bit, 448GB/s)·180W；16GB 版本广泛用于个人高性价比本地大模型/生图推理及 2K 游戏 | ✓ |
+| 2D05 | GB206 | sm_120 | GPU | GB206 [GeForce RTX 5060] | NVIDIA GeForce RTX 5060 | 【入门甜品游戏·RTX 5060 (标准 GB206 版)】GB206 主力甜品卡（open-gpu ✓）；3,840 CUDA·8GB GDDR7 (128-bit, 448GB/s)·145W·PCIe 5.0 x8；定位 1080p/2K 主流电竞与日常视频加速 | ✓ |
+| 2D18 | GB206 | sm_120 | GPU | GB206M [GeForce RTX 5070 Max-Q / Mobile] | NVIDIA GeForce RTX 5070 Laptop GPU | 【主流游戏本·RTX 5070 Laptop】GB206M 移动卡主 ID（open-gpu ✓）；4,608 CUDA·8GB GDDR7 (128-bit)·50–115W；覆盖主流 14–16 寸游戏本与全能创作本 | ✓ |
+| 2D19 | GB206 | sm_120 | GPU | GB206M [GeForce RTX 5060 Max-Q / Mobile] | NVIDIA GeForce RTX 5060 Laptop GPU | 【普及型游戏本·RTX 5060 Laptop】GB206M 入门主力移动卡（open-gpu ✓）；3,328 CUDA·8GB GDDR7 (128-bit)·45–115W；覆盖高性价比主流游戏本与学生全能本 | ✓ |
+| 2D2C | GB206 | sm_120 | GPU | GB6-128 (N22Y-ES-A1) | GN22 Mobile/Workstation 128-bit ES-A1 (社区) | 【工程样品·GB206M ES】pci.ids 标注 'GB6-128 (N22Y-ES-A1)'，128-bit 位宽 GB206M (RTX 5060/5070 Laptop 级) 早期工程样品，非量产零售 ID | — |
+| 2D30 | GB206 | sm_120 | GPU | GB206GL [RTX PRO 2000 Blackwell] | NVIDIA RTX PRO 2000 Blackwell | 【入门专业工作站·RTX PRO 2000】免外接供电半高/单槽专业卡（open-gpu ✓ subsys 2054，覆四大 OEM）；16GB GDDR7 ECC·70W；面向多屏金融终端、2D/3D CAD、轻量 AI 推理与紧凑工控机 | ✓ |
+| 2D39 | GB206 | sm_120 | GPU | GB206GLM [RTX PRO 2000 Blackwell Generation Laptop GPU] | NVIDIA RTX PRO 2000 Blackwell Generation Laptop GPU | 【轻薄移动工作站·RTX PRO 2000 Laptop】GB206GLM 轻薄专业本 GPU（open-gpu ✓）；3,328 CUDA·8GB GDDR7 (128-bit, 384GB/s)·17.7 TFLOPS FP32 / 572 AI TOPS·45–115W；适配 14–16 寸移动工作站 | ✓ |
+| 2D58 | GB206 | sm_120 | GPU | GB206M [GeForce RTX 5070 Max-Q / Mobile] | NVIDIA GeForce RTX 5070 Laptop GPU | 【主流轻薄游戏本·RTX 5070 Laptop (Max-Q 变体)】RTX 5070 Laptop 第二移动 ID（open-gpu ✓），用于低功耗 Max-Q / 特定 OEM 笔记本识别 | ✓ |
+| 2D59 | GB206 | sm_120 | GPU | GB206M [GeForce RTX 5060 Max-Q / Mobile] | NVIDIA GeForce RTX 5060 Laptop GPU | 【普及型轻薄游戏本·RTX 5060 Laptop (Max-Q 变体)】RTX 5060 Laptop 第二移动 ID（open-gpu ✓），用于低功耗 Max-Q / OEM 配置区分 | ✓ |
+| 2D79 | GB206 | sm_120 | GPU | GB206GLM [RTX PRO 2000 Blackwell Embedded GPU] | NVIDIA RTX PRO 2000 Blackwell Embedded GPU | 【工业嵌入式 MXM·RTX PRO 2000 Embedded】MXM 3.1 Type A (82×70mm) 紧凑工业模块（open-gpu ✓）；3,328 CUDA·8GB GDDR7 ECC (384GB/s)·PCIe 5.0 x8·长生命周期；用于便携医疗超声、工控视觉检测与边缘盒子 | ✓ |
+| 2D83 | GB207 | sm_120 | GPU | GB207 [GeForce RTX 5050] | NVIDIA GeForce RTX 5050 | 【入门桌面卡·RTX 5050】GB207 桌面入门卡（open-gpu ✓）；2,560 CUDA·8GB GDDR6 (128-bit，区别于高阶 GDDR7)·130W·PCIe 5.0 x8；定位 1080p 入门电竞、亮机与 AV1/4:2:2 编解码加速 | ✓ |
+| 2D98 | GB207 | sm_120 | GPU | GB207M [GeForce RTX 5050 Max-Q / Mobile] | NVIDIA GeForce RTX 5050 Laptop GPU | 【入门轻薄游戏本·RTX 5050 Laptop】GB207M 入门移动卡主 ID（open-gpu ✓）；2,560 CUDA·8GB GDDR7 (128-bit)·35–115W；适配轻薄全能本与入门级游戏本 | ✓ |
+| 2DB8 | GB207 | sm_120 | GPU | GB207GLM [RTX PRO 1000 Blackwell Generation Laptop GPU] | NVIDIA RTX PRO 1000 Blackwell Generation Laptop GPU | 【入门移动工作站·RTX PRO 1000 Laptop】GB207GLM 入门专业移动卡（open-gpu ✓）；2,560 CUDA·8GB GDDR7 (128-bit, ~384GB/s)·13.6 TFLOPS FP32 / 440 AI TOPS·35–115W；面向 14 寸轻薄商用/设计本 | ✓ |
+| 2DB9 | GB207 | sm_120 | GPU | GB207GLM [RTX PRO 500 Blackwell Generation Laptop GPU] | NVIDIA RTX PRO 500 Blackwell Generation Laptop GPU | 【超轻薄移动工作站·RTX PRO 500 Laptop】GB207GLM 超低功耗专业移动卡（open-gpu ✓）；1,792 CUDA·6GB GDDR7 (96-bit, 288GB/s)·9.2 TFLOPS FP32 / 294 AI TOPS·35–75W；面向超轻薄企业 CAD/AI 办公本 | ✓ |
+| 2DD8 | GB207 | sm_120 | GPU | GB207M [GeForce RTX 5050 Max-Q / Mobile] | NVIDIA GeForce RTX 5050 Laptop GPU | 【入门超薄本·RTX 5050 Laptop (Max-Q 变体)】RTX 5050 Laptop 第二移动 ID（open-gpu ✓），用于更低 TGP Max-Q 超薄本平台 | ✓ |
+| 2DF9 | GB207 | sm_120 | GPU | GB207GLM [RTX PRO 500 Blackwell Embedded GPU] | NVIDIA RTX PRO 500 Blackwell Embedded GPU | 【紧凑工业嵌入式·RTX PRO 500 Embedded】GB207GLM 低功耗工业嵌入模块（open-gpu ✓）；6GB GDDR7 (96-bit)·35–75W·长生命周期；用于自助终端、轻量化工业视觉、轨交显控与医疗便携设备 | ✓ |
+| 2F02 | GB205 | sm_120 | GPU | GB205 [GeForce RTX 5070 SUPER] | GeForce RTX 5070 SUPER (社区) | 【未发售·RTX 5070 SUPER】首个浮出水面的 RTX 50 SUPER PCI ID（2026-10-28 并入 pci.ids，尚未入 open-gpu 620.73.04）；基于 GB205，预计 2027 年初推出（定位 18GB GDDR7 中高端升级款，规格待 NVIDIA 官宣） | — |
+| 2F04 | GB205 | sm_120 | GPU | GB205 [GeForce RTX 5070] | NVIDIA GeForce RTX 5070 | 【主流中高端游戏·RTX 5070 (标准 GB205 版)】RTX 5070 主力硅片版本（open-gpu ✓）；6,144 CUDA·12GB GDDR7 (192-bit, 672GB/s)·250W；定位 2K 高刷游戏、DLSS 4 多帧生成与个人 AIGC | ✓ |
+| 2F06 | GB205 | sm_120 | GPU | GB205 [GeForce RTX 5060] | NVIDIA GeForce RTX 5060 | 【主流甜品游戏·RTX 5060 (GB205 分档版)】由更大 GB205 硅片降规封装的 RTX 5060 分档（open-gpu ✓，与 GB206 2D05 规格一致：3,840 CUDA·8GB GDDR7 128-bit·145–155W·PCIe 5.0 x8） | ✓ |
+| 2F18 | GB205 | sm_120 | GPU | GB205M [GeForce RTX 5070 Ti Mobile] | NVIDIA GeForce RTX 5070 Ti Laptop GPU | 【中高端游戏本·RTX 5070 Ti Laptop】GB205M 移动卡主 ID（open-gpu ✓）；5,888 CUDA·12GB GDDR7 (192-bit)·60–140W；2K 高画质游戏本与轻度本地 AI 创作主力 | ✓ |
+| 2F38 | GB205 | sm_120 | GPU | GB205GLM [RTX PRO 3000 Blackwell Generation Laptop GPU] | NVIDIA RTX PRO 3000 Blackwell Generation Laptop GPU | 【主流移动工作站·RTX PRO 3000 Laptop】GB205GLM 专业移动卡（open-gpu ✓）；5,888 CUDA·12GB GDDR7 ECC (192-bit, 672GB/s)·29.1 TFLOPS FP32 / 992 AI TOPS·60–140W；面向中端专业设计本与工程仿真 | ✓ |
+| 2F58 | GB205 | sm_120 | GPU | GB205M [GeForce RTX 5070 Ti Mobile] | NVIDIA GeForce RTX 5070 Ti Laptop GPU | 【中高端轻薄游戏本·RTX 5070 Ti Laptop (变体)】RTX 5070 Ti Laptop 第二移动 ID（open-gpu ✓），用于 Max-Q / 不同 OEM（如 ROG/Legion）功耗档位区分 | ✓ |
+| 22E8 | GB202 | sm_120 | **HD Audio** | GB202 High Definition Audio Controller | — | 【板载伴生功能·HDMI/DP 音频】GB202 芯片（RTX 5090 / RTX PRO 6000/5500/5000）的 Function 1 高清音频控制器（非独立 GPU；VFIO 直通时需与 Function 0 同步解绑） | — |
+| 22E9 | GB203 | sm_120 | **HD Audio** | GB203 High Definition Audio Controller | — | 【板载伴生功能·HDMI/DP 音频】GB203 芯片（RTX 5080/5070 Ti / RTX PRO 4500/4000）的 Function 1 高清音频控制器（非独立 GPU；VFIO 直通配套设备） | — |
+| 22EB | GB206 | sm_120 | **HD Audio** | GB206 High Definition Audio Controller | — | 【板载伴生功能·HDMI/DP 音频】GB206 芯片（RTX 5060 Ti/5060 / RTX PRO 2000）的 Function 1 高清音频控制器（非独立 GPU；VFIO 直通配套设备） | — |
+| 22EC | GB207 | sm_120 | **HD Audio** | GB207 High Definition Audio Controller | — | 【板载伴生功能·HDMI/DP 音频】GB207 芯片（RTX 5050 / RTX PRO 1000/500）的 Function 1 高清音频控制器（非独立 GPU；VFIO 直通配套设备） | — |
+| 2F80 | GB205 | sm_120 | **HD Audio** | GB205 High Definition Audio Controller | — | 【板载伴生功能·HDMI/DP 音频】GB205 芯片（RTX 5070/5070 SUPER / RTX PRO 3000）的 Function 1 高清音频控制器（非独立 GPU；VFIO 直通配套设备） | — |
+| 2E02 | GB20B | sm_121 | GPU | GB20B [JMJWOA-Generic-GPU] | — | 【工程样品·N1X 硅前】pci.ids 注释 '# N1X' 标为 JMJWOA-Generic-GPU（Windows on Arm 预量产 ID）；Linux quirks.c 对 2E00–2E3F 全段强制启用 PCIe ATS 模拟 CXL.cache | — |
+| 2E03 | GB20B | sm_121 | GPU | GB20B [RTX Spark N1X (6144-core Blackwell RTX GPU)] | NVIDIA RTX Spark N1X (6144-core Blackwell RTX GPU) | 【Arm AI PC·RTX Spark N1X 满血版】6,144 CUDA 核 Blackwell 集成 GPU + 20 核 Grace Arm CPU（open-gpu ✓，最高 128GB LPDDR5X，45–80W 笔记本 / 140W 迷你主机），面向 Windows 11 on Arm AI PC 端侧大模型推理、本地开发与轻度 3D 创作 | ✓ |
+| 2E06 | GB20B | sm_121 | GPU | GB20B [RTX Spark N1X (5120-core Blackwell RTX GPU)] | NVIDIA RTX Spark N1X (5120-core Blackwell RTX GPU) | 【Arm AI PC·RTX Spark N1X 精简版】5,120 CUDA 核 Blackwell 集成 GPU + 20 核 Grace Arm CPU（open-gpu ✓，Linux quirks.c ATS 段 2E00–2E3F），定位主流 Arm AI 笔记本与迷你主机 | ✓ |
+| 2E12 | GB10 | sm_121 | GPU | GB20B [GB10] | NVIDIA GB10 | 【个人 AI 超算·NVIDIA DGX Spark (GB10)】桌上型个人 AI 开发者超算（open-gpu ✓ subsys 10DE:21EC）；20 核 Grace CPU + Blackwell GPU·128GB 统一 LPDDR5X (273GB/s)·1 PFLOPS FP4 (稀疏)，支持本地运行最高 200B 参数模型（双机互联达 405B）原型开发与微调 | ✓ |
+| 2E13 | GB20B | sm_121 | GPU | GB20B [RTX Spark N1X (6144-core Blackwell RTX GPU)] | NVIDIA RTX Spark N1X (6144-core Blackwell RTX GPU) | 【Arm AI PC·RTX Spark N1X 6144 核 OEM/高功耗变体】6,144 CUDA 核版本第二 PCI ID（open-gpu ✓，同属 Linux quirks.c 2E00–2E3F ATS 区间），用于不同 TDP/OEM 平台区分 | ✓ |
+| 2E2A | GB20B | sm_121 | GPU | GB20B [JMJWOA-Generic-GPU] | — | 【工程样品·N1X 硅前】pci.ids 注释 '# N1X' 标为 JMJWOA-Generic-GPU（与 2E02 对应的预量产测试 ID，位于 2E00–2E3F ATS 段） | — |
+
+### 5.1 Blackwell & Rubin 关键子系统 ID（`VID:DID · SVID:SDID`）与 vGPU / MIG 细分 SKU 精解表
+
+在现代 NVIDIA 数据中心与专业卡中，**同一个 PCI Device ID 往往承载多款不同显存容量、不同 TDP 功耗墙（风冷 vs 液冷）、乃至上百个 vGPU/MIG 虚拟化切片**（例如 `2BB3` 同时对应 RTX PRO 5000 48GB 与 72GB，`31C2` 区分 1399W Bianca 与 1299W Galaxy，`2BB5` 挂载 106 个子系统 ID）。下表直接提取自 **`open-gpu 620.73.04` `g_nv_name_released.h`**、**`NVIDIA/DCGM`** 与 **`NVIDIA/gpu-admin-tools`**，可用于 `lspci -nnv` 精确识别：
+
+| 代际 | PCI DID | 芯片 | 物理子系统（SVID:SDID） | vGPU / MIG 虚拟化子系统（g_nv_name_released.h） | 官方 SKU 名称 | 核心规格与功耗 | 核心用途与部署定位 | 一手来源 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Rubin | 3041 | GR100 | 10DE:221A (C2C+SXM) | 2304–230A (7 档: 1-35C~7-280C / 280C) | NVIDIA VR NVL72 | 288GB HBM4 (280GB 可用) · 22TB/s · 50 PFLOPS NVFP4 · NVLink 6 | 72 卡全液冷前沿大模型训练、超大规模 Agentic 推理与多租户 MIG 云算力 | open-gpu g_nv_name_released.h ✓ + DCGM + gat |
+| Rubin | 3002 | GR100 | 10DE:2277 (SXM 非 C2C) | — | GR100 Endpoint SXM | 独立 x86/HGX SXM 形态（非 Vera C2C） | 常规 x86 机头 HGX Rubin 训练与推理节点（尚未入开放驱动列表） | gpu-admin-tools |
+| Rubin | 307E | GR100 | 10DE:221A (C2C+SXM) | — | GR100 Vera+Rubin 变体 | Self-Hosted C2C 形态（3040–307F 段） | Vera Rubin 平台验证 / OEM 诊断（DCGM 已内置 Rubin profile） | gpu-admin-tools + DCGM |
+| Rubin | 30FF | GR102 | 10DE:221B / 221C (C2C+SXM) | — | GR102 Vera+Rubin 变体 | GR102 单裸片 / 定制 C2C+SXM（GR100 = 2×GR102） | Rubin 基础硅片验证与定制 C2C 形态 | gpu-admin-tools + detect-self-hosted.h |
+| Blackwell Ultra | 31C2 | GB110 | 10DE:21F1 (Bianca) · 10DE:20E5 (Galaxy) | 22D3–22DA (8 档: 1-35CME~7-278C / 278C) | NVIDIA GB300 (NVL72) | 288GB HBM3e (278GB 可用) · Bianca 1399W / Galaxy 1299W · 液冷机架 | 72 卡整柜超大规模训练、长思维链推理 (Test-Time Scaling) 与多租户 MIG | open-gpu ✓ + DCGM + Linux nvgrace-gpu |
+| Blackwell Ultra | 31C3 | GB110 | 10DE:23AB (GB300-252) · 10DE:22F8 (GB300) | — | NVIDIA GB300-252 (DGX Station GB300) | 252GB HBM3e (7.1TB/s) + 496GB LPDDR5X = 748GB · 20 PFLOPS FP4 · ~1600W | 桌面级个人/实验室 AI 超算：本地 1T 参数模型推理与 200B–400B 微调 | open-gpu ✓ + gat (C2C+SXM) |
+| Blackwell Ultra | 3182 | GB110 | 10DE:20E6 (另有 gat 20E5/220C) | 22CB–22D2 (8 档: 1-34CME~7-269C / 269C) | NVIDIA B300 SXM6 AC | 288GB HBM3e (269GB 可用) · 8TB/s · DCGM 1099W (最高 1100W) · SXM6 | 8 卡 x86 HGX B300 风冷/液冷企业 AI 训练与高吞吐推理节点 | open-gpu ✓ + DCGM + gat |
+| Blackwell Ultra | 3183 / 3184 | GB110 | 10DE:22F2 (3183) · 10DE:22F3 (3184) | — | GB110 B300 SXM 变体 | 独立 SXM 形态（非 C2C） | OEM / 定制 HGX B300 模块变体 | gpu-admin-tools |
+| Blackwell Ultra | 31A1 | GB110 | 10DE:2274 (C2C+SXM) | — | GB300 Max-Q | DCGM 1199W 功耗上限 · detect-self-hosted.h / edk2 特例 C2C ID | 面向功耗/散热受限机房的能效优化型 GB300 集群 | detect-self-hosted.h + edk2 + DCGM + gat |
+| Blackwell Ultra | 3224 / 323E | GB112 | 10DE:215F (SXM) | — | GB112 SXM 变体 | Blackwell Ultra 衍生芯片 GB112（rmconfig.h 已开启） | GB112 数据中心 SXM 工程/定制形态 | gpu-admin-tools + open-gpu rmconfig.h |
+| Blackwell DC | 2941 | GB100 | 10DE:2046 / 20CA / 20D5 / 21C9 / 21CA / 22C4 | 20CB–20D2 (8 档: 1-23CME~7-186C / 186C) | NVIDIA GB200 (NVL72/36) | 186GB 可用 HBM3e · DCGM 1199W · NVLink-C2C 900GB/s | 72/36 卡液冷机架超大规模 AI 训练、MoE 大模型实时推理与 MIG 云切分 | open-gpu ✓ + DCGM + Linux nvgrace-gpu |
+| Blackwell DC | 2901 | GB100 | 10DE:1999 (1000W) · 199B (999W) · 20DA (850W) | 21D7–21DD / 21EA (8 档: 1-23CME~7-180C / 180C) | NVIDIA B200 (HGX/DGX) | 180GB 可用 HBM3e · 8TB/s · PG525 SKU 220/225(1000W) 与 230(850W) | 8 卡 x86 HGX/DGX B200 主力训练集群与风冷低功耗机房适配 (20DA) | open-gpu ✓ + DCGM + gat |
+| Blackwell DC | 2909 | GB100 | 10DE:22EB | — | NVIDIA HGX B200 168GB | 168GB HBM3e · DCGM 1000W · 精准对齐 7×24GB MIG 切分 | 多租户云厂商均分型 MIG 推理与细粒度算力租赁 | open-gpu ✓ + DCGM |
+| Blackwell DC | 2920 / 29BC | GB100/102 | 2920: 197F(850W)/20DE · 29BC: 1997/1998/1985/2045 | — | NVIDIA B100 (TS4 / GB102) | 2920 TS4 700W / 197F 850W；29BC DCGM 350W | 700W 风冷 HGX 机箱平滑升级 / 低功耗数据中心推理测试 | DCGM + gpu-admin-tools |
+| Blackwell DC | 29BB | GB102 | 10DE:207C | — | NVIDIA DRIVE P2021 | DCGM 50W 目标功耗 | NVIDIA DRIVE 自动驾驶计算域控与车载 AI 平台验证 | open-gpu ✓ + DCGM |
+| Blackwell Pro | 2BB5 | GB202GL | 10DE:204E · 10DE:220B | 2160–23A2 (102 档 2GB~96GB Q/A/B/C/E) + 21A6/21A7 (云游戏) | RTX PRO 6000 Server Edition | 96GB GDDR7 ECC · 600W 被动散热 · DCGM PG153 SKU 210 · 4×24GB MIG | 企业级全能服务器：大模型推理、Omniverse 渲染、VDI 虚拟工作站与云游戏 | open-gpu g_nv_name_released.h ✓ + DCGM |
+| Blackwell Pro | 2BB9 | GB202GL | 10DE:2091 / 2092 (600W) · 10DE:2279 (LC 249W) | 2233–226F (12 档 1-42/2-84/84) + 22EE/22EF (云游戏) | NVIDIA RTX 6000D (中国合规) | 84GB GDDR7 (448-bit, 无 NVLink) · 600W 标配 / 249W 液冷 LC · 2×42GB MIG | 中国出口合规企业推理、渲染、VDI 与云游戏多租户虚拟化 | open-gpu g_nv_name_released.h ✓ + DCGM |
+| Blackwell Pro | 2BB3 | GB202GL | 204D (48GB) · 227A (72GB) [1028/103C/10DE/17AA] | 2324–2372 (26 档 2Q~72Q，限 72GB 版) | RTX PRO 5000 (48GB / 72GB) | 14,080 CUDA · 48GB 或 72GB GDDR7 ECC · 300W 级 (DCGM 349W) | 工作站大模型推理/微调、仿真渲染；72GB 版额外支持企业 vGPU/MIG | open-gpu g_nv_name_released.h ✓ + DCGM |
+| Blackwell Pro | 2BB1 / 2BB4 / 2BBD | GB202GL | 204B(6000 WS) · 204C(Max-Q) · 23AE(5500 WS) [四大 OEM] | — | RTX PRO 6000 WS / Max-Q / 5500 WS | 6000 WS 96GB 600W · Max-Q 96GB 300W(Galaxy TS2) · 5500 84GB ECC 600W(2×42GB MIG) | 单卡旗舰桌塔 / 2–4 卡低功耗多卡工作站 / 中大型本地模型微调 | open-gpu ✓ + DCGM |
+| Blackwell Pro | 2C3A | GB203GL | 10DE:21F4 | 2295–22C2 (46 档 2GB~32GB Q/A/B/C/裸) | RTX PRO 4500 Server Edition | 32GB GDDR7 (800GB/s) · 165W 单槽被动/服务器卡 (DCGM 164W) · PCIe 5.0 | 高密度 1U/2U 服务器：小模型推理、向量数据库 (Milvus/cuVS)、Metropolis 视觉与 VDI | open-gpu g_nv_name_released.h ✓ + DCGM |
+| Blackwell Pro | 2C31 / 2C34 / 2C33 / 2D30 | GB203/206GL | 2051(4500) · 2052(4000) · 2053(4000 SFF) · 2054(2000) [四大 OEM] | — | RTX PRO 4500 / 4000 / 4000 SFF / 2000 | 4500 32GB 200W · 4000 24GB 140W · 4000 SFF 24GB 70W · 2000 16GB 70W | 企业级 CAD/BIM、单槽/半高 SFF 紧凑工作站、多屏显控与轻量 AI 推理 | open-gpu g_nv_name_released.h ✓ |
+| Blackwell Spark | 2E12 | GB20B (GB10) | 10DE:21EC | — | NVIDIA GB10 (DGX Spark) | 20 核 Grace + Blackwell · 128GB 统一 LPDDR5X (273GB/s) · 1 PFLOPS FP4 | 个人桌面 AI 超算：本地 200B 模型原型开发与双机 405B 微调 | open-gpu ✓ + Linux quirks.c |
 
 ## 六、Hopper（29 个 ID · sm_90）
 
@@ -1372,18 +1389,19 @@ Grace（`Tegra241 / TH500`，Neoverse V2 核心）与 Vera（`TB500`，自研 Ol
 - **Linux `nvgrace-gpu` + PCI-SIG CXL DVSEC**：主线 `drivers/vfio/pci/nvgrace-gpu/main.c` 明确收录 5 个一致性内存 VFIO ID（`2342` / `2345` / `2348` / `2941` / `31C2`），并通过 PCI-SIG CXL DVSEC（`PCI_VENDOR_ID_CXL`）探测 Blackwell-Next / Rubin 显存就绪状态（物理层仍为 NVLink-C2C，接口走向 CXL 标准化，详见本站 [Blackwell-Next CXL DVSEC 考据](/posts/blackwell-next-cxl-dvsec/)）。
 - **Linux `drivers/pci/quirks.c` 的两处 CXL.cache / ATS 特例**：`quirk_nvidia_gpu_ats_required()` 强制对 **`10DE:2E00–2E3F`（GB20B / Spark / N1X）** 与 **`15B3:2101`（ConnectX-10 NVLink-C2C）** 开启 PCIe ATS，注释明确说明这些设备不暴露标准 CXL 配置空间但会发出类似 `CXL.cache` 的一致性事务。
 - **Linux Rust 驱动 `nova-core`**：主线 `drivers/gpu/nova-core/gpu.rs` 已定义 `GA100–GA107`、`GH100`、`AD102–AD107`、`GB100/102`、`GB202–GB207`，并留下关键注释——*`Somewhere in the Rubin timeframe, boot0 will no longer have space to add new GPU IDs.`*
-- **Open GPU `rmconfig.h` 芯片枚举**：R620（`620.73.04`）已内置 `TU102–TU117`、`GA100–GA107`、`AD102–AD107`、`GH100`、`GB100/102/10B/10C/110/112`、`GB202–GB207/GB20B/GB20C`、`GR100/GR102`、`T234D/T238D/T264D`。
+- **Open GPU `rmconfig.h` & `nvtrust` 机密计算**：R620（`620.73.04`）已内置 `TU102–TU117`、`GA100–GA107`、`AD102–AD107`、`GH100`、`GB100/102/10B/10C/110/112`、`GB202–GB207/GB20B/GB20C`、`GR100/GR102`、`T234D/T238D/T264D`；`NVIDIA/nvtrust` 将 Blackwell 注册为机密计算硬件架构 `GPU_ARCH = 10`（Hopper 为 `9`）。
 
-### 七大一手数据源
+### 八大可信一手数据源
 
-1. **`pciutils/pciids`（`pci.ids v2026.11.19`）**：全量 `10DE`（1,997 条）与 `15B3`（235 条）超集。
-2. **`NVIDIA/open-gpu-kernel-modules`（`620.73.04`，2026-11-18）**：`README.md` 全部 843 行 / 299 唯一 ID、`nvcst.h`（Grace `TH500` / Vera `TB500` / `T256 N1` / `T268`）、`nvswitch.c`（LR10/LS10 共 33 ID）、`rmconfig.h`、`arch/rubin/` 与 `arch/blackwell/`。
-3. **`NVIDIA/gpu-admin-tools`（`main`）**：`devid_chips.py`、`devid_names.py`（补出 `2309` H20 与 `2343/2345` GH200）、`devid_properties.py`（子系统级 `is_sxm`/`is_pcie`/`has_c2c`，覆盖 Hopper → Rubin）。
-4. **`NVIDIA/DCGM`（`master` / `v4.7.0`）**：`nvvs/diag-skus.yaml.in`（137 个数据中心 SKU 功耗与内部板卡代号）与 Rubin `3041 / 307E / 307F` 诊断支持说明。
-5. **`NVIDIA/edk2-nvidia`（`main`）**：`TH500GpuDxe/efihand/DriverBinding.c`（Endpoint vs Self-Hosted Bit-6 分配规则与 `GB120 3341–337F`）、`Dsdt_TH500.asl`。
-6. **`torvalds/linux` 主线源码**：`nvgrace-gpu/main.c`、`nova-core/gpu.rs`、`drivers/pci/quirks.c`、`drivers/perf/arm_cspmu/nvidia_cspmu.c`、`tegra241-cmdqv.c`、`nouveau/nvkm/engine/device/base.c`。
-7. **NVIDIA CUDA 13.4 / 13.5 官方文档**：确认 Vera Rubin `sm_107`（CC 10.7）及历代 SM 映射。
+1. **`pciutils/pciids`（`pci.ids v2026.11.19`）**：实时核对 `pci-ids.ucw.cz` 一致，`systemd/hwdb` 与 `NVIDIA/go-nvlib` 验证 `>= 0x2900` 零额外条目。
+2. **`NVIDIA/open-gpu-kernel-modules`（`620.73.04`，2026-11-18）**：`src/nvidia/generated/g_nv_name_released.h`（全部 1,985 条物理+vGPU/MIG 编译表）、`kernel-open/nvidia/detect-self-hosted.h`、`README.md`、`nvcst.h`、`nvswitch.c`、`rmconfig.h`、`arch/rubin/` 与 `arch/blackwell/`。
+3. **`NVIDIA/gpu-admin-tools`（`main`）**：`devid_chips.py`、`devid_names.py`、`devid_properties.py`（子系统级 `is_sxm` / `is_pcie` / `has_c2c` 硬件属性）。
+4. **`NVIDIA/DCGM`（`master` / `v4.7.0`）**：`nvvs/diag-skus.yaml.in`（实测目标功耗、内部板卡代号 `Bianca / Galaxy / Galaxy TS2 / TS4 / PG153 / RTX6000D LC`）与 Rubin `3041 / 307E / 307F` 诊断支持。
+5. **`NVIDIA/edk2-nvidia`（`main`）**：`TH500GpuDxe/efihand/DriverBinding.c`（Endpoint vs Self-Hosted Bit-6 分配规则与 `GB120 3341–337F`）。
+6. **`torvalds/linux` 主线源码**：`nvgrace-gpu/main.c`、`nova-core/gpu.rs`、`drivers/pci/quirks.c`、`drivers/perf/arm_cspmu/nvidia_cspmu.c`、`sound/hda/controllers/intel.c`。
+7. **`NVIDIA/nvtrust`**：机密计算 GPU 架构校验（`Hopper=9 / Blackwell=10`）与 VBIOS RIM 签章识别。
+8. **NVIDIA 官方规格书、GTC 2026 与 CUDA 13.5 GA 文档**：核实 Vera Rubin `sm_107`、B300/GB300/DGX Station GB300/DGX Spark/Thor/RTX PRO Blackwell（Desktop/Server/Laptop/Embedded）及 GeForce RTX 50 全系官方参数与定位。
 
 > [!NOTE]
-> **最终汇总统计（2026-11-20）**：本文与配套 Excel 共收录 **1149** 条一手实证 PCI Device ID —— 其中 `10DE` CUDA GPU（Fermi → Rubin 11 代）**1026** 条（开放驱动 `620.73.04` 官方收录 **299** 条）、`10DE` Grace/Vera/Tegra CPU & SoC **40** 条、`10DE` NVSwitch **33** 条、`15B3` 配套高速互联与 NVLink-6/7/8 Switch **50** 条。
+> **最终汇总统计（2026-11-20）**：本文与配套 17 表 Excel 共收录 **1149** 条一手实证 PCI Device ID —— 其中 `10DE` CUDA GPU（Fermi → Rubin 11 代）**1026** 条（开放驱动 `620.73.04` 官方收录 **299** 条，Rubin 10 条 + Blackwell 91 条均完成全量规格/用途/子系统精校）、`10DE` Grace/Vera/Tegra CPU & SoC **40** 条、`10DE` NVSwitch **33** 条、`15B3` 配套高速互联与 NVLink-6/7/8 Switch **50** 条。
 
