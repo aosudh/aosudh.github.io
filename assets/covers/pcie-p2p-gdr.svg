@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" width="480" height="300" role="img" aria-label="消费级 RTX PCIe P2P 与 GPUDirect RDMA 封面图">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1220"/>
+      <stop offset="100%" stop-color="#131f33"/>
+    </linearGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#38bdf8" stroke-opacity="0.06" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="480" height="300" fill="url(#g)"/>
+  <rect width="480" height="300" fill="url(#grid)"/>
+  <circle cx="240" cy="120" r="140" fill="#2563eb" opacity="0.12"/>
+
+  <rect x="28" y="24" width="152" height="26" rx="6" fill="#2563eb" fill-opacity="0.2" stroke="#60a5fa" stroke-opacity="0.5"/>
+  <text x="40" y="42" fill="#93c5fd" font-family="Consolas,monospace" font-size="13" font-weight="700">P2P · GDR · GSP</text>
+  <text x="452" y="42" text-anchor="end" fill="#64748b" font-family="Consolas,monospace" font-size="12">RTX 30 / 40 / 50</text>
+
+  <!-- Control plane top bar -->
+  <rect x="28" y="68" width="424" height="30" rx="7" fill="#172554" fill-opacity="0.7" stroke="#3b82f6" stroke-opacity="0.6"/>
+  <text x="240" y="88" text-anchor="middle" fill="#bfdbfe" font-family="Consolas,monospace" font-size="12" font-weight="700">Host OpenRM · GSP-RM · libcuda · BIOS / ACS</text>
+
+  <!-- Data plane nodes -->
+  <rect x="28" y="122" width="116" height="68" rx="10" fill="#111c33" stroke="#60a5fa" stroke-width="1.6"/>
+  <text x="86" y="150" text-anchor="middle" fill="#f8fafc" font-family="Consolas,monospace" font-size="16" font-weight="700">GPU A</text>
+  <text x="86" y="172" text-anchor="middle" fill="#93c5fd" font-family="Consolas,monospace" font-size="11">BAR1 / VRAM</text>
+
+  <rect x="182" y="122" width="116" height="68" rx="10" fill="#111c33" stroke="#60a5fa" stroke-width="1.6"/>
+  <text x="240" y="150" text-anchor="middle" fill="#f8fafc" font-family="Consolas,monospace" font-size="16" font-weight="700">GPU B</text>
+  <text x="240" y="172" text-anchor="middle" fill="#93c5fd" font-family="Consolas,monospace" font-size="11">PCIe P2P</text>
+
+  <rect x="336" y="122" width="116" height="68" rx="10" fill="#0d2926" stroke="#10b981" stroke-width="1.6"/>
+  <text x="394" y="150" text-anchor="middle" fill="#ecfdf5" font-family="Consolas,monospace" font-size="16" font-weight="700">RDMA NIC</text>
+  <text x="394" y="172" text-anchor="middle" fill="#6ee7b7" font-family="Consolas,monospace" font-size="11">DMA-BUF / peermem</text>
+
+  <!-- Direct thick data arrows -->
+  <path d="M148 156 H178" stroke="#10b981" stroke-width="4.5"/>
+  <path d="M302 156 H332" stroke="#10b981" stroke-width="4.5"/>
+  <!-- Control dashes -->
+  <path d="M86 98 V119 M240 98 V119 M394 98 V119" stroke="#60a5fa" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+  <text x="28" y="246" fill="#f8fafc" font-family="system-ui,'Microsoft YaHei',sans-serif" font-size="25" font-weight="700">消费级 RTX P2P 与 GDR</text>
+  <text x="28" y="274" fill="#94a3b8" font-family="Consolas,monospace" font-size="13">OpenRM · GSP-RM · DMA-BUF · 源码与消融验证</text>
+</svg>

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" width="480" height="300" role="img" aria-label="Jetson Thor 刷写全流程封面图">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#14110f"/>
+      <stop offset="100%" stop-color="#1e1b18"/>
+    </linearGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#f59e0b" stroke-opacity="0.07" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="480" height="300" fill="url(#g)"/>
+  <rect width="480" height="300" fill="url(#grid)"/>
+  <circle cx="400" cy="70" r="135" fill="#f59e0b" opacity="0.11"/>
+
+  <!-- Top badge -->
+  <rect x="28" y="24" width="144" height="26" rx="6" fill="#f59e0b" fill-opacity="0.15" stroke="#fbbf24" stroke-opacity="0.45"/>
+  <text x="40" y="42" fill="#fcd34d" font-family="Consolas,monospace" font-size="13" font-weight="700">JETSON FLASHING</text>
+  <text x="452" y="42" text-anchor="end" fill="#78716c" font-family="Consolas,monospace" font-size="12">L4T R38.2.1</text>
+
+  <!-- Left SoM chip icon -->
+  <rect x="28" y="72" width="136" height="122" rx="12" fill="#1c1917" stroke="#f59e0b" stroke-opacity="0.65" stroke-width="1.6"/>
+  <rect x="46" y="90" width="100" height="62" rx="7" fill="#292524" stroke="#fbbf24" stroke-opacity="0.4"/>
+  <text x="96" y="117" text-anchor="middle" fill="#fef3c7" font-family="Consolas,monospace" font-size="16" font-weight="700">THOR</text>
+  <text x="96" y="137" text-anchor="middle" fill="#fbbf24" font-family="Consolas,monospace" font-size="11">SoM · Carrier</text>
+  <!-- Bottom pins -->
+  <g fill="#f59e0b" opacity="0.75">
+    <rect x="46" y="166" width="12" height="16" rx="2"/>
+    <rect x="64" y="166" width="12" height="16" rx="2"/>
+    <rect x="82" y="166" width="12" height="16" rx="2"/>
+    <rect x="100" y="166" width="12" height="16" rx="2"/>
+    <rect x="118" y="166" width="12" height="16" rx="2"/>
+    <rect x="136" y="166" width="10" height="16" rx="2"/>
+  </g>
+
+  <!-- Right stack layers -->
+  <g font-family="Consolas,monospace" font-size="13">
+    <rect x="184" y="72" width="268" height="26" rx="6" fill="#292524" stroke="#57534e"/>
+    <text x="198" y="90" fill="#fde68a" font-weight="700">BCT / MB1 / MB2</text>
+    <text x="438" y="90" text-anchor="end" fill="#a8a29e" font-size="11">Boot Config</text>
+
+    <rect x="184" y="104" width="268" height="26" rx="6" fill="#292524" stroke="#57534e"/>
+    <text x="198" y="122" fill="#fdba74" font-weight="700">DTB / Pinmux</text>
+    <text x="438" y="122" text-anchor="end" fill="#a8a29e" font-size="11">CES Carrier</text>
+
+    <rect x="184" y="136" width="268" height="26" rx="6" fill="#292524" stroke="#57534e"/>
+    <text x="198" y="154" fill="#fcd34d" font-weight="700">UEFI + NVMe Layout</text>
+    <text x="438" y="154" text-anchor="end" fill="#a8a29e" font-size="11">Partition</text>
+
+    <rect x="184" y="168" width="268" height="26" rx="6" fill="#78350f" fill-opacity="0.55" stroke="#f59e0b"/>
+    <text x="198" y="186" fill="#fef3c7" font-weight="700">Linux Native vs WSL</text>
+    <text x="438" y="186" text-anchor="end" fill="#fcd34d" font-size="11">6 Rounds</text>
+  </g>
+
+  <!-- Title footer -->
+  <text x="28" y="246" fill="#fafaf9" font-family="system-ui,'Microsoft YaHei',sans-serif" font-size="25" font-weight="700">Jetson Thor 刷写全流程</text>
+  <text x="28" y="274" fill="#a8a29e" font-family="Consolas,monospace" font-size="13">CLI 调用链 · 第三方载板适配 · WSL 排错复盘</text>
+</svg>

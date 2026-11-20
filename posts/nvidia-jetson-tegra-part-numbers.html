@@ -8,13 +8,27 @@
   <link rel="stylesheet" href="/assets/css/style.css" />
   <style>
     /* 文章内表格样式——仅作用于本页，用中性灰 + currentColor，浅色/深色模式都适配，不动全局 style.css */
-    .post-content .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1.1rem 0; }
-    .post-content table { border-collapse: collapse; width: 100%; font-size: 0.86rem; line-height: 1.45; }
-    .post-content caption { caption-side: top; text-align: left; font-weight: 700; font-size: 0.98rem; padding: 0 0 0.45rem; opacity: 0.95; }
-    .post-content th, .post-content td { border: 1px solid rgba(128,128,128,0.32); padding: 0.45rem 0.6rem; text-align: left; vertical-align: top; }
-    .post-content thead th { background: rgba(128,128,128,0.14); font-weight: 600; white-space: nowrap; }
-    .post-content tbody td:first-child { white-space: nowrap; font-weight: 600; }
+    .post-content .table-scroll {
+      width: min(calc(100vw - 48px), 1240px);
+      max-height: 76vh;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 1.1rem 0;
+      margin-left: 50%;
+      transform: translateX(-50%);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--bg);
+    }
+    .post-content table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 0.86rem; line-height: 1.45; margin: 0; }
+    .post-content caption { caption-side: top; text-align: left; font-weight: 700; font-size: 0.98rem; padding: 0.65rem 0.85rem 0.45rem; opacity: 0.95; }
+    .post-content th, .post-content td { border: none; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); padding: 0.45rem 0.6rem; text-align: left; vertical-align: top; }
+    .post-content th:last-child, .post-content td:last-child { border-right: none; }
+    .post-content thead th { position: sticky; top: 0; z-index: 3; background: var(--bg-soft); font-weight: 600; white-space: nowrap; }
+    .post-content tbody td:first-child { position: sticky; left: 0; z-index: 2; background: var(--bg); white-space: nowrap; font-weight: 600; box-shadow: 1px 0 0 var(--border); }
+    .post-content tbody tr:hover td { background: var(--bg-soft); }
     .post-content .legend { opacity: 0.75; font-size: 0.9em; }
+    @media (max-width: 760px) { .post-content .table-scroll { width: calc(100vw - 24px); } }
   </style>
 </head>
 <body>

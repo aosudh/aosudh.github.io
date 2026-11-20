@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" width="480" height="300" role="img" aria-label="H100 885 ES Fallen Off the Bus 封面图">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#130f18"/>
+      <stop offset="100%" stop-color="#1b1726"/>
+    </linearGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#f43f5e" stroke-opacity="0.06" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="480" height="300" fill="url(#g)"/>
+  <rect width="480" height="300" fill="url(#grid)"/>
+  <circle cx="390" cy="60" r="130" fill="#f43f5e" opacity="0.1"/>
+
+  <rect x="28" y="24" width="142" height="26" rx="6" fill="#f43f5e" fill-opacity="0.16" stroke="#fb7185" stroke-opacity="0.5"/>
+  <text x="40" y="42" fill="#fda4af" font-family="Consolas,monospace" font-size="13" font-weight="700">PCIe BAR0 DEBUG</text>
+  <text x="452" y="42" text-anchor="end" fill="#94a3b8" font-family="Consolas,monospace" font-size="12">10de:233f · Gen5 x16</text>
+
+  <!-- Two comparison rows -->
+  <rect x="28" y="68" width="424" height="54" rx="9" fill="#2a121a" stroke="#f43f5e" stroke-opacity="0.65"/>
+  <text x="44" y="90" fill="#fecdd3" font-family="Consolas,monospace" font-size="13" font-weight="700">pci=nocrs,realloc=on</text>
+  <text x="436" y="90" text-anchor="end" fill="#fb7185" font-family="Consolas,monospace" font-size="12" font-weight="700">MMIO I/O ERR</text>
+  <text x="44" y="111" fill="#fda4af" font-family="Consolas,monospace" font-size="11">BAR0 remapped outside ACPI _CRS → Fallen off the bus</text>
+
+  <rect x="28" y="134" width="424" height="54" rx="9" fill="#0d2922" stroke="#10b981" stroke-opacity="0.75"/>
+  <text x="44" y="156" fill="#d1fae5" font-family="Consolas,monospace" font-size="13" font-weight="700">pci=use_crs,realloc=off</text>
+  <text x="436" y="156" text-anchor="end" fill="#34d399" font-family="Consolas,monospace" font-size="12" font-weight="700">RECOVERED</text>
+  <text x="44" y="177" fill="#6ee7b7" font-family="Consolas,monospace" font-size="11">BAR0 aligned in ACPI _CRS window → nvidia-smi OK</text>
+
+  <text x="28" y="246" fill="#f8fafc" font-family="system-ui,'Microsoft YaHei',sans-serif" font-size="25" font-weight="700">H100 885 ES 掉卡排查</text>
+  <text x="28" y="274" fill="#94a3b8" font-family="Consolas,monospace" font-size="13">GH100 ES · ACPI _CRS · BAR0 MMIO 定位</text>
+</svg>

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" width="480" height="300" role="img" aria-label="ConnectX 固件逆向分析封面图">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1320"/>
+      <stop offset="100%" stop-color="#132234"/>
+    </linearGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#14b8a6" stroke-opacity="0.06" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="480" height="300" fill="url(#g)"/>
+  <rect width="480" height="300" fill="url(#grid)"/>
+  <circle cx="380" cy="80" r="130" fill="#14b8a6" opacity="0.12"/>
+
+  <rect x="28" y="24" width="154" height="26" rx="6" fill="#14b8a6" fill-opacity="0.16" stroke="#2dd4bf" stroke-opacity="0.45"/>
+  <text x="40" y="42" fill="#5eead4" font-family="Consolas,monospace" font-size="13" font-weight="700">FIRMWARE REVERSE</text>
+  <text x="452" y="42" text-anchor="end" fill="#64748b" font-family="Consolas,monospace" font-size="12">CX7 · CX8 · CX9</text>
+
+  <!-- Binary / Family cards -->
+  <g font-family="Consolas,monospace">
+    <rect x="28" y="68" width="132" height="82" rx="9" fill="#0f1b2d" stroke="#2dd4bf" stroke-opacity="0.65"/>
+    <text x="42" y="92" fill="#5eead4" font-size="16" font-weight="700">CX-7</text>
+    <text x="42" y="116" fill="#e2e8f0" font-size="13">49 Revs</text>
+    <text x="42" y="136" fill="#94a3b8" font-size="12">37 PSIDs</text>
+
+    <rect x="174" y="68" width="132" height="82" rx="9" fill="#0f1b2d" stroke="#38bdf8" stroke-opacity="0.65"/>
+    <text x="188" y="92" fill="#7dd3fc" font-size="16" font-weight="700">CX-8</text>
+    <text x="188" y="116" fill="#e2e8f0" font-size="13">13 Models</text>
+    <text x="188" y="136" fill="#94a3b8" font-size="12">GB200 / B200</text>
+
+    <rect x="320" y="68" width="132" height="82" rx="9" fill="#0f1b2d" stroke="#818cf8" stroke-opacity="0.65"/>
+    <text x="334" y="92" fill="#c7d2fe" font-size="16" font-weight="700">CX-9</text>
+    <text x="334" y="116" fill="#e2e8f0" font-size="13">2 Builds</text>
+    <text x="334" y="136" fill="#94a3b8" font-size="12">Shared Base</text>
+  </g>
+
+  <!-- Hex strip -->
+  <rect x="28" y="164" width="424" height="30" rx="6" fill="#09111d" stroke="#1e293b"/>
+  <text x="42" y="184" fill="#2dd4bf" font-family="Consolas,monospace" font-size="12">0x0046: MT_0000000838 · Freysa · .46 Device Table Diff</text>
+
+  <text x="28" y="246" fill="#f8fafc" font-family="system-ui,'Microsoft YaHei',sans-serif" font-size="24" font-weight="700">固件二进制里的未公开网卡</text>
+  <text x="28" y="274" fill="#94a3b8" font-family="Consolas,monospace" font-size="13">ConnectX-7/8/9 PSID 全表与构建树追踪</text>
+</svg>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" width="480" height="300" role="img" aria-label="NVIDIA Jetson Tegra 编号与料号对照封面图">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#11101d"/>
+      <stop offset="100%" stop-color="#1a1c2e"/>
+    </linearGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#a78bfa" stroke-opacity="0.06" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="480" height="300" fill="url(#g)"/>
+  <rect width="480" height="300" fill="url(#grid)"/>
+  <circle cx="385" cy="90" r="130" fill="#8b5cf6" opacity="0.12"/>
+
+  <rect x="28" y="24" width="142" height="26" rx="6" fill="#8b5cf6" fill-opacity="0.2" stroke="#a78bfa" stroke-opacity="0.5"/>
+  <text x="40" y="42" fill="#ddd6fe" font-family="Consolas,monospace" font-size="13" font-weight="700">HARDWARE INDEX</text>
+  <text x="452" y="42" text-anchor="end" fill="#94a3b8" font-family="Consolas,monospace" font-size="12">Pxxxx · SKU · DTB</text>
+
+  <!-- 3 Matrix Cards -->
+  <rect x="28" y="72" width="132" height="114" rx="10" fill="#17162b" stroke="#8b5cf6" stroke-opacity="0.7"/>
+  <text x="42" y="96" fill="#c4b5fd" font-family="Consolas,monospace" font-size="11" font-weight="700">MODULE (SoM)</text>
+  <text x="42" y="124" fill="#f8fafc" font-family="Consolas,monospace" font-size="15" font-weight="700">P3701</text>
+  <text x="42" y="146" fill="#94a3b8" font-family="Consolas,monospace" font-size="13">P3767 · P3834</text>
+  <text x="42" y="170" fill="#a78bfa" font-family="Consolas,monospace" font-size="11">SKU 0000 / 0005</text>
+
+  <text x="172" y="135" text-anchor="middle" fill="#a78bfa" font-family="Consolas,monospace" font-size="20" font-weight="700">×</text>
+
+  <rect x="184" y="72" width="132" height="114" rx="10" fill="#17162b" stroke="#38bdf8" stroke-opacity="0.7"/>
+  <text x="198" y="96" fill="#7dd3fc" font-family="Consolas,monospace" font-size="11" font-weight="700">CARRIER BOARD</text>
+  <text x="198" y="124" fill="#f8fafc" font-family="Consolas,monospace" font-size="15" font-weight="700">P3737</text>
+  <text x="198" y="146" fill="#94a3b8" font-family="Consolas,monospace" font-size="13">P3768 · P4071</text>
+  <text x="198" y="170" fill="#38bdf8" font-family="Consolas,monospace" font-size="11">DevKit / OEM</text>
+
+  <text x="328" y="135" text-anchor="middle" fill="#34d399" font-family="Consolas,monospace" font-size="20" font-weight="700">=</text>
+
+  <rect x="340" y="72" width="112" height="114" rx="10" fill="#0d2926" stroke="#10b981" stroke-opacity="0.75"/>
+  <text x="354" y="96" fill="#6ee7b7" font-family="Consolas,monospace" font-size="11" font-weight="700">PART NO.</text>
+  <text x="354" y="126" fill="#ffffff" font-family="Consolas,monospace" font-size="15" font-weight="700">900-</text>
+  <text x="354" y="148" fill="#ffffff" font-family="Consolas,monospace" font-size="15" font-weight="700">945-</text>
+  <text x="354" y="170" fill="#6ee7b7" font-family="Consolas,monospace" font-size="11">Device Tree</text>
+
+  <text x="28" y="246" fill="#f8fafc" font-family="system-ui,'Microsoft YaHei',sans-serif" font-size="24" font-weight="700">Jetson / Tegra 料号全表</text>
+  <text x="28" y="274" fill="#94a3b8" font-family="Consolas,monospace" font-size="13">核心板 × 底板 × 开发套件 · 设备树自查</text>
+</svg>

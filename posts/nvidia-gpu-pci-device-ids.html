@@ -27,10 +27,48 @@
     .post-content .toc ul { margin: 0; padding: 0; list-style: none; columns: 2; column-gap: 1.4rem; }
     .post-content .toc li { margin: 0.2rem 0; break-inside: avoid; font-size: 0.9rem; }
     @media (max-width: 560px) { .post-content .toc ul { columns: 1; } }
-    /* 宽表：突破正文 680px 列宽，居中展开到近视口宽度——宽屏可一屏看全、免左右滑动；
-       窄屏仍保留横向滚动作兜底。 */
-    .post-content .table-scroll.wide { width: min(95vw, 1500px); margin-left: 50%; transform: translateX(-50%); }
-    .post-content .table-scroll.wide table { font-size: 0.85rem; }
+    /* 宽表：突破正文 680px 列宽，居中展开到近视口宽度（留出滚动条安全边距），
+       带表头吸顶 + 首列 Device ID 冻结 + 悬停高亮，窄屏仍可流畅横滑。 */
+    .post-content .table-scroll.wide {
+      width: min(calc(100vw - 48px), 1520px);
+      max-height: 78vh;
+      overflow: auto;
+      margin-left: 50%;
+      transform: translateX(-50%);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--bg);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    }
+    .post-content .table-scroll.wide.is-full-height { max-height: none; }
+    .post-content .table-scroll.wide table { font-size: 0.85rem; margin: 0; border-collapse: separate; border-spacing: 0; }
+    .post-content .table-scroll.wide caption { padding: 0.7rem 0.9rem 0.45rem; background: var(--bg); }
+    .post-content .table-scroll.wide th,
+    .post-content .table-scroll.wide td { border: none; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
+    .post-content .table-scroll.wide th:last-child,
+    .post-content .table-scroll.wide td:last-child { border-right: none; }
+    .post-content .table-scroll.wide thead th { position: sticky; top: 0; z-index: 3; background: var(--bg-soft); }
+    .post-content .table-scroll.wide thead th:first-child { left: 0; z-index: 4; }
+    .post-content .table-scroll.wide tbody td:first-child { position: sticky; left: 0; z-index: 2; background: var(--bg); box-shadow: 1px 0 0 var(--border); }
+    .post-content .table-scroll.wide tbody tr:hover td { background: var(--bg-soft); }
+    .pci-toolbar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+      margin: 1rem 0 1.4rem; padding: 12px 14px;
+      border: 1px solid var(--border); border-radius: 10px; background: var(--bg-soft);
+    }
+    .pci-toolbar input {
+      flex: 1 1 240px; padding: 8px 12px; border: 1px solid var(--border);
+      border-radius: 8px; background: var(--bg); color: var(--text); font-size: 0.9rem;
+    }
+    .pci-toolbar button {
+      padding: 7px 12px; border: 1px solid var(--border); border-radius: 8px;
+      background: var(--bg); color: var(--text); font-size: 0.84rem; cursor: pointer;
+    }
+    .pci-toolbar button:hover { border-color: var(--accent); color: var(--accent); }
+    .pci-toolbar .pci-stat { font-size: 0.82rem; color: var(--text-muted); }
+    @media (max-width: 760px) {
+      .post-content .table-scroll.wide { width: calc(100vw - 24px); max-height: 70vh; }
+    }
   </style>
 </head>
 <body>
@@ -54,6 +92,12 @@
         </blockquote>
 
         <p class="download">📊 <strong>原始数据</strong>：<a href="/assets/files/nvidia-gpu-pci-ids-ampere-to-rubin.xlsx" download>下载原版表格（.xlsx · 9 个工作表 · 332 个 device ID · 57&nbsp;KB）</a></p>
+
+        <div class="pci-toolbar" role="search" aria-label="快速检索 PCI Device ID">
+          <input id="pciFilter" type="search" placeholder="快速过滤 332 条记录：如 2901、3182、GR100、H100、Rubin、6000D…" autocomplete="off" />
+          <button id="toggleWideHeight" type="button">展开全部表行</button>
+          <span class="pci-stat" id="pciStat">宽屏自动展开至 1520px · 表头与首列吸顶</span>
+        </div>
 
         <nav class="toc" aria-label="目录">
           <p class="toc-title">目录</p>
@@ -546,9 +590,38 @@
     </main>
 
     <footer class="site-footer">
-      <span>© 2026 我的博客</span>
+      <span>© 2026 繁星若尘</span>
       <span>由 <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a> 托管</span>
     </footer>
   </div>
+  <script>
+    (function () {
+      var input = document.getElementById('pciFilter');
+      var stat = document.getElementById('pciStat');
+      var toggle = document.getElementById('toggleWideHeight');
+      var tables = Array.prototype.slice.call(document.querySelectorAll('.table-scroll.wide'));
+      var rows = Array.prototype.slice.call(document.querySelectorAll('.table-scroll.wide tbody tr'));
+      if (input) {
+        input.addEventListener('input', function () {
+          var q = input.value.trim().toLowerCase();
+          var hit = 0;
+          rows.forEach(function (tr) {
+            var show = !q || tr.textContent.toLowerCase().indexOf(q) !== -1;
+            tr.style.display = show ? '' : 'none';
+            if (show) hit++;
+          });
+          stat.textContent = q ? ('匹配 ' + hit + ' / ' + rows.length + ' 行') : '宽屏自动展开至 1520px · 表头与首列吸顶';
+        });
+      }
+      if (toggle) {
+        var expanded = false;
+        toggle.addEventListener('click', function () {
+          expanded = !expanded;
+          tables.forEach(function (el) { el.classList.toggle('is-full-height', expanded); });
+          toggle.textContent = expanded ? '恢复吸顶滚动' : '展开全部表行';
+        });
+      }
+    })();
+  </script>
 </body>
 </html>

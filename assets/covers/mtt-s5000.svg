@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" width="480" height="300" role="img" aria-label="MTT S5000 单卡与八卡实测封面图">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1120"/>
+      <stop offset="100%" stop-color="#171f36"/>
+    </linearGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#60a5fa" stroke-opacity="0.06" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="480" height="300" fill="url(#g)"/>
+  <rect width="480" height="300" fill="url(#grid)"/>
+  <circle cx="385" cy="110" r="130" fill="#3b82f6" opacity="0.14"/>
+
+  <rect x="28" y="24" width="138" height="26" rx="6" fill="#3b82f6" fill-opacity="0.18" stroke="#60a5fa" stroke-opacity="0.5"/>
+  <text x="40" y="42" fill="#93c5fd" font-family="Consolas,monospace" font-size="13" font-weight="700">8-GPU BENCHMARK</text>
+  <text x="452" y="42" text-anchor="end" fill="#64748b" font-family="Consolas,monospace" font-size="12">MTT S5000</text>
+
+  <!-- Left KPI tiles -->
+  <rect x="28" y="68" width="118" height="58" rx="9" fill="#111c33" stroke="#1d4ed8" stroke-opacity="0.7"/>
+  <text x="40" y="88" fill="#94a3b8" font-family="Consolas,monospace" font-size="11">FP8 PEAK</text>
+  <text x="40" y="114" fill="#60a5fa" font-family="Consolas,monospace" font-size="21" font-weight="700">899.4 T</text>
+
+  <rect x="156" y="68" width="118" height="58" rx="9" fill="#111c33" stroke="#0d9488" stroke-opacity="0.7"/>
+  <text x="168" y="88" fill="#94a3b8" font-family="Consolas,monospace" font-size="11">AllReduce</text>
+  <text x="168" y="114" fill="#2dd4bf" font-family="Consolas,monospace" font-size="20" font-weight="700">234 GB/s</text>
+
+  <rect x="28" y="136" width="118" height="58" rx="9" fill="#111c33" stroke="#334155"/>
+  <text x="40" y="156" fill="#94a3b8" font-family="Consolas,monospace" font-size="11">PCIe H2D</text>
+  <text x="40" y="182" fill="#e2e8f0" font-family="Consolas,monospace" font-size="20" font-weight="700">57.1 GB/s</text>
+
+  <rect x="156" y="136" width="118" height="58" rx="9" fill="#111c33" stroke="#334155"/>
+  <text x="168" y="156" fill="#94a3b8" font-family="Consolas,monospace" font-size="11">MTLink P2P</text>
+  <text x="168" y="182" fill="#e2e8f0" font-family="Consolas,monospace" font-size="20" font-weight="700">35.7 GB/s</text>
+
+  <!-- Right 8-GPU Mesh Octagon -->
+  <g transform="translate(366,132)">
+    <g stroke="#3b82f6" stroke-opacity="0.38" stroke-width="1.2">
+      <line x1="0" y1="-54" x2="38" y2="-38"/><line x1="0" y1="-54" x2="54" y2="0"/><line x1="0" y1="-54" x2="38" y2="38"/>
+      <line x1="0" y1="-54" x2="0" y2="54"/><line x1="0" y1="-54" x2="-38" y2="38"/><line x1="0" y1="-54" x2="-54" y2="0"/><line x1="0" y1="-54" x2="-38" y2="-38"/>
+      <line x1="38" y1="-38" x2="54" y2="0"/><line x1="38" y1="-38" x2="0" y2="54"/><line x1="38" y1="-38" x2="-54" y2="0"/>
+      <line x1="54" y1="0" x2="38" y2="38"/><line x1="54" y1="0" x2="-54" y2="0"/><line x1="54" y1="0" x2="-38" y2="-38"/>
+      <line x1="38" y1="38" x2="0" y2="54"/><line x1="38" y1="38" x2="-38" y2="-38"/>
+      <line x1="0" y1="54" x2="-38" y2="38"/><line x1="-38" y1="38" x2="-54" y2="0"/><line x1="-54" y1="0" x2="-38" y2="-38"/>
+    </g>
+    <g fill="#1e3a8a" stroke="#60a5fa" stroke-width="1.6">
+      <circle cx="0" cy="-54" r="9"/><circle cx="38" cy="-38" r="9"/><circle cx="54" cy="0" r="9"/><circle cx="38" cy="38" r="9"/>
+      <circle cx="0" cy="54" r="9"/><circle cx="-38" cy="38" r="9"/><circle cx="-54" cy="0" r="9"/><circle cx="-38" cy="-38" r="9"/>
+    </g>
+    <circle cx="0" cy="0" r="14" fill="#0f172a" stroke="#2dd4bf" stroke-width="1.5"/>
+    <text x="0" y="4" text-anchor="middle" fill="#5eead4" font-family="Consolas,monospace" font-size="9" font-weight="700">MT2</text>
+  </g>
+
+  <text x="28" y="246" fill="#f8fafc" font-family="system-ui,'Microsoft YaHei',sans-serif" font-size="25" font-weight="700">MTT S5000 单卡与八卡实测</text>
+  <text x="28" y="274" fill="#94a3b8" font-family="Consolas,monospace" font-size="13">FP8 · Torch Flash · MTLink 全互联 · MCCL</text>
+</svg>

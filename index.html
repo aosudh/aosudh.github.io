@@ -4,131 +4,809 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="msvalidate.01" content="46123FCC681264A8B4C1EA6378D97A58" />
-  <title>我的博客 · 首页</title>
-  <meta name="description" content="aosudh 的个人博客，记录技术、折腾与思考。" />
-  <meta property="og:title" content="我的博客" />
-  <meta property="og:description" content="记录技术、折腾与思考。" />
+  <title>繁星若尘 · AI 算力基础设施与底层硬件实测</title>
+  <meta name="description" content="繁星若尘 (aosudh) 的个人技术博客，专注大规模智算集群稳定性测试、异构计算卡微架构与速率实测、高速互联网络与底层固件排错。" />
+  <meta property="og:title" content="繁星若尘 · AI 算力基础设施与底层硬件实测" />
+  <meta property="og:description" content="大规模智算集群稳定性工程、异构算力微架构实测、高速网络与底层固件排错。" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://aosudh.github.io/" />
-  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="icon" type="image/svg+xml" href="/assets/covers/favicon.svg" />
+  <link rel="stylesheet" href="/assets/css/home-v3.css" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('site-theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        var h = localStorage.getItem('site-v3-hue');
+        if (h !== null && !isNaN(Number(h))) document.documentElement.style.setProperty('--hue', h);
+      } catch (e) {}
+    })();
+  </script>
 </head>
-<body>
-  <div class="wrap">
-    <header class="site-header">
-      <a class="site-title" href="/">我的博客</a>
-      <nav class="site-nav">
-        <a href="/">首页</a>
+<body class="page-v3">
+
+  <!-- 顶部悬浮毛玻璃导航 -->
+  <div class="v3-nav-wrap">
+    <header class="v3-navbar" id="v3Navbar">
+      <a class="v3-brand" href="/">
+        <img src="/assets/covers/avatar.jpg" alt="繁星若尘" width="30" height="30" />
+        <span>繁星若尘</span>
+      </a>
+
+      <nav class="v3-nav-links" aria-label="主导航">
+        <a class="is-active" href="/">首页</a>
         <a href="/about.html">关于</a>
+        <a href="https://www.xiaohongshu.com/user/profile/60cb6efc000000000101d62b" target="_blank" rel="noopener">小红书</a>
+        <a href="https://github.com/aosudh" target="_blank" rel="noopener">GitHub</a>
+        <a href="/classic.html" title="切换到保留的原始极简版首页">原版入口</a>
       </nav>
+
+      <div class="v3-nav-tools">
+        <div class="v3-nav-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path>
+          </svg>
+          <input id="searchInput" type="search" placeholder="搜索文章… (/)" aria-label="搜索文章" autocomplete="off" />
+          <button class="v3-search-clear" id="searchClear" type="button" aria-label="清空搜索">×</button>
+        </div>
+
+        <button class="v3-icon-btn" id="paletteToggle" type="button" aria-label="自定义主题色" title="主题色盘">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle>
+            <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle>
+            <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle>
+            <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle>
+            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
+          </svg>
+        </button>
+
+        <button class="v3-icon-btn" id="themeToggle" type="button" aria-label="切换浅色或深色主题" title="切换浅/深色">
+          <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
     </header>
+  </div>
 
-    <main>
-      <section class="hero">
-        <h1>你好，我是繁星若尘 👋</h1>
-        <p>在这里记录技术、折腾与一些零碎的思考。</p>
-      </section>
+  <!-- 主题色盘弹出卡 -->
+  <div class="palette-popover" id="palettePopover" role="dialog" aria-label="主题色调节">
+    <div class="palette-head">
+      <span class="palette-title">主题色 Hue</span>
+      <span class="palette-val" id="hueVal">222</span>
+    </div>
+    <input class="hue-slider" id="hueSlider" type="range" min="0" max="360" step="1" value="222" aria-label="主题色相" />
+    <div class="palette-presets">
+      <button class="hue-dot" type="button" data-hue="222" style="background:hsl(222,78%,54%)" title="星夜蓝"></button>
+      <button class="hue-dot" type="button" data-hue="258" style="background:hsl(258,76%,60%)" title="星云紫"></button>
+      <button class="hue-dot" type="button" data-hue="186" style="background:hsl(186,78%,44%)" title="极光青"></button>
+      <button class="hue-dot" type="button" data-hue="152" style="background:hsl(152,68%,44%)" title="翡翠绿"></button>
+      <button class="hue-dot" type="button" data-hue="34" style="background:hsl(34,88%,52%)" title="琥珀金"></button>
+      <button class="hue-dot" type="button" data-hue="338" style="background:hsl(338,78%,58%)" title="樱花粉"></button>
+      <button class="hue-reset" id="hueReset" type="button">重置</button>
+    </div>
+  </div>
 
-      <h2 class="section-title">最新文章</h2>
-      <ul class="post-list">
+  <!-- 全宽氛围头图 Banner + 打字机 + 4 层动态波浪 -->
+  <section class="v3-banner" aria-label="站点横幅">
+    <div class="v3-banner-bg" id="bannerBg"></div>
+    <div class="v3-banner-overlay"></div>
+    <div class="v3-banner-content">
+      <div class="v3-banner-badge"><i></i><span>AI 算力基础设施 · 智算集群稳定性 · 底层互联实测</span></div>
+      <h1 class="v3-banner-title">繁星若尘</h1>
+      <p class="v3-typewriter-wrap"><span id="typewriter">在硅片与光缆之间，追寻大规模算力系统的底层真相。</span><span class="v3-cursor" aria-hidden="true"></span></p>
+    </div>
 
-        <!-- ↓↓↓ 新增文章：复制下面这个 <li> 块，改链接/标题/日期/摘要即可 ↓↓↓ -->
-        <li class="post-item">
-<a class="post-link" href="/posts/sbe1v1k-openwrt-qwrt-guide.html">三台 SBE1V1K 刷机全记录：Windows 免拆、OpenWrt 与 QWRT 稳定使用</a>
-<p class="post-meta">2026-11-19</p>
-<p class="post-summary">从原厂 DHCP/TFTP 入口到第三台 QWRT 数日使用回访，完整记录 Windows 免拆刷机、备份、引导地址、无线掉线、13.375 MiB overlay、独立 p29 修复和前两台复用；附技术图与可运行审计代码。</p>
-</li>
-        <li class="post-item">
-          <a class="post-link" href="/posts/hpe-r1n26a-sonic-adaptation.html">从 HPE R1N26A 到可维护的 SONiC：平台适配、端口灯、Web 管理与 BMC 终端</a>
-          <p class="post-meta">2026-11-19</p>
-          <p class="post-summary">记录 HPE R1N26A / Celestica D3030 的 SONiC RC4 平台适配、LED 映射、100G/4×25G 验证、Web 管理与机内 USB BMC 终端，并交代回退和验收边界。</p>
-        </li>
-        <li class="post-item">
-          <a class="post-link" href="/posts/sn2100-onyx-recovery.html">SN2100 系统故障恢复全流程：串口排查、ONIE 救援与 Onyx 重装</a>
-          <p class="post-meta">2026-10-25</p>
-          <p class="post-summary">从串口无输出和 GRUB unknown filesystem 出发，手动启动原有 ONIE、清除旧系统并重装 Onyx 3.9.3202；记录镜像校验、DHCP 与 HTTPS 配置，以及许可证和 DAC 1036 错误的后续诊断。</p>
-        </li>
-        <li class="post-item">
-          <a class="post-link" href="/posts/jetson-thor-flashing-guide.html">Jetson Thor 刷写全流程：原生 Linux、系统配置、第三方载板与 WSL 复盘</a>
-          <p class="post-meta">2026-10-22</p>
-          <p class="post-summary">从 R38.2.1 官方包、目录与 CLI 调用链出发，逐项解释 BCT、设备树、分区与 UEFI，再记录 CES 第三方载板适配和 Windows/WSL 六轮刷写排错。附完整手册下载、文件清单与适配材料。</p>
-        </li>
-        <li class="post-item">
-          <a class="post-link" href="/posts/spark-vs-thor.html">DGX Spark 与 Jetson Thor 实测：48 SM 与 20 SM，为什么有时接近、有时反转？</a>
-          <p class="post-meta">2026-09-28</p>
-          <p class="post-summary">从普通 FP32、低精度矩阵到 Q4 服务与视觉完整链，解释 Spark 和 Thor 的胜负为何随任务改变；附 TF32 内核追踪、特权 NCU、FP4 阶段计时及结论边界。</p>
-        </li>
-        <li class="post-item">
-          <a class="post-link" href="/posts/connectx8-pcie-nvdata-recovery.html">ConnectX-8 PCIe 配置改崩后的完整恢复：CH347、MTUSB、FNP 与 NV_DATA</a>
-          <p class="post-meta">2026-07-15</p>
-          <p class="post-summary">照官网手册改完 mlxconfig PCIe 参数，CX8 直接从总线消失：从 CH347 repeated START、MTUSB 信号量、FNP Flash Recovery、固件重刷无效，一路追到 FS5 双份 NV_DATA，最终原始读写恢复枚举；附失败分支、关键寄存器与 POST 92 后续分析。</p>
-        </li>
-        <li class="post-item">
-          <a class="post-link" href="/posts/mtt-s5000-single-and-8gpu-benchmark.html">MTT S5000 单卡与八卡实测：从 PCIe、FP8 到 MTLink 与 MCCL</a>
-          <p class="post-meta">2026-07-14</p>
-          <p class="post-summary">MTT S5000 单卡到八卡完整实测：PCIe 57.1 GB/s、FP8 899.4 TFLOP/s、Torch flash 372.6 TFLOP/s、全互联 MTLink P2P 35.7 GB/s，以及 8 卡 MCCL AllReduce 234.3 GB/s；附 DSL 兼容矩阵、profiling 结论和 mthreads-gmi CLI 吐槽。</p>
-        </li>
-        <li class="post-item">
-          <a class="post-link" href="/posts/pcie-p2p-gdr-gsp-enablement-guide.html">消费级 RTX 的 PCIe P2P、GPUDirect RDMA 与 GSP-RM</a>
-          <p class="post-meta">2026-07-10</p>
-          <p class="post-summary">把 RTX 3090、4090 与 5090 的 GPU↔GPU PCIe P2P、legacy nvidia-peermem、DMA-BUF GDR、host OpenRM、GSP-RM、libcuda 和 BIOS/拓扑放进同一张可验证的工程图：给出源码与反汇编证据、分代修改策略、逐键消融方法、验证与回滚标准，以及 profile 驱动的可审计自动化框架。</p>
+    <svg class="v3-waves" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto" aria-hidden="true">
+      <defs>
+        <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+      </defs>
+      <g class="parallax">
+        <use href="#gentle-wave" x="48" y="0" />
+        <use href="#gentle-wave" x="48" y="3" />
+        <use href="#gentle-wave" x="48" y="5" />
+        <use href="#gentle-wave" x="48" y="7" />
+      </g>
+    </svg>
+  </section>
+
+  <!-- 主内容区：左侧栏 + 右侧文章流 -->
+  <div class="v3-shell">
+    <aside class="v3-sidebar" aria-label="侧边信息栏">
+      <!-- 个人名片 -->
+      <div class="v3-card profile-card">
+        <a class="profile-avatar" href="/about.html" aria-label="关于繁星若尘">
+          <img src="/assets/covers/avatar.jpg" alt="繁星若尘头像" width="210" height="210" />
+        </a>
+        <h2 class="profile-name">繁星若尘</h2>
+        <div class="profile-bar"></div>
+        <p class="profile-motto">大规模集群稳定性 · 异构算力速率 · 高速互联与固件工程</p>
+        <div class="profile-stats">
+          <div><span class="stat-num" id="statPosts">16</span><span class="stat-label">文章</span></div>
+          <div><span class="stat-num">4</span><span class="stat-label">分类</span></div>
+          <div><span class="stat-num" id="statDays">155</span><span class="stat-label">运行天</span></div>
+        </div>
+        <div class="profile-links">
+          <a class="profile-btn" href="https://github.com/aosudh" target="_blank" rel="noopener">GitHub</a>
+          <a class="profile-btn is-xhs" href="https://www.xiaohongshu.com/user/profile/60cb6efc000000000101d62b" target="_blank" rel="noopener">小红书</a>
+          <a class="profile-btn" href="/about.html">关于我</a>
+        </div>
+      </div>
+
+      <!-- 硬件速查与精选 -->
+      <div class="v3-card side-card">
+        <h3 class="side-heading">速查与精选</h3>
+        <div class="quick-list">
+          <a class="quick-link" href="/posts/nvidia-gpu-pci-device-ids.html">
+            <strong>NVIDIA GPU PCI ID 全表</strong>
+            <span>332 项 · Ampere → Rubin</span>
+          </a>
+          <a class="quick-link" href="/posts/nvidia-jetson-tegra-part-numbers.html">
+            <strong>Jetson / Tegra 料号对照</strong>
+            <span>核心板 × 底板 × 设备树</span>
+          </a>
+          <a class="quick-link" href="/posts/rtx-6000d-vs-pro-6000.html">
+            <strong>RTX PRO 6000 vs 6000D</strong>
+            <span>37% 限速器实测与优化指南</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 分类卡片 -->
+      <div class="v3-card side-card">
+        <h3 class="side-heading">文章分类</h3>
+        <div class="cat-list">
+          <button class="cat-row is-active" type="button" data-filter="all"><span>全部文章</span><span class="cat-count" data-count="all">16</span></button>
+          <button class="cat-row" type="button" data-filter="gpu"><span>GPU / 算力</span><span class="cat-count" data-count="gpu">7</span></button>
+          <button class="cat-row" type="button" data-filter="net"><span>网络 / 交换机</span><span class="cat-count" data-count="net">4</span></button>
+          <button class="cat-row" type="button" data-filter="emb"><span>嵌入式 / 刷机</span><span class="cat-count" data-count="emb">2</span></button>
+          <button class="cat-row" type="button" data-filter="ref"><span>资料与随笔</span><span class="cat-count" data-count="ref">3</span></button>
+        </div>
+      </div>
+
+      <!-- 标签云 -->
+      <div class="v3-card side-card">
+        <h3 class="side-heading">常用标签</h3>
+        <div class="tag-cloud" id="tagCloud">
+          <button class="tag-chip" type="button" data-tag="NVIDIA"># NVIDIA</button>
+          <button class="tag-chip" type="button" data-tag="PCIe"># PCIe</button>
+          <button class="tag-chip" type="button" data-tag="SONiC"># SONiC</button>
+          <button class="tag-chip" type="button" data-tag="Jetson"># Jetson</button>
+          <button class="tag-chip" type="button" data-tag="ConnectX"># ConnectX</button>
+          <button class="tag-chip" type="button" data-tag="OpenWrt"># OpenWrt</button>
+          <button class="tag-chip" type="button" data-tag="H100"># H100</button>
+          <button class="tag-chip" type="button" data-tag="RTX"># RTX</button>
+          <button class="tag-chip" type="button" data-tag="NVLink"># NVLink</button>
+          <button class="tag-chip" type="button" data-tag="实测"># 实测</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 主文章流 -->
+    <main class="v3-main">
+      <!-- 顶部分类条 + 列表/网格切换 -->
+      <div class="v3-card v3-toolbar">
+        <div class="v3-tabs" role="tablist" aria-label="文章分类">
+          <button class="v3-tab is-active" type="button" data-filter="all">全部 <span data-count="all">16</span></button>
+          <button class="v3-tab" type="button" data-filter="gpu">GPU / 算力 <span data-count="gpu">7</span></button>
+          <button class="v3-tab" type="button" data-filter="net">网络 / 交换机 <span data-count="net">4</span></button>
+          <button class="v3-tab" type="button" data-filter="emb">嵌入式 / 刷机 <span data-count="emb">2</span></button>
+          <button class="v3-tab" type="button" data-filter="ref">资料与随笔 <span data-count="ref">3</span></button>
+        </div>
+
+        <div class="v3-toolbar-right">
+          <span class="v3-status" id="statusText">共 16 篇</span>
+          <button class="v3-reset-btn" id="resetBtn" type="button">重置</button>
+          <div class="view-switch" role="group" aria-label="切换文章布局">
+            <button class="view-btn is-active" id="listViewBtn" type="button" title="列表视图（左文右图）" aria-label="列表视图">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+            </button>
+            <button class="view-btn" id="gridViewBtn" type="button" title="双列网格视图" aria-label="网格视图">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 文章卡片列表 -->
+      <ul class="v3-posts" id="postList">
+
+        <!-- ↓↓↓ 新增文章：复制下面一个 <li class="v3-card v3-post"> 块，改 data-cat / data-tags / 标题 / 日期 / 摘要 / 右侧图片即可（不放 .v3-thumb 也会自动通栏）↓↓↓ -->
+        <li class="v3-card v3-post" data-cat="emb" data-tags="OpenWrt QWRT 刷机">
+          <div class="v3-post-body">
+            <h3 class="v3-post-title">
+              <span class="v3-pin">最新</span>
+              <a href="/posts/sbe1v1k-openwrt-qwrt-guide.html">三台 SBE1V1K 刷机全记录：Windows 免拆、OpenWrt 与 QWRT 稳定使用</a>
+            </h3>
+            <div class="v3-post-meta">
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>2026-11-19</span>
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>嵌入式 / 刷机</span>
+            </div>
+            <p class="v3-post-excerpt">从原厂 DHCP/TFTP 入口到第三台 QWRT 数日使用回访，完整记录 Windows 免拆刷机、备份、引导地址、无线掉线、13.375 MiB overlay、独立 p29 修复和前两台复用；附技术图与可运行审计代码。</p>
+            <div class="v3-post-tags">
+              <button class="v3-post-tag" type="button" data-tag="OpenWrt"># OpenWrt</button>
+              <button class="v3-post-tag" type="button" data-tag="QWRT"># QWRT</button>
+            </div>
+          </div>
+          <a class="v3-thumb thumb-chart" href="/posts/sbe1v1k-openwrt-qwrt-guide.html" tabindex="-1" aria-hidden="true">
+            <img src="/assets/sbe1v1k/04-physical-port-map.svg" alt="SBE1V1K 物理网口与接口角色示意图" loading="lazy" decoding="async" />
+            <span class="v3-thumb-go">→</span>
+          </a>
         </li>
 
-        <li class="post-item">
-          <a class="post-link" href="/posts/rtx-6000d-vs-pro-6000.html">RTX PRO 6000 vs RTX 6000D：阉割点实测与 profiling 接口验证报告</a>
-          <p class="post-meta">2026-07-06</p>
-          <p class="post-summary">租两台 AutoDL 实例把满血 RTX PRO 6000 Server 与中国特供 RTX 6000D 摆在一起对称实测：DCGM tensor_active 计数器当场抓到限速器现行——D 卡 tensor 发射占空比被硬锁 ~37%，TF32/FP16/FP8/INT8/NVFP4 全 MMA 一视同仁，cutlass 最优内核也拉不动（满血 +20%、D 卡 +0%），证实"FP16≈148T"传闻并算清 TPP 合规账；带宽 0.875、CUDA core 0.83 均为纯物理裁剪。逐项验证"profiling/DCGM 被阉"传闻：ncu/CUPTI 确被 SKU 白名单封锁（官方文档背书），DCGM≥4.4.1 已修复，nvidia-smi/NVML 属讹传。附限速器形状/强度响应曲线与 D 卡顺特性优化 playbook（NVFP4 3.8×、融合 5.4×、Sage +18%）。</p>
+        <li class="v3-card v3-post" data-cat="net" data-tags="SONiC 交换机 100G">
+          <div class="v3-post-body">
+            <h3 class="v3-post-title">
+              <span class="v3-pin">最新</span>
+              <a href="/posts/hpe-r1n26a-sonic-adaptation.html">从 HPE R1N26A 到可维护的 SONiC：平台适配、端口灯、Web 管理与 BMC 终端</a>
+            </h3>
+            <div class="v3-post-meta">
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>2026-11-19</span>
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>网络 / 交换机</span>
+            </div>
+            <p class="v3-post-excerpt">记录 HPE R1N26A / Celestica D3030 的 SONiC RC4 平台适配、LED 映射、100G/4×25G 验证、Web 管理与机内 USB BMC 终端，并交代回退和验收边界。</p>
+            <div class="v3-post-tags">
+              <button class="v3-post-tag" type="button" data-tag="SONiC"># SONiC</button>
+              <button class="v3-post-tag" type="button" data-tag="100G"># 100G</button>
+            </div>
+          </div>
+          <a class="v3-thumb thumb-photo" href="/posts/hpe-r1n26a-sonic-adaptation.html" tabindex="-1" aria-hidden="true">
+            <img src="/assets/images/sonic/01-live-100g.jpg" alt="SONiC Web 管理界面 100G 端口实测截图" loading="lazy" decoding="async" />
+            <span class="v3-thumb-go">→</span>
+          </a>
         </li>
 
-        <li class="post-item">
-          <a class="post-link" href="/posts/h100-es-fallen-off-the-bus.html">我与 H100 885 ES 的激情斗法</a>
-          <p class="post-meta">2026-07-06</p>
-          <p class="post-summary">一块 GH100 ES（10de:233f）突然从 nvidia-smi 消失：lspci 看得见、链路 Gen5 x16 训练正常、PCI config 可读，BAR0 MMIO 却一读就 I/O error，内核反复报 fallen off the bus。FLR、secondary bus reset、remove/rescan、BAR2 resize、modprobe 旗子全家桶六个回合轮番上阵全部无效，最终真凶是引导参数 pci=nocrs,realloc=on——内核无视 ACPI _CRS 窗口自作主张重排 BAR；改回 pci=use_crs,realloc=off 一击痊愈。附完整验证与复发自查清单。</p>
+        <li class="v3-card v3-post" data-cat="net" data-tags="Onyx ONIE 交换机">
+          <div class="v3-post-body">
+            <h3 class="v3-post-title">
+              <a href="/posts/sn2100-onyx-recovery.html">SN2100 系统故障恢复全流程：串口排查、ONIE 救援与 Onyx 重装</a>
+            </h3>
+            <div class="v3-post-meta">
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>2026-10-25</span>
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>网络 / 交换机</span>
+            </div>
+            <p class="v3-post-excerpt">从串口无输出和 GRUB unknown filesystem 出发，手动启动原有 ONIE、清除旧系统并重装 Onyx 3.9.3202；记录镜像校验、DHCP 与 HTTPS 配置，以及许可证和 DAC 1036 错误的后续诊断。</p>
+            <div class="v3-post-tags">
+              <button class="v3-post-tag" type="button" data-tag="SN2100"># SN2100</button>
+              <button class="v3-post-tag" type="button" data-tag="Onyx"># Onyx</button>
+            </div>
+          </div>
+          <a class="v3-thumb" href="/posts/sn2100-onyx-recovery.html" tabindex="-1" aria-hidden="true">
+            <img src="/assets/covers/sn2100-onyx.svg" alt="SN2100 串口救援与 Onyx 重装示意图" loading="lazy" decoding="async" />
+            <span class="v3-thumb-go">→</span>
+          </a>
         </li>
 
-        <li class="post-item">
-          <a class="post-link" href="/posts/nvlink-c2c-tma-multicast.html">NVLink-C2C × TMA Multicast：从一条 folklore 到真相</a>
-          <p class="post-meta">2026-06-29</p>
-          <p class="post-summary">动手验证“NVLink 上用 TMA multicast 访问远程内存会挂卡”这条说法：在 GH200 上用 Nsight Compute 证明 C2C 远端读会落本地 L2；在双卡 H100 上复现 peer 访问其实稳定不挂（NVLink 流量为证）；再用 2×2 对照 + cuda-gdb 抓现场，把挂卡真凶定位到 mbarrier 协议误用（consumer CTA 没 arm expect_tx），与 NVLink 无关——本地 HBM 用错误协议一样挂死。附 DAK 论文代码复现与最小可复现示例。</p>
+        <li class="v3-card v3-post" data-cat="emb" data-tags="Jetson Thor 刷机">
+          <div class="v3-post-body">
+            <h3 class="v3-post-title">
+              <a href="/posts/jetson-thor-flashing-guide.html">Jetson Thor 刷写全流程：原生 Linux、系统配置、第三方载板与 WSL 复盘</a>
+            </h3>
+            <div class="v3-post-meta">
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>2026-10-22</span>
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>嵌入式 / 刷机</span>
+            </div>
+            <p class="v3-post-excerpt">从 R38.2.1 官方包、目录与 CLI 调用链出发，逐项解释 BCT、设备树、分区与 UEFI，再记录 CES 第三方载板适配和 Windows/WSL 六轮刷写排错。附完整手册下载与适配材料。</p>
+            <div class="v3-post-tags">
+              <button class="v3-post-tag" type="button" data-tag="Jetson"># Jetson</button>
+              <button class="v3-post-tag" type="button" data-tag="Thor"># Thor</button>
+            </div>
+          </div>
+          <a class="v3-thumb" href="/posts/jetson-thor-flashing-guide.html" tabindex="-1" aria-hidden="true">
+            <img src="/assets/covers/jetson-thor.svg" alt="Jetson Thor 刷写架构与层栈示意图" loading="lazy" decoding="async" />
+            <span class="v3-thumb-go">→</span>
+          </a>
         </li>
 
-        <li class="post-item">
-          <a class="post-link" href="/posts/nvidia-gpu-pci-device-ids.html">NVIDIA GPU PCI Device ID 全量对照：Ampere → Rubin</a>
-          <p class="post-meta">2026-06-24</p>
-          <p class="post-summary">把 lspci 里的 10DE:xxxx 翻译成芯片 / 架构 / 产品：整理从 Ampere 到刚出现的 Rubin 共 332 个 NVIDIA GPU PCI device ID，交叉核对 pci.ids、开源内核模块 README、nouveau 与 CUDA 文档，逐条标注芯片、SM / Compute Capability、功能、官方与社区产品名，以及是否在开放驱动列表内。附 SM/CC 速查与 Rubin 代号路线图。</p>
+        <li class="v3-card v3-post" data-cat="gpu" data-tags="NVIDIA Jetson 实测">
+          <div class="v3-post-body">
+            <h3 class="v3-post-title">
+              <a href="/posts/spark-vs-thor.html">DGX Spark 与 Jetson Thor 实测：48 SM 与 20 SM，为什么有时接近、有时反转？</a>
+            </h3>
+            <div class="v3-post-meta">
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>2026-09-28</span>
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>GPU / 算力</span>
+            </div>
+            <p class="v3-post-excerpt">从普通 FP32、低精度矩阵到 Q4 服务与视觉完整链，解释 Spark 和 Thor 的胜负为何随任务改变；附 TF32 内核追踪、特权 NCU、FP4 阶段计时及结论边界。</p>
+            <div class="v3-post-tags">
+              <button class="v3-post-tag" type="button" data-tag="Jetson"># Jetson</button>
+              <button class="v3-post-tag" type="button" data-tag="实测"># 实测</button>
+            </div>
+          </div>
+          <a class="v3-thumb thumb-chart" href="/posts/spark-vs-thor.html" tabindex="-1" aria-hidden="true">
+            <img src="/assets/img/spark-vs-thor/interpretation-precision.png" alt="DGX Spark 与 Jetson Thor 不同精度吞吐对比图" loading="lazy" decoding="async" />
+            <span class="v3-thumb-go">→</span>
+          </a>
         </li>
 
-        <li class="post-item">
-          <a class="post-link" href="/posts/blackwell-next-cxl-dvsec.html">Blackwell-Next CXL DVSEC：代码考据与最终结论</a>
-          <p class="post-meta">2026-06-24</p>
-          <p class="post-summary">从微信一句"Blackwell-Next"出发，全树核查这个 NVIDIA 代号在 Linux 内核源码里的唯一落地点——nvgrace-gpu 驱动新增的 CXL DVSEC 显存就绪探测路径，逐段拆解代码，并就"VR200 是否从 PCIe+C2C 变成 CXL+C2C、提升缓存一致性"给出结论：传输层始终是 NVLink-C2C，变的只是 GPU 内存暴露接口从私有走向 CXL 标准化。</p>
+        <li class="v3-card v3-post" data-cat="net" data-tags="ConnectX PCIe 固件">
+          <div class="v3-post-body">
+            <h3 class="v3-post-title">
+              <a href="/posts/connectx8-pcie-nvdata-recovery.html">ConnectX-8 PCIe 配置改崩后的完整恢复：CH347、MTUSB、FNP 与 NV_DATA</a>
+            </h3>
+            <div class="v3-post-meta">
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>2026-07-15</span>
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>网络 / 交换机</span>
+            </div>
+            <p class="v3-post-excerpt">照官网手册改完 mlxconfig PCIe 参数，CX8 直接从总线消失：从 CH347 repeated START、MTUSB 信号量、FNP Flash Recovery 一路追到 FS5 双份 NV_DATA，最终原始读写恢复枚举。</p>
+            <div class="v3-post-tags">
+              <button class="v3-post-tag" type="button" data-tag="ConnectX"># ConnectX</button>
+              <button class="v3-post-tag" type="button" data-tag="PCIe"># PCIe</button>
+            </div>
+          </div>
+          <a class="v3-thumb" href="/posts/connectx8-pcie-nvdata-recovery.html" tabindex="-1" aria-hidden="true">
+            <img src="/assets/covers/cx8-nvdata.svg" alt="ConnectX-8 FS5 双份 NV_DATA 恢复示意图" loading="lazy" decoding="async" />
+            <span class="v3-thumb-go">→</span>
+          </a>
         </li>
 
-        <li class="post-item">
-          <a class="post-link" href="/posts/nvidia-jetson-tegra-part-numbers.html">NVIDIA Jetson / Tegra 编号与料号全量对照</a>
-          <p class="post-meta">2026-06-20</p>
-          <p class="post-summary">把 Jetson 各代核心板、底板、开发套件的 Pxxxx 编号、SKU 后缀与量产料号一次理清，附设备上自查方法与设备树实证的模组×底板组合。</p>
+        <li class="v3-card v3-post" data-cat="gpu" data-tags="MTT 实测 PCIe">
+          <div class="v3-post-body">
+            <h3 class="v3-post-title">
+              <a href="/posts/mtt-s5000-single-and-8gpu-benchmark.html">MTT S5000 单卡与八卡实测：从 PCIe、FP8 到 MTLink 与 MCCL</a>
+            </h3>
+            <div class="v3-post-meta">
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>2026-07-14</span>
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>GPU / 算力</span>
+            </div>
+            <p class="v3-post-excerpt">MTT S5000 单卡到八卡完整实测：PCIe 57.1 GB/s、FP8 899.4 TFLOP/s、全互联 MTLink P2P 35.7 GB/s，以及 8 卡 MCCL AllReduce 234.3 GB/s。</p>
+            <div class="v3-post-tags">
+              <button class="v3-post-tag" type="button" data-tag="实测"># 实测</button>
+              <button class="v3-post-tag" type="button" data-tag="PCIe"># PCIe</button>
+            </div>
+          </div>
+          <a class="v3-thumb" href="/posts/mtt-s5000-single-and-8gpu-benchmark.html" tabindex="-1" aria-hidden="true">
+            <img src="/assets/covers/mtt-s5000.svg" alt="MTT S5000 单卡与八卡实测核心指标图" loading="lazy" decoding="async" />
+            <span class="v3-thumb-go">→</span>
+          </a>
         </li>
 
-        <li class="post-item">
-          <a class="post-link" href="/posts/connectx-firmware-reverse-analysis.html">从固件二进制里挖出 NVIDIA 的"未公开网卡"</a>
-          <p class="post-meta">2026-06-19</p>
-          <p class="post-summary">逐版本解析 ConnectX-7/8/9 官方固件 Release Notes 与二进制：CX7 49 版/37 个 PSID 全表、CX8 13 型号、CX9 2 版。发现三家族共用同一固件代码库、NVIDIA 在同一个 .46 build 上跨家族同步撤掉器件表、GH100「Freysa」等内部板，以及 IGX/GB200/GB300/DGX-B200 的网卡对应。</p>
+        <li class="v3-card v3-post" data-cat="gpu" data-tags="RTX PCIe NVIDIA">
+          <div class="v3-post-body">
+            <h3 class="v3-post-title">
+              <a href="/posts/pcie-p2p-gdr-gsp-enablement-guide.html">消费级 RTX 的 PCIe P2P、GPUDirect RDMA 与 GSP-RM</a>
+            </h3>
+            <div class="v3-post-meta">
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>2026-07-10</span>
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>GPU / 算力</span>
+            </div>
+            <p class="v3-post-excerpt">把 RTX 3090、4090 与 5090 的 GPU↔GPU PCIe P2P、legacy nvidia-peermem、DMA-BUF GDR、OpenRM 与 GSP-RM 放进同一张可验证的工程图。</p>
+            <div class="v3-post-tags">
+              <button class="v3-post-tag" type="button" data-tag="RTX"># RTX</button>
+              <button class="v3-post-tag" type="button" data-tag="PCIe"># PCIe</button>
+            </div>
+          </div>
+          <a class="v3-thumb" href="/posts/pcie-p2p-gdr-gsp-enablement-guide.html" tabindex="-1" aria-hidden="true">
+            <img src="/assets/covers/pcie-p2p-gdr.svg" alt="消费级 RTX PCIe P2P 与 GPUDirect RDMA 架构图" loading="lazy" decoding="async" />
+            <span class="v3-thumb-go">→</span>
+          </a>
         </li>
 
-        <li class="post-item">
-          <a class="post-link" href="/posts/hello-world.html">第一篇文章：Hello, World</a>
-          <p class="post-meta">2026-06-18</p>
-          <p class="post-summary">博客上线啦，简单聊聊为什么想搭一个自己的小站。</p>
+        <li class="v3-card v3-post" data-cat="gpu" data-tags="RTX NVIDIA 实测">
+          <div class="v3-post-body">
+            <h3 class="v3-post-title">
+              <span class="v3-pin">精选</span>
+              <a href="/posts/rtx-6000d-vs-pro-6000.html">RTX PRO 6000 vs RTX 6000D：阉割点实测与 profiling 接口验证报告</a>
+            </h3>
+            <div class="v3-post-meta">
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>2026-07-06</span>
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>GPU / 算力</span>
+            </div>
+            <p class="v3-post-excerpt">把满血 RTX PRO 6000 Server 与中国特供 RTX 6000D 对称实测：DCGM tensor_active 当场抓到限速器现行——D 卡 tensor 发射占空比被硬锁 ~37%，附完整优化 playbook。</p>
+            <div class="v3-post-tags">
+              <button class="v3-post-tag" type="button" data-tag="RTX"># RTX</button>
+              <button class="v3-post-tag" type="button" data-tag="实测"># 实测</button>
+            </div>
+          </div>
+          <a class="v3-thumb thumb-chart" href="/posts/rtx-6000d-vs-pro-6000.html" tabindex="-1" aria-hidden="true">
+            <img src="/posts/rtx-6000d-vs-pro-6000/fig1_limiter_signature.png" alt="RTX 6000D tensor_active 0.37 限速器签名曲线图" loading="lazy" decoding="async" />
+            <span class="v3-thumb-go">→</span>
+          </a>
+        </li>
+
+        <li class="v3-card v3-post" data-cat="gpu" data-tags="H100 PCIe NVIDIA">
+          <div class="v3-post-body">
+            <h3 class="v3-post-title">
+              <a href="/posts/h100-es-fallen-off-the-bus.html">我与 H100 885 ES 的激情斗法</a>
+            </h3>
+            <div class="v3-post-meta">
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>2026-07-06</span>
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>GPU / 算力</span>
+            </div>
+            <p class="v3-post-excerpt">一块 GH100 ES（10de:233f）突然从 nvidia-smi 消失，BAR0 MMIO 一读就报 I/O error 与 fallen off the bus。六回合排查后定位到 pci=nocrs,realloc=on 无视 ACPI _CRS 窗口重排 BAR。</p>
+            <div class="v3-post-tags">
+              <button class="v3-post-tag" type="button" data-tag="H100"># H100</button>
+              <button class="v3-post-tag" type="button" data-tag="PCIe"># PCIe</button>
+            </div>
+          </div>
+          <a class="v3-thumb" href="/posts/h100-es-fallen-off-the-bus.html" tabindex="-1" aria-hidden="true">
+            <img src="/assets/covers/h100-es-bar0.svg" alt="GH100 ES BAR0 与 ACPI _CRS 窗口排查图" loading="lazy" decoding="async" />
+            <span class="v3-thumb-go">→</span>
+          </a>
+        </li>
+
+        <li class="v3-card v3-post" data-cat="gpu" data-tags="NVLink H100 NVIDIA">
+          <div class="v3-post-body">
+            <h3 class="v3-post-title">
+              <a href="/posts/nvlink-c2c-tma-multicast.html">NVLink-C2C × TMA Multicast：从一条 folklore 到真相</a>
+            </h3>
+            <div class="v3-post-meta">
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>2026-06-29</span>
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>GPU / 算力</span>
+            </div>
+            <p class="v3-post-excerpt">动手验证“NVLink 上用 TMA multicast 访问远程内存会挂卡”的说法：用 NCU 与 cuda-gdb 定位到挂卡真凶是 mbarrier 协议误用（未 arm expect_tx），与 NVLink 无关。</p>
+            <div class="v3-post-tags">
+              <button class="v3-post-tag" type="button" data-tag="NVLink"># NVLink</button>
+              <button class="v3-post-tag" type="button" data-tag="H100"># H100</button>
+            </div>
+          </div>
+          <a class="v3-thumb" href="/posts/nvlink-c2c-tma-multicast.html" tabindex="-1" aria-hidden="true">
+            <img src="/assets/covers/nvlink-tma.svg" alt="NVLink-C2C 与 TMA Multicast 数据通路图" loading="lazy" decoding="async" />
+            <span class="v3-thumb-go">→</span>
+          </a>
+        </li>
+
+        <li class="v3-card v3-post" data-cat="ref" data-tags="NVIDIA PCIe">
+          <div class="v3-post-body">
+            <h3 class="v3-post-title">
+              <span class="v3-pin">速查表</span>
+              <a href="/posts/nvidia-gpu-pci-device-ids.html">NVIDIA GPU PCI Device ID 全量对照：Ampere → Rubin</a>
+            </h3>
+            <div class="v3-post-meta">
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>2026-06-24</span>
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>资料与随笔</span>
+            </div>
+            <p class="v3-post-excerpt">整理从 Ampere 到 Rubin 共 332 个 NVIDIA GPU PCI device ID，交叉核对 pci.ids、开源内核模块与 CUDA 文档，附 SM/CC 速查与 Rubin 代号路线图。</p>
+            <div class="v3-post-tags">
+              <button class="v3-post-tag" type="button" data-tag="NVIDIA"># NVIDIA</button>
+              <button class="v3-post-tag" type="button" data-tag="PCIe"># PCIe</button>
+            </div>
+          </div>
+          <a class="v3-thumb" href="/posts/nvidia-gpu-pci-device-ids.html" tabindex="-1" aria-hidden="true">
+            <img src="/assets/covers/nvidia-pci-ids.svg" alt="NVIDIA GPU PCI Device ID 对照表封面图" loading="lazy" decoding="async" />
+            <span class="v3-thumb-go">→</span>
+          </a>
+        </li>
+
+        <li class="v3-card v3-post" data-cat="gpu" data-tags="NVIDIA NVLink">
+          <div class="v3-post-body">
+            <h3 class="v3-post-title">
+              <a href="/posts/blackwell-next-cxl-dvsec.html">Blackwell-Next CXL DVSEC：代码考据与最终结论</a>
+            </h3>
+            <div class="v3-post-meta">
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>2026-06-24</span>
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>GPU / 算力</span>
+            </div>
+            <p class="v3-post-excerpt">全树核查“Blackwell-Next”在 Linux 内核源码里的落地点——nvgrace-gpu 驱动新增的 CXL DVSEC 显存就绪探测路径，证实传输层始终是 NVLink-C2C。</p>
+            <div class="v3-post-tags">
+              <button class="v3-post-tag" type="button" data-tag="NVIDIA"># NVIDIA</button>
+              <button class="v3-post-tag" type="button" data-tag="NVLink"># NVLink</button>
+            </div>
+          </div>
+          <a class="v3-thumb" href="/posts/blackwell-next-cxl-dvsec.html" tabindex="-1" aria-hidden="true">
+            <img src="/assets/covers/blackwell-cxl.svg" alt="Blackwell-Next CXL DVSEC 代码考据图" loading="lazy" decoding="async" />
+            <span class="v3-thumb-go">→</span>
+          </a>
+        </li>
+
+        <li class="v3-card v3-post" data-cat="ref" data-tags="NVIDIA Jetson">
+          <div class="v3-post-body">
+            <h3 class="v3-post-title">
+              <span class="v3-pin">速查表</span>
+              <a href="/posts/nvidia-jetson-tegra-part-numbers.html">NVIDIA Jetson / Tegra 编号与料号全量对照</a>
+            </h3>
+            <div class="v3-post-meta">
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>2026-06-20</span>
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>资料与随笔</span>
+            </div>
+            <p class="v3-post-excerpt">把 Jetson 各代核心板、底板、开发套件的 Pxxxx 编号、SKU 后缀与量产料号一次理清，附设备上自查方法与设备树实证的模组×底板组合。</p>
+            <div class="v3-post-tags">
+              <button class="v3-post-tag" type="button" data-tag="Jetson"># Jetson</button>
+              <button class="v3-post-tag" type="button" data-tag="NVIDIA"># NVIDIA</button>
+            </div>
+          </div>
+          <a class="v3-thumb" href="/posts/nvidia-jetson-tegra-part-numbers.html" tabindex="-1" aria-hidden="true">
+            <img src="/assets/covers/jetson-parts.svg" alt="Jetson Tegra 模组与底板料号对照图" loading="lazy" decoding="async" />
+            <span class="v3-thumb-go">→</span>
+          </a>
+        </li>
+
+        <li class="v3-card v3-post" data-cat="net" data-tags="ConnectX NVIDIA 固件">
+          <div class="v3-post-body">
+            <h3 class="v3-post-title">
+              <a href="/posts/connectx-firmware-reverse-analysis.html">从固件二进制里挖出 NVIDIA 的"未公开网卡"</a>
+            </h3>
+            <div class="v3-post-meta">
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>2026-06-19</span>
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>网络 / 交换机</span>
+            </div>
+            <p class="v3-post-excerpt">逐版本解析 ConnectX-7/8/9 官方固件 Release Notes 与二进制：CX7 49 版/37 个 PSID 全表、CX8 13 型号、CX9 2 版以及 GB200/GB300 的网卡对应关系。</p>
+            <div class="v3-post-tags">
+              <button class="v3-post-tag" type="button" data-tag="ConnectX"># ConnectX</button>
+              <button class="v3-post-tag" type="button" data-tag="NVIDIA"># NVIDIA</button>
+            </div>
+          </div>
+          <a class="v3-thumb" href="/posts/connectx-firmware-reverse-analysis.html" tabindex="-1" aria-hidden="true">
+            <img src="/assets/covers/connectx-fw.svg" alt="ConnectX-7/8/9 固件逆向分析图" loading="lazy" decoding="async" />
+            <span class="v3-thumb-go">→</span>
+          </a>
+        </li>
+
+        <li class="v3-card v3-post" data-cat="ref" data-tags="随笔">
+          <div class="v3-post-body">
+            <h3 class="v3-post-title">
+              <a href="/posts/hello-world.html">第一篇文章：Hello, World</a>
+            </h3>
+            <div class="v3-post-meta">
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>2026-06-18</span>
+              <span class="v3-meta-item"><span class="v3-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>资料与随笔</span>
+            </div>
+            <p class="v3-post-excerpt">博客上线啦，简单聊聊为什么想搭一个自己的小站。</p>
+            <div class="v3-post-tags">
+              <button class="v3-post-tag" type="button" data-tag="随笔"># 随笔</button>
+            </div>
+          </div>
+          <a class="v3-thumb" href="/posts/hello-world.html" tabindex="-1" aria-hidden="true">
+            <img src="/assets/covers/hello-world.svg" alt="Hello World 建站纪念图" loading="lazy" decoding="async" />
+            <span class="v3-thumb-go">→</span>
+          </a>
         </li>
         <!-- ↑↑↑ 复制到这里为止 ↑↑↑ -->
 
       </ul>
-    </main>
 
-    <footer class="site-footer">
-      <span>© 2026 我的博客</span>
-      <span>由 <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a> 托管</span>
-    </footer>
+      <div class="v3-card v3-empty" id="emptyState">
+        <p>没有找到匹配的文章，换个关键词或标签试试？</p>
+        <button id="emptyResetBtn" type="button">显示全部文章</button>
+      </div>
+
+      <footer class="v3-card v3-footer">
+        <span>© 2026 繁星若尘 · aosudh.github.io</span>
+        <span>
+          <a href="/classic.html">原版极简入口</a> ·
+          <a href="https://www.xiaohongshu.com/user/profile/60cb6efc000000000101d62b" target="_blank" rel="noopener">小红书</a> ·
+          由 <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a> 托管
+        </span>
+      </footer>
+    </main>
   </div>
+
+  <button class="v3-backtop" id="backTop" type="button" aria-label="返回顶部" title="返回顶部">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+  </button>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var navbar = document.getElementById('v3Navbar');
+      var bannerBg = document.getElementById('bannerBg');
+      var backTop = document.getElementById('backTop');
+
+      function onScroll() {
+        var y = window.scrollY || 0;
+        navbar.classList.toggle('is-scrolled', y > 220);
+        backTop.classList.toggle('is-visible', y > 360);
+        if (y < 680) {
+          bannerBg.style.transform = 'translate3d(0,' + (y * 0.22).toFixed(1) + 'px,0) scale(1.03)';
+        }
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+      backTop.addEventListener('click', function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
+      var startDay = new Date('2026-06-18T00:00:00');
+      var diffDays = Math.max(1, Math.floor((Date.now() - startDay.getTime()) / 86400000));
+      var statDays = document.getElementById('statDays');
+      if (statDays) statDays.textContent = diffDays;
+
+      var lines = [
+        '在硅片与光缆之间，追寻大规模算力系统的底层真相。',
+        '从大规模智算集群长稳烤机到单卡极限速率，每份数据皆可复现。',
+        '从 PCIe BAR0 到 100G SONiC，直面最硬核的底层硬件排错。',
+        '仰望繁星，亦俯察寄存器、互联拓扑与二进制微尘。'
+      ];
+      var twEl = document.getElementById('typewriter');
+      var lineIdx = 0, charIdx = lines[0].length, deleting = true;
+      function tickTypewriter() {
+        var current = lines[lineIdx];
+        if (!deleting) {
+          charIdx++;
+          twEl.textContent = current.slice(0, charIdx);
+          if (charIdx >= current.length) {
+            deleting = true;
+            setTimeout(tickTypewriter, 2500);
+            return;
+          }
+          setTimeout(tickTypewriter, 72);
+        } else {
+          charIdx--;
+          twEl.textContent = current.slice(0, charIdx);
+          if (charIdx <= 0) {
+            deleting = false;
+            lineIdx = (lineIdx + 1) % lines.length;
+            setTimeout(tickTypewriter, 420);
+            return;
+          }
+          setTimeout(tickTypewriter, 34);
+        }
+      }
+      setTimeout(tickTypewriter, 2300);
+
+      var themeToggle = document.getElementById('themeToggle');
+      var themeIcon = document.getElementById('themeIcon');
+      var mediaDark = window.matchMedia('(prefers-color-scheme: dark)');
+      function effTheme() {
+        var a = root.getAttribute('data-theme');
+        return (a === 'dark' || a === 'light') ? a : (mediaDark.matches ? 'dark' : 'light');
+      }
+      function syncThemeIcon() {
+        var isDark = effTheme() === 'dark';
+        themeIcon.innerHTML = isDark
+          ? '<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>'
+          : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+      }
+      syncThemeIcon();
+      themeToggle.addEventListener('click', function () {
+        var next = effTheme() === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem('site-theme', next); } catch (e) {}
+        syncThemeIcon();
+      });
+
+      var paletteToggle = document.getElementById('paletteToggle');
+      var palettePopover = document.getElementById('palettePopover');
+      var hueSlider = document.getElementById('hueSlider');
+      var hueVal = document.getElementById('hueVal');
+      var hueReset = document.getElementById('hueReset');
+
+      function setHue(val) {
+        var v = String(Math.min(360, Math.max(0, Number(val) || 222)));
+        root.style.setProperty('--hue', v);
+        hueSlider.value = v;
+        hueVal.textContent = v;
+        try { localStorage.setItem('site-v3-hue', v); } catch (e) {}
+      }
+      var savedHue = localStorage.getItem('site-v3-hue');
+      if (savedHue !== null) setHue(savedHue);
+
+      paletteToggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var open = palettePopover.classList.toggle('is-open');
+        paletteToggle.classList.toggle('is-active', open);
+      });
+      document.addEventListener('click', function (e) {
+        if (!palettePopover.contains(e.target) && e.target !== paletteToggle) {
+          palettePopover.classList.remove('is-open');
+          paletteToggle.classList.remove('is-active');
+        }
+      });
+      hueSlider.addEventListener('input', function () { setHue(this.value); });
+      hueReset.addEventListener('click', function () { setHue(222); });
+      Array.prototype.forEach.call(document.querySelectorAll('.hue-dot'), function (dot) {
+        dot.addEventListener('click', function () { setHue(this.getAttribute('data-hue')); });
+      });
+
+      var postList = document.getElementById('postList');
+      var posts = Array.prototype.slice.call(postList.querySelectorAll('.v3-post'));
+      var filterControls = Array.prototype.slice.call(document.querySelectorAll('[data-filter]'));
+      var tagChips = Array.prototype.slice.call(document.querySelectorAll('#tagCloud .tag-chip'));
+      var searchInput = document.getElementById('searchInput');
+      var searchClear = document.getElementById('searchClear');
+      var statusText = document.getElementById('statusText');
+      var resetBtn = document.getElementById('resetBtn');
+      var emptyState = document.getElementById('emptyState');
+      var emptyResetBtn = document.getElementById('emptyResetBtn');
+
+      var activeCat = 'all', activeTag = '';
+
+      var counts = { all: posts.length, gpu: 0, net: 0, emb: 0, ref: 0 };
+      posts.forEach(function (el) {
+        var c = el.getAttribute('data-cat');
+        if (counts[c] !== undefined) counts[c]++;
+      });
+      Object.keys(counts).forEach(function (k) {
+        Array.prototype.forEach.call(document.querySelectorAll('[data-count="' + k + '"]'), function (n) {
+          n.textContent = counts[k];
+        });
+      });
+      var statPosts = document.getElementById('statPosts');
+      if (statPosts) statPosts.textContent = posts.length;
+
+      function applyFilter() {
+        var q = searchInput.value.trim().toLowerCase();
+        var visible = 0;
+        posts.forEach(function (el) {
+          var catOk = activeCat === 'all' || el.getAttribute('data-cat') === activeCat;
+          var tagsStr = (el.getAttribute('data-tags') || '').toLowerCase();
+          var tagOk = !activeTag || tagsStr.indexOf(activeTag.toLowerCase()) !== -1 || el.textContent.toLowerCase().indexOf(activeTag.toLowerCase()) !== -1;
+          var qOk = !q || el.textContent.toLowerCase().indexOf(q) !== -1;
+          var show = catOk && tagOk && qOk;
+          el.classList.toggle('is-hidden', !show);
+          if (show) {
+            el.classList.add('is-revealed');
+            visible++;
+          }
+        });
+        var isFiltered = activeCat !== 'all' || !!activeTag || q.length > 0;
+        searchClear.classList.toggle('is-visible', q.length > 0);
+        resetBtn.classList.toggle('is-visible', isFiltered);
+        emptyState.classList.toggle('is-visible', visible === 0);
+        statusText.textContent = isFiltered
+          ? ('显示 ' + visible + ' / ' + posts.length + ' 篇' + (activeTag ? ' · #' + activeTag : ''))
+          : ('共 ' + posts.length + ' 篇');
+      }
+
+      function setCat(cat) {
+        activeCat = cat;
+        filterControls.forEach(function (btn) {
+          btn.classList.toggle('is-active', btn.getAttribute('data-filter') === cat);
+        });
+        applyFilter();
+      }
+      function setTag(tag) {
+        activeTag = (activeTag === tag) ? '' : tag;
+        tagChips.forEach(function (c) {
+          c.classList.toggle('is-active', c.getAttribute('data-tag') === activeTag);
+        });
+        applyFilter();
+      }
+      function resetAll() {
+        activeTag = '';
+        searchInput.value = '';
+        tagChips.forEach(function (c) { c.classList.remove('is-active'); });
+        setCat('all');
+      }
+
+      filterControls.forEach(function (btn) {
+        btn.addEventListener('click', function () { setCat(this.getAttribute('data-filter')); });
+      });
+      document.addEventListener('click', function (e) {
+        var t = e.target.closest('[data-tag]');
+        if (t) setTag(t.getAttribute('data-tag'));
+      });
+      searchInput.addEventListener('input', applyFilter);
+      searchClear.addEventListener('click', function () { searchInput.value = ''; applyFilter(); searchInput.focus(); });
+      resetBtn.addEventListener('click', resetAll);
+      emptyResetBtn.addEventListener('click', resetAll);
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === '/' && document.activeElement !== searchInput && !e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          searchInput.focus();
+        }
+      });
+
+      var listViewBtn = document.getElementById('listViewBtn');
+      var gridViewBtn = document.getElementById('gridViewBtn');
+      listViewBtn.addEventListener('click', function () {
+        postList.classList.remove('is-grid');
+        listViewBtn.classList.add('is-active');
+        gridViewBtn.classList.remove('is-active');
+      });
+      gridViewBtn.addEventListener('click', function () {
+        postList.classList.add('is-grid');
+        gridViewBtn.classList.add('is-active');
+        listViewBtn.classList.remove('is-active');
+      });
+
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry, idx) {
+            if (entry.isIntersecting) {
+              setTimeout(function () {
+                entry.target.classList.add('is-revealed');
+              }, Math.min(idx * 55, 220));
+              io.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.05 });
+        posts.forEach(function (el) { io.observe(el); });
+      } else {
+        posts.forEach(function (el) { el.classList.add('is-revealed'); });
+      }
+    })();
+  </script>
 </body>
 </html>

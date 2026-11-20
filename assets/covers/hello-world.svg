@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" width="480" height="300" role="img" aria-label="Hello World 第一篇文章封面图">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#94a3b8" stroke-opacity="0.06" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="480" height="300" fill="url(#g)"/>
+  <rect width="480" height="300" fill="url(#grid)"/>
+  <circle cx="400" cy="60" r="120" fill="#60a5fa" opacity="0.1"/>
+
+  <!-- Minimal terminal window -->
+  <rect x="28" y="28" width="424" height="164" rx="12" fill="#0b1120" stroke="#334155" stroke-width="1.5"/>
+  <circle cx="48" cy="48" r="5" fill="#f87171"/>
+  <circle cx="64" cy="48" r="5" fill="#fbbf24"/>
+  <circle cx="80" cy="48" r="5" fill="#34d399"/>
+  <text x="436" y="52" text-anchor="end" fill="#64748b" font-family="Consolas,monospace" font-size="11">aosudh.github.io</text>
+  <line x1="28" y1="64" x2="452" y2="64" stroke="#1e293b"/>
+
+  <text x="46" y="96" fill="#60a5fa" font-family="Consolas,monospace" font-size="14">$ git init &amp;&amp; echo "Hello, World"</text>
+  <text x="46" y="128" fill="#e2e8f0" font-family="Consolas,monospace" font-size="22" font-weight="700">Hello, World_</text>
+  <text x="46" y="160" fill="#94a3b8" font-family="Consolas,monospace" font-size="13">// Pure HTML + CSS · Zero Build · Notes &amp; Labs</text>
+
+  <text x="28" y="246" fill="#f8fafc" font-family="system-ui,'Microsoft YaHei',sans-serif" font-size="24" font-weight="700">第一篇文章：Hello, World</text>
+  <text x="28" y="274" fill="#94a3b8" font-family="Consolas,monospace" font-size="13">2026-06-18 · 博客上线与建站初衷</text>
+</svg>

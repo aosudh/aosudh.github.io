@@ -3,44 +3,263 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>关于 · 我的博客</title>
-  <meta name="description" content="关于我和这个博客。" />
-  <link rel="stylesheet" href="/assets/css/style.css" />
+  <title>关于 · 繁星若尘</title>
+  <meta name="description" content="繁星若尘 (aosudh) —— 聚焦大规模智算集群稳定性测试、异构加速卡算力与极限速率表征、高速互联网络与底层固件工程。" />
+  <link rel="icon" type="image/svg+xml" href="/assets/covers/favicon.svg" />
+  <link rel="stylesheet" href="/assets/css/home-v3.css" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('site-theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        var h = localStorage.getItem('site-v3-hue');
+        if (h !== null && !isNaN(Number(h))) document.documentElement.style.setProperty('--hue', h);
+      } catch (e) {}
+    })();
+  </script>
 </head>
-<body>
-  <div class="wrap">
-    <header class="site-header">
-      <a class="site-title" href="/">我的博客</a>
-      <nav class="site-nav">
+<body class="page-v3">
+
+  <div class="v3-nav-wrap">
+    <header class="v3-navbar" id="v3Navbar">
+      <a class="v3-brand" href="/">
+        <img src="/assets/covers/avatar.jpg" alt="繁星若尘" width="30" height="30" />
+        <span>繁星若尘</span>
+      </a>
+
+      <nav class="v3-nav-links" aria-label="主导航">
         <a href="/">首页</a>
-        <a href="/about.html">关于</a>
+        <a class="is-active" href="/about.html">关于</a>
+        <a href="https://www.xiaohongshu.com/user/profile/60cb6efc000000000101d62b" target="_blank" rel="noopener">小红书</a>
+        <a href="https://github.com/aosudh" target="_blank" rel="noopener">GitHub</a>
+        <a href="/classic.html" title="切换到保留的原始极简版首页">原版入口</a>
       </nav>
+
+      <div class="v3-nav-tools">
+        <button class="v3-icon-btn" id="paletteToggle" type="button" aria-label="自定义主题色" title="主题色盘">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle>
+            <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle>
+            <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle>
+            <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle>
+            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
+          </svg>
+        </button>
+
+        <button class="v3-icon-btn" id="themeToggle" type="button" aria-label="切换浅色或深色主题" title="切换浅/深色">
+          <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
     </header>
-
-    <main>
-      <article class="post-content">
-        <h1>关于</h1>
-        <p>嗨，我是 aosudh。这里是我的个人博客，用最朴素的 HTML/CSS 手写而成，托管在 GitHub Pages 上。</p>
-
-        <h2>我会写些什么</h2>
-        <ul>
-          <li>技术折腾与踩坑记录</li>
-          <li>项目笔记</li>
-          <li>一些随想</li>
-        </ul>
-
-        <h2>联系我</h2>
-        <ul>
-          <li>GitHub：<a href="https://github.com/aosudh" target="_blank" rel="noopener">@aosudh</a></li>
-          <li>邮箱：2169159625@qq.com</li>
-        </ul>
-      </article>
-    </main>
-
-    <footer class="site-footer">
-      <span>© 2026 我的博客</span>
-      <span>由 <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a> 托管</span>
-    </footer>
   </div>
+
+  <div class="palette-popover" id="palettePopover" role="dialog" aria-label="主题色调节">
+    <div class="palette-head">
+      <span class="palette-title">主题色 Hue</span>
+      <span class="palette-val" id="hueVal">222</span>
+    </div>
+    <input class="hue-slider" id="hueSlider" type="range" min="0" max="360" step="1" value="222" aria-label="主题色相" />
+    <div class="palette-presets">
+      <button class="hue-dot" type="button" data-hue="222" style="background:hsl(222,78%,54%)" title="星夜蓝"></button>
+      <button class="hue-dot" type="button" data-hue="258" style="background:hsl(258,76%,60%)" title="星云紫"></button>
+      <button class="hue-dot" type="button" data-hue="186" style="background:hsl(186,78%,44%)" title="极光青"></button>
+      <button class="hue-dot" type="button" data-hue="152" style="background:hsl(152,68%,44%)" title="翡翠绿"></button>
+      <button class="hue-dot" type="button" data-hue="34" style="background:hsl(34,88%,52%)" title="琥珀金"></button>
+      <button class="hue-dot" type="button" data-hue="338" style="background:hsl(338,78%,58%)" title="樱花粉"></button>
+      <button class="hue-reset" id="hueReset" type="button">重置</button>
+    </div>
+  </div>
+
+  <section class="v3-banner is-compact" aria-label="关于页横幅">
+    <div class="v3-banner-bg" id="bannerBg"></div>
+    <div class="v3-banner-overlay"></div>
+    <div class="v3-banner-content">
+      <div class="v3-banner-badge"><i></i><span>AI Infrastructure · Systems &amp; Hardware Engineering</span></div>
+      <h1 class="v3-banner-title">关于繁星若尘</h1>
+      <p class="v3-typewriter-wrap">面向大规模异构智算集群，以第一手硬件实测还原底层系统真相。</p>
+    </div>
+
+    <svg class="v3-waves" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto" aria-hidden="true">
+      <defs>
+        <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+      </defs>
+      <g class="parallax">
+        <use href="#gentle-wave" x="48" y="0" />
+        <use href="#gentle-wave" x="48" y="3" />
+        <use href="#gentle-wave" x="48" y="5" />
+        <use href="#gentle-wave" x="48" y="7" />
+      </g>
+    </svg>
+  </section>
+
+  <main class="about-shell">
+    <!-- 个人定位主卡 -->
+    <section class="v3-card about-hero-card">
+      <div class="about-avatar">
+        <img src="/assets/covers/avatar.jpg" alt="繁星若尘头像" width="118" height="118" />
+      </div>
+      <div>
+        <span class="about-kicker">AI INFRASTRUCTURE · HARDWARE SYSTEMS LAB</span>
+        <h2>繁星若尘（aosudh）</h2>
+        <p>
+          长期深耕 <strong>AI 算力基础设施</strong> 与 <strong>底层异构硬件系统工程</strong>，专注于大规模多机多卡智算集群的稳定性验证、计算卡微架构极限速率表征、高速互联网络（RDMA / NVLink / PCIe P2P / 100G–800G 交换）与固件级排错。本站坚持全手写零构建静态架构，只沉淀经得起硬件计数器、波形与代码复现的一手工程实录。
+        </p>
+      </div>
+    </section>
+
+    <!-- 关键工程维度指标 -->
+    <section class="about-metrics" aria-label="核心技术覆盖维度">
+      <div class="v3-card metric-tile">
+        <span class="metric-kicker">CLUSTER RELIABILITY</span>
+        <span class="metric-val">大规模集群长稳验证</span>
+        <span class="metric-sub">全链路 Burn-in 烤机 · 故障域隔离</span>
+      </div>
+      <div class="v3-card metric-tile">
+        <span class="metric-kicker">COMPUTE PROFILING</span>
+        <span class="metric-val">多精度极限速率表征</span>
+        <span class="metric-sub">FP32 / FP16 / FP8 / NVFP4 · NCU &amp; DCGM</span>
+      </div>
+      <div class="v3-card metric-tile">
+        <span class="metric-kicker">HIGH-SPEED FABRIC</span>
+        <span class="metric-val">高速互联与集合通信</span>
+        <span class="metric-sub">NVLink-C2C · PCIe P2P · GDR · 100G+ 交换</span>
+      </div>
+      <div class="v3-card metric-tile">
+        <span class="metric-kicker">FIRMWARE &amp; SILICON</span>
+        <span class="metric-val">固件逆向与硬件图谱</span>
+        <span class="metric-sub">332 项 GPU PCI ID · FS5 NV_DATA 恢复</span>
+      </div>
+    </section>
+
+    <!-- 四大核心研究方向 -->
+    <section class="about-grid" aria-label="核心研究与实践方向">
+      <article class="v3-card domain-card">
+        <span class="domain-tag">01 · CLUSTER STABILITY</span>
+        <h3>大规模智算集群稳定性与可靠性工程</h3>
+        <p>
+          围绕多机多卡智算集群的上线验收与长周期稳定性测试，构建从单卡满载烤机、功耗与热节流监控到跨节点集合通信压测的端到端验收基线；深度定位 PCIe 链路降级、BAR0 MMIO 访问异常、GPU 掉卡（Fallen off the bus）、TMA/mbarrier 挂死与静默性能抖动等生产级疑难故障。
+        </p>
+      </article>
+
+      <article class="v3-card domain-card">
+        <span class="domain-tag">02 · ACCELERATOR BENCHMARKING</span>
+        <h3>异构计算卡微架构剖析与极限速率实测</h3>
+        <p>
+          覆盖 NVIDIA Hopper / Blackwell / Rubin、DGX Spark、Jetson Thor 及国产算力卡（如 MTT S5000）的真实算力墙、显存带宽与发射占空比表征；结合 DCGM 硬件计数器、Nsight Compute 与底层 CUTLASS / CUDA 内核追踪，量化多精度矩阵算力、特供 SKU 限速机制与端到端推理吞吐收益。
+        </p>
+      </article>
+
+      <article class="v3-card domain-card">
+        <span class="domain-tag">03 · FABRIC &amp; NETWORKING</span>
+        <h3>高速互联拓扑与数据中心交换网络</h3>
+        <p>
+          深挖 GPU↔GPU PCIe P2P、GPUDirect RDMA（DMA-BUF / nvidia-peermem）、NVLink-C2C 与 MTLink 互联带宽瓶颈，以及多卡 NCCL / MCCL AllReduce 通信效率；涵盖白盒与品牌 100G/400G 交换机（HPE / Celestica / Mellanox SN2100）的 SONiC / Onyx / ONIE 平台适配、端口拆分验证与带外运维体系。
+        </p>
+      </article>
+
+      <article class="v3-card domain-card">
+        <span class="domain-tag">04 · FIRMWARE &amp; HARDWARE ATLAS</span>
+        <h3>底层固件逆向、恢复与硬件资料库</h3>
+        <p>
+          涉及 ConnectX-7/8/9 网卡固件二进制与 PSID 谱系逆向、CH347 / MTUSB / FS5 双份 NV_DATA 闪存级救砖、OpenRM / GSP-RM 驱动栈源码消融，以及 Jetson 载板设备树与嵌入式启动链排错；持续维护 Ampere → Rubin 全量 PCI Device ID 对照表与 Jetson/Tegra 模组料号图谱。
+        </p>
+      </article>
+    </section>
+
+    <!-- 社交主页与联系 -->
+    <section class="v3-card contact-card" aria-label="联系与主页">
+      <h3 class="side-heading">主页与联系</h3>
+      <div class="contact-grid">
+        <a class="contact-link is-xhs" href="https://www.xiaohongshu.com/user/profile/60cb6efc000000000101d62b" target="_blank" rel="noopener">
+          <span class="contact-label">XIAOHONGSHU · 小红书</span>
+          <span class="contact-title">繁星若尘 · 小红书主页 ↗</span>
+          <span class="contact-sub">硬件实测拆解、算力卡与集群折腾日常</span>
+        </a>
+
+        <a class="contact-link" href="https://github.com/aosudh" target="_blank" rel="noopener">
+          <span class="contact-label">GITHUB</span>
+          <span class="contact-title">@aosudh ↗</span>
+          <span class="contact-sub">实验脚本、复现代码与开源笔记仓库</span>
+        </a>
+
+        <a class="contact-link" href="mailto:2169159625@qq.com">
+          <span class="contact-label">EMAIL</span>
+          <span class="contact-title">2169159625@qq.com</span>
+          <span class="contact-sub">技术交流、硬件实测探讨与勘误反馈</span>
+        </a>
+      </div>
+    </section>
+
+    <footer class="v3-card v3-footer">
+      <span>© 2026 繁星若尘 · aosudh.github.io</span>
+      <span><a href="/">返回首页</a> · <a href="/classic.html">原版首页</a> · <a href="/about-classic.html">原版关于页</a></span>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var navbar = document.getElementById('v3Navbar');
+      window.addEventListener('scroll', function () {
+        navbar.classList.toggle('is-scrolled', (window.scrollY || 0) > 160);
+      }, { passive: true });
+
+      var themeToggle = document.getElementById('themeToggle');
+      var themeIcon = document.getElementById('themeIcon');
+      var mediaDark = window.matchMedia('(prefers-color-scheme: dark)');
+      function effTheme() {
+        var a = root.getAttribute('data-theme');
+        return (a === 'dark' || a === 'light') ? a : (mediaDark.matches ? 'dark' : 'light');
+      }
+      function syncThemeIcon() {
+        var isDark = effTheme() === 'dark';
+        themeIcon.innerHTML = isDark
+          ? '<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>'
+          : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+      }
+      syncThemeIcon();
+      themeToggle.addEventListener('click', function () {
+        var next = effTheme() === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem('site-theme', next); } catch (e) {}
+        syncThemeIcon();
+      });
+
+      var paletteToggle = document.getElementById('paletteToggle');
+      var palettePopover = document.getElementById('palettePopover');
+      var hueSlider = document.getElementById('hueSlider');
+      var hueVal = document.getElementById('hueVal');
+      var hueReset = document.getElementById('hueReset');
+
+      function setHue(val) {
+        var v = String(Math.min(360, Math.max(0, Number(val) || 222)));
+        root.style.setProperty('--hue', v);
+        hueSlider.value = v;
+        hueVal.textContent = v;
+        try { localStorage.setItem('site-v3-hue', v); } catch (e) {}
+      }
+      var savedHue = localStorage.getItem('site-v3-hue');
+      if (savedHue !== null) setHue(savedHue);
+
+      paletteToggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var open = palettePopover.classList.toggle('is-open');
+        paletteToggle.classList.toggle('is-active', open);
+      });
+      document.addEventListener('click', function (e) {
+        if (!palettePopover.contains(e.target) && e.target !== paletteToggle) {
+          palettePopover.classList.remove('is-open');
+          paletteToggle.classList.remove('is-active');
+        }
+      });
+      hueSlider.addEventListener('input', function () { setHue(this.value); });
+      hueReset.addEventListener('click', function () { setHue(222); });
+      Array.prototype.forEach.call(document.querySelectorAll('.hue-dot'), function (dot) {
+        dot.addEventListener('click', function () { setHue(this.getAttribute('data-hue')); });
+      });
+    })();
+  </script>
 </body>
 </html>
