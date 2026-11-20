@@ -1,8 +1,8 @@
 ---
-title: "NVIDIA PCI Device ID 全量对照：Fermi → Rubin × Grace / Vera × NVSwitch"
+title: "NVIDIA GPU PCI Device ID 全量对照：Rubin / Blackwell × Vera / Grace / NVSwitch"
 published: 2026-06-24
-updated: 2026-11-20
-description: "全网最全一手实证 NVIDIA PCI Device ID 图谱（共 1149 项）：整合 pci.ids v2026.11.19、open-gpu-kernel-modules 620.73.04（含 g_nv_name_released.h 全部物理与 vGPU/MIG 子系统）、gpu-admin-tools、DCGM、edk2-nvidia 与 Linux 主线源码，深度考据 Rubin（10 项）与 Blackwell（91 项）全量 ID、细分 SKU 与具体用途，完整覆盖 Fermi → Rubin 11 代 GPU、Grace/Vera CPU 与 NVSwitch/15B3 互联。"
+updated: 2026-11-21
+description: "把 lspci 里的 10DE:xxxx 翻译成芯片 / 架构 / 产品与具体用途：整合 pci.ids v2026.11.19、open-gpu-kernel-modules 620.73.04（含 g_nv_name_released.h 全部物理与 vGPU/MIG 子系统）、gpu-admin-tools、DCGM、edk2-nvidia 与 Linux 主线源码，按 Rubin → Blackwell → Hopper → Ada → Ampere 排序，并附 NVSwitch/15B3、Grace/Vera CPU 与可折叠历史 6 代老卡（共 1149 项）。"
 image: "/assets/covers/nvidia-pci-ids.svg"
 category: "资料与随笔"
 tags: ["NVIDIA", "PCIe", "Rubin", "Blackwell", "Grace", "Vera", "NVSwitch", "速查表"]
@@ -10,226 +10,23 @@ pinned: true
 draft: false
 ---
 
-> [!TIP]
-> **2026-11-20 Rubin × Blackwell 全量精校深度版（1149 项 · 17 表 Excel）**：在同步 `pci.ids v2026.11.19` 与 `open-gpu-kernel-modules 620.73.04` 的基础上，新增解析了 NVIDIA 驱动编译头文件 **`g_nv_name_released.h`（1,985 条物理+vGPU/MIG 映射）**、**`detect-self-hosted.h`**、**`NVIDIA/DCGM`**、**`NVIDIA/gpu-admin-tools`**、**`NVIDIA/edk2-nvidia`**、**`NVIDIA/nvtrust`** 与 **`torvalds/linux`**，为 **Rubin（10 项）与 Blackwell（91 项）全部 101 个 ID** 逐一补全了**可信官方型号、显存/功耗硬规格、具体用途定位与子系统（`SVID:SDID`）对照表**。Ampere 之前的 6 代历史架构（Turing → Fermi，681 项）支持在正文与目录中一键折叠/展开。
->
-> 如需使用 **实时关键词过滤 + 架构快捷筛选 + 1520px 吸顶宽表**，推荐直接打开：[原版实时搜索宽表页（1149 条）](/legacy-posts/nvidia-gpu-pci-device-ids.html)；本文所有表格亦支持右上角 **「⤢ 宽屏展开表格」**。
+把 `lspci` 里那串 `10de:xxxx`（及配套互联 `15b3:xxxx`）翻译成「到底是哪颗芯片、哪代架构、哪个产品与具体用途」。正文按 **Rubin → Blackwell → Hopper → Ada Lovelace → Ampere** 从新到旧直出主力 GPU，随后汇总 **NVSwitch & `15B3` 互联**、**Grace / Vera / Tegra CPU** 与 **SM / Bit-6 规律**，末尾将 **Ampere 之前的 6 代历史老卡（Turing → Fermi，681 项）** 默认折叠收纳。
 
-📊 **原始数据下载**：[下载最新全量多表 Excel（.xlsx · 17 个工作表 · 含 Blackwell/Rubin 子系统精解表 · 1149 个 PCI ID · 156 KB）](/assets/files/nvidia-gpu-pci-ids-ampere-to-rubin.xlsx)
+📊 **原始数据**：[下载全量多表 Excel（.xlsx · 17 个工作表 · 1149 个 PCI ID · 156 KB）](/assets/files/nvidia-gpu-pci-ids-ampere-to-rubin.xlsx) ｜ [打开 1520px 实时搜索宽表页](/legacy-posts/nvidia-gpu-pci-device-ids.html)（本文表格亦支持右上角 **「⤢ 宽屏展开表格」**）
 
 > [!NOTE]
-> **本次一手源码交叉核对的核心发现（零传闻，全源码实锤）**
-> 1. **`g_nv_name_released.h` 一手实锤 Rubin & Blackwell 真实可用显存与 MIG/vGPU 切分**：`3041`（`NVIDIA VR NVL72`）内置 `2304–230A` 共 7 档 MIG/vCS（实锤 **280 GB 可用 HBM4**）；`31C2`（`GB300 NVL72`）实锤 **278 GB 可用 HBM3e**（物理区分 **`21F1` Bianca 1399W** 与 **`20E5` Galaxy 1299W**）；`3182`（`B300 SXM6 AC`）实锤 **269 GB 可用 HBM3e**；`2BB5`（`RTX PRO 6000 Server`）内置 **102 档 vGPU/MIG + 2 档云游戏切片**；`2BB9`（`RTX 6000D`）实锤 **2×42 GB MIG** 与 **249W 液冷 LC（`2279`）**。
-> 2. **`detect-self-hosted.h` 硬编码 Self-Hosted C2C 分区**：`open-gpu` 内核代码明确将 `2940–297F`（GB100）、`31C0–31FF` + 特例 **`31A1`**（GB110 Max-Q）、`3040–307F`（GR100）与 `30C0–30FF`（GR102）归为 Grace/Vera C2C Self-Hosted 段。
-> 3. **Grace CPU（`TH500`）6 个隐藏 PCI ID 与 Vera CPU（`TB500`）5 个 Root Port**：`TH500` 的 `22B1/22B2/22B3/22B4/22B8/22B9` 从未出现在 `pci.ids`，全部藏在 `open-gpu` `nvcst.h` 中；`TB500` 的 `2F95–2F99` 已同时落地 `pci.ids` 与 `nvcst.h`。
-> 4. **NVLink-6/7/8 Switch 与 ConnectX-10/11 C2C 迁入 `15B3`**：从 Vera Rubin 起，机架级 NVLink 交换芯片迁入 Mellanox/NVIDIA Networking 段位（`15B3:D2F8/D2FA/D2FC`），`15B3:2101`（ConnectX-10 NVLink-C2C）与 `10DE:2E00–2E3F`（GB20B/Spark/N1X）均在 Linux `drivers/pci/quirks.c` 中强制启用 PCIe ATS 模拟 `CXL.cache`。
-> 5. **明确区分已证实 ID vs 传闻/未分配**：截至 `2026-11-20`，`Rubin Ultra（GR150 / Kyber NVL576，2027 H2）`、`消费级 Rubin（GR20x）` 与 `RTX 5080 SUPER / 5070 Ti SUPER` **均未分配公开 PCI ID**；原 late-2025 预告的 **Rubin CPX（128GB GDDR7 Prefill）** 已在 GTC 2026 主路线图中调整让位于 HBM4 + Groq 3 LPU/LPX 推理架构。
+> **最后更新日期：2026-11-21** ｜ 共收录 **1149** 条一手实证 PCI Device ID（GPU **1026** 条，其中开放驱动 `620.73.04` 官方收录 **299** 条；NVSwitch **33** 条；`15B3` 配套互联 **50** 条；Grace / Vera / Tegra CPU & SoC **40** 条）。
+> - **数据快照**：`pci.ids v2026.11.19`（与实时 `pci-ids.ucw.cz` 一致，`systemd/hwdb` 与 `go-nvlib` 验证 `>= 0x2900` 零额外）、`open-gpu-kernel-modules 620.73.04`（含 `g_nv_name_released.h` 1,985 条物理+vGPU/MIG 编译表与 `detect-self-hosted.h`）、`NVIDIA/gpu-admin-tools`、`NVIDIA/DCGM`、`NVIDIA/edk2-nvidia`、`NVIDIA/nvtrust`、`torvalds/linux` 主线与 `CUDA 13.5 GA`。
+> - **Rubin & Blackwell 核心实锤**：`3041`（`NVIDIA VR NVL72`）实锤 **280 GB 可用 HBM4**（7 档 MIG `2304–230A`）；`31C2`（`GB300 NVL72`）实锤 **278 GB 可用 HBM3e**（区分 **`21F1` Bianca 1399W** 与 **`20E5` Galaxy 1299W**）；`31C3` 区分 **`23AB` GB300-252**（DGX Station）；`2BB5` 含 **102 档 vGPU/MIG + 云游戏切片**；`2BB9`（RTX 6000D）实锤 **2×42 GB MIG** 与 **249W 液冷 LC（`2279`）**。
+> - **明确未分配公开 ID 的边界**：截至 `2026-11-21`，**Rubin Ultra（`GR150` / Kyber NVL576，2027 H2）**、**消费级 Rubin（`GR20x`）**、**Rubin CPX（GTC 2026 已移出核心路线图）** 及 **RTX 5080 SUPER / 5070 Ti SUPER** 均尚未分配公开 PCI ID。
 
-## 一、架构 × SM / Compute Capability 与 Bit-6（+0x40）硬件分配规律
+## 一、Rubin（10 个 ID · sm_107 / CC 10.7）
 
-| 架构 | 芯片 | SM | CC | PCI Hex 段位 | 代表产品 | 备注 |
-| --- | --- | --- | --- | --- | --- | --- |
-| Rubin (DC) | GR100 / GR102 | sm_107 | 10.7 | 3000–307F (GR100) / 3080–30FF (GR102) | VR NVL72 (3041), PCIe Faber (3021), R100/R200 | CUDA 13.4/13.5 GA (sm_107a/107f); 328 KB SMEM; 288GB HBM4 (280GB 可用), NVLink 6; open-gpu 620.x |
-| Blackwell (Spark/N1X) | GB10 / GB20B | sm_121 | 12.1 | 2E00–2E3F (Linux quirks ATS) | DGX Spark (GB10), RTX Spark N1X (5120/6144-core) | sm_121a; 强制 PCIe ATS 模拟 CXL.cache; 128GB 统一 LPDDR5X |
-| Blackwell (Consumer/Pro) | GB202/203/205/206/207 | sm_120 | 12.0 | 2B80–2DFF, 2F00–2F7F | RTX 50 / 5070 SUPER, RTX PRO 6000/5500/5000/4500/4000/2000 | mma.sync (非 tcgen05); FP4/FP6; 另有 GB20C 车载虚拟化 |
-| Blackwell (Thor/T268) | GB10B (T264 / T268) | sm_110 | 11.0 | 2B00 (T264), 3400 (T268) | Jetson AGX Thor (2070 FP4 TFLOPS), DRIVE Thor, T268 | CUDA 13.0 由 sm_101 改名; 另有 GB10C |
-| Blackwell Ultra (DC) | GB110 / GB112 / GB120 | sm_103 | 10.3 | 3180–327F, 3300–337F | B300 (3182), GB300 Bianca/Galaxy (31C2), GB300-252 (31C3) | sm_103a/103f; 288GB HBM3e; 1400W 级; edk2 确认 GB120 段 3341–337F |
-| Blackwell (DC) | GB100 / GB102 | sm_100 | 10.0 | 2900–297F (GB100) / 2980–29FF (GB102) | B100, B200 (180/168GB), GB200 NVL72 (2941), DRIVE P2021 (29BB) | TMEM, tcgen05, 2-SM MMA; sm_100a/100f; nvtrust CC 架构 10 |
-| Hopper | GH100 | sm_90 | 9.0 | 2300–237F (+ 23B0/23F0) | H100, H200, H800, H20/H20-3e, GH200 (2342/2345/2348) | WGMMA, TMA; sm_90a; 2301–233F EP vs 2341–237F SH |
-| Ada Lovelace | AD102/103/104/106/107 | sm_89 | 8.9 | 2680–28FF | RTX 40 系, RTX 6000 Ada, L40/L40S/L20/L4/L2 | FP8 Transformer Engine |
-| Ampere (Orin) | GA10B (T234) | sm_87 | 8.7 | SoC 集成 (RP: 229A/9C/9E) | Jetson AGX Orin, DRIVE Orin | Tegra 嵌入式 iGPU |
-| Ampere (Consumer/Pro) | GA102/103/104/106/107 | sm_86 | 8.6 | 2200–227F, 2400–25FF | RTX 30 系, RTX A6000~A2000, A40/A10/A16/A2 | 2× FP32/SM vs sm_80 |
-| Ampere (DC) | GA100 | sm_80 | 8.0 | 2080–20FF | A100, A800, A30, AX800, CMP 170HX | HBM2e; TF32 + 原生 FP64 Tensor Core |
-| Turing | TU102/104/106/116/117 | sm_75 | 7.5 | 1E00–1FFF, 2180–21FF | RTX 20 / GTX 16, T4/T4G, Quadro RTX 8000 | open-gpu-kernel-modules 支持起点 (81 IDs ✓) |
-| Volta | GV100 / GV11B | sm_70 / 72 | 7.0 / 7.2 | 1D80–1DFF (GV100) | Tesla V100 / V100S, TITAN V, Quadro GV100, Xavier (7.2) | 初代 Tensor Core + HBM2 + NVLink 2.0 |
-| Pascal | GP100 / GP102–108 / GP10B | sm_60 / 61 / 62 | 6.0–6.2 | 15C0–15FF, 1700–173F, 1B00–1D7F | Tesla P100 (6.0), P40/P4/GTX 10 系 (6.1), TX2 (6.2) | GP100 原生 FP16 + HBM2; GP102–108 补 DP4A |
-| Maxwell | GM107–108 / GM200–206 / GM20B | sm_50 / 52 / 53 | 5.0–5.3 | 1340–143F, 1600–167F, 1740–183F | GTX 750/900/TITAN X, Tesla M60/M40/M10/M4, Nano (5.3) | SMM 高能效重构 |
-| Kepler | GK104–107 / GK110–208 / GK210 | sm_30 / 35 / 37 | 3.0 / 3.5 / 3.7 | 0FC0–103F, 1180–12BF | GTX 600/700, Tesla K10/K20/K40 (3.5), K80 (3.7) | Dynamic Parallelism; GK210 (K80) 独享 sm_37 |
-| Fermi | GF100/110 · GF104–119 | sm_20 / 21 | 2.0 / 2.1 | 06C0–06FF, 0DC0–107F | GTX 480/580, Tesla C2050/M2090 (2.0), GTX 460/560 (2.1) | 初代 IEEE-754 + ECC + L1/L2 缓存 CUDA 架构 |
+交叉核验 **`pci.ids v2026.11.19`**、**`NVIDIA/open-gpu-kernel-modules 620.73.04`**（含编译头文件 `g_nv_name_released.h` 与 `detect-self-hosted.h`）、**`NVIDIA/gpu-admin-tools`**、**`NVIDIA/edk2-nvidia`**、**`NVIDIA/DCGM`** 与 **CUDA 13.5 GA** 官方文档，Rubin 代际目前公开可信的一手 PCI Device ID 共 **10 个**（GR100 7 个 + GR102 3 个）：
 
-### 数据中心 GPU Bit-6（`+0x40`）Endpoint vs Self-Hosted 分配规律
-
-来自 **`NVIDIA/open-gpu-kernel-modules` `kernel-open/nvidia/detect-self-hosted.h`** 与 **`NVIDIA/edk2-nvidia` `TH500GpuDxe/DriverBinding.c`** 的双源码交叉确认：从 Hopper 起，数据中心芯片按 **Bit-6（`+0x40`）** 严格区分独立主机直连（Endpoint，x86/HGX）与 Grace/Vera C2C 一致性内存耦合（Self-Hosted）：
-
-| 芯片家族 | Recovery / 保留基准 | Endpoint 段（`+0x00`） | Self-Hosted C2C 段（`+0x40`） | 源码来源 | 典型实例 |
-| --- | --- | --- | --- | --- | --- |
-| GH100 (Hopper) | 0x2300 (Recovery) | 0x2301 – 0x233F | 0x2340 – 0x237F | detect-self-hosted.h + edk2 | 2330 H100 SXM (EP) vs 2342/2345/2348 GH200 (SH) |
-| GB100 (Blackwell) | 0x2900 (Reserved A) | 0x2901 – 0x293F | 0x2940 – 0x297F | detect-self-hosted.h + edk2 | 2901/2909 B200 (EP) vs 2941/297E GB200 (TH500 SH) |
-| GB102 (Blackwell) | 0x2980 (Reserved A) | 0x2981 – 0x29BF | 0x29C0 – 0x29FF | edk2-nvidia TH500GpuDxe | 29BB DRIVE P2021 / 29BC B100 (EP) vs 29C1–29FF (TH500 SH) |
-| GB110 (Blackwell Ultra) | 0x3180 (Reserved A) | 0x3181 – 0x31BF (特例 31A1=SH) | 0x31C0 – 0x31FF (+ 31A1) | detect-self-hosted.h + edk2 | 3182 B300 (EP) vs 31C2/31C3 GB300 & 31A1 MaxQ (SH) |
-| GB120 (Blackwell Ultra) | 0x3300 / 0x3340 | 0x3301 – 0x333F | 0x3341 – 0x337F | edk2-nvidia TH500GpuDxe | edk2 明确预留 TH500+GB120 SH 段 3341–337F |
-| GR100 (Rubin) | 0x3000 (Reserved A) | 0x3000 – 0x303F | 0x3040 – 0x307F | detect-self-hosted.h + edk2 | 3002 SXM / 3021 PCIe Faber (EP) vs 3041 VR NVL72 / 307E / 307F (Vera SH) |
-| GR102 (Rubin) | 0x3080 (Reserved A) | 0x3081 – 0x30BF | 0x30C0 – 0x30FF | detect-self-hosted.h + gat | 30C0 Reserved B / 30FF [221B/221C] C2C+SXM (Vera SH) |
-
-## 二、Grace（`TH500`）· Vera（`TB500`）· Tegra / Thor / N1 CPU & SoC（40 项）
-
-> [!IMPORTANT]
-> Grace（`TH500`）的 6 个 Root Port ID（`22B1–22B4 / 22B8 / 22B9`）和 Thor（`T264`）的 `22D6 / 22DA` 并未录入 `pci.ids`，全部提取自 `open-gpu-kernel-modules` 的 `src/nvidia/inc/kernel/core/nvcst.h`；Vera（`TB500`）的 `2F95–2F99` 与 N1 客户端 SoC `2F88`（`T256`）则已在 `pci.ids v2026.11.19` 与 `nvcst.h` 中双双落地。
-
-| ID | 平台 / CPU | 内部代号 | 功能 | pci.ids 名称 | 驱动 / 官方定义 | 技术说明 | 来源 |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 2F95 | Vera CPU | TB500 | PCIe Root Port | TB500 RP x16 | NVIDIA Vera CPU (TB500) PCIe Root Port x16 | pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500, I/O Coherent + PCIe Atomics) | pci.ids + open-gpu |
-| 2F96 | Vera CPU | TB500 | PCIe Root Port | TB500 RP x8 | NVIDIA Vera CPU (TB500) PCIe Root Port x8 | pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500, Nvidia_TB500_setupFunc) | pci.ids + open-gpu |
-| 2F97 | Vera CPU | TB500 | PCIe Root Port | TB500 RP x4 | NVIDIA Vera CPU (TB500) PCIe Root Port x4 | pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500) | pci.ids + open-gpu |
-| 2F98 | Vera CPU | TB500 | PCIe Root Port | TB500 RP x2 | NVIDIA Vera CPU (TB500) PCIe Root Port x2 | pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500) | pci.ids + open-gpu |
-| 2F99 | Vera CPU | TB500 | PCIe Root Port | TB500 RP x1 | NVIDIA Vera CPU (TB500) PCIe Root Port x1 | pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500) | pci.ids + open-gpu |
-| 22B1 | Grace CPU | TH500 | PCIe Root Port | — (未入 pci.ids) | NVIDIA Grace CPU (TH500) RP for GH100 GPU in GH180 | open-gpu nvcst.h (CS_NVIDIA_TH500, I/O Coherent + PCIe Atomics WAR 3562968) | open-gpu nvcst.h |
-| 22B2 | Grace CPU | TH500 | PCIe Root Port | — (未入 pci.ids) | NVIDIA Grace CPU (TH500) PCIe Root Port x16 | open-gpu nvcst.h (CS_NVIDIA_TH500; P2P via PCIe switch enabled in chipset_pcie.c) | open-gpu nvcst.h |
-| 22B3 | Grace CPU | TH500 | PCIe Root Port | — (未入 pci.ids) | NVIDIA Grace CPU (TH500) PCIe Root Port x4 | open-gpu nvcst.h (CS_NVIDIA_TH500) | open-gpu nvcst.h |
-| 22B4 | Grace CPU | TH500 | PCIe Root Port | — (未入 pci.ids) | NVIDIA Grace CPU (TH500) PCIe Root Port x1 | open-gpu nvcst.h (CS_NVIDIA_TH500) | open-gpu nvcst.h |
-| 22B8 | Grace CPU | TH500 | PCIe Root Port | — (未入 pci.ids) | NVIDIA Grace CPU (TH500) PCIe Root Port x8 | open-gpu nvcst.h (CS_NVIDIA_TH500) | open-gpu nvcst.h |
-| 22B9 | Grace CPU | TH500 | PCIe Root Port | — (未入 pci.ids) | NVIDIA Grace CPU (TH500) PCIe Root Port x2 | open-gpu nvcst.h (CS_NVIDIA_TH500) | open-gpu nvcst.h |
-| 22D6 | Thor SoC | T264 | PCIe Root Port | — (未入 pci.ids) | NVIDIA Tegra T264 (Thor) PCIe Root Port x8 | open-gpu nvcst.h (CS_NVIDIA_T264) | open-gpu nvcst.h |
-| 22D8 | Thor SoC | T264 | PCIe Root Port | THOR Processor PCI Express Root Port | NVIDIA Tegra T264 (Thor) PCIe Root Port x4 | pci.ids + open-gpu nvcst.h (CS_NVIDIA_T264) | pci.ids + open-gpu |
-| 22DA | Thor SoC | T264 | PCIe Root Port | — (未入 pci.ids) | NVIDIA Tegra T264 (Thor) PCIe Root Port x2 | open-gpu nvcst.h (CS_NVIDIA_T264) | open-gpu nvcst.h |
-| 22E6 | Thor SoC | T264 | iGPU Root Port | THOR Processor PCI Express x16 Controller | NVIDIA Tegra T264 (Thor) iGPU Root Port | pci.ids + open-gpu nvcst.h (CS_NVIDIA_T264) | pci.ids + open-gpu |
-| 22CE | DGX Spark / GB10 | GB10 | PCIe Host Bridge | GB10 GEN5 X4 PCIe host | NVIDIA GB10 Gen5 x4 PCIe Host | pci.ids + Linux quirks.c (quirk_no_bus_reset) | pci.ids + Linux |
-| 22D0 | DGX Spark / GB10 | GB10 | PCIe Host Bridge | GB10 GEN4 X1 PCIe host | NVIDIA GB10 Gen4 x1 PCIe Host | pci.ids + Linux quirks.c (quirk_no_bus_reset) | pci.ids + Linux |
-| 22D1 | Spark / N1 SoC | T254 / GB20B | PCI Bridge | GB20B PCI bridge | NVIDIA T254 / GB20B PCI Bridge | pci.ids + open-gpu nvcst.h (CS_NVIDIA_T254) | pci.ids + open-gpu |
-| 2F88 | N1 Client SoC | T256 (N1) | PCIe Root/Host | T256 | NVIDIA T256 (N1) Client Arm SoC | pci.ids + open-gpu nvcst.h (CS_NVIDIA_T256, comment: NVIDIA T256 (N1)) | pci.ids + open-gpu |
-| 200A | Tegra / SoC | NPU | NPU | NPU | NVIDIA Neural Processing Unit (NPU) | Added in pci.ids v2026.11.19 | pci.ids |
-| 229A | Orin SoC | T234 | PCIe Root Port | Orin PCIe x8 Root Complex | NVIDIA Tegra T234 (Orin) RP0 x8 | pci.ids + nvcst.h + Linux quirks.c (disable_rp_msi) | pci.ids + Linux + og |
-| 229C | Orin SoC | T234 | PCIe Root Port | Orin PCIe x4/x8 Endpoint/Root Complex | NVIDIA Tegra T234 (Orin) RP1 x4/x8 | pci.ids + nvcst.h + Linux quirks.c (disable_rp_msi) | pci.ids + Linux + og |
-| 229E | Orin SoC | T234 | PCIe Root Port | Orin PCIe x1 Root Complex | NVIDIA Tegra T234 (Orin) RP2 x1 | pci.ids + nvcst.h + Linux quirks.c (disable_rp_msi) | pci.ids + Linux + og |
-| 2296 | Orin / Tegra | Tegra | Virtual NIC | Tegra PCIe Endpoint Virtual Network | Tegra PCIe Endpoint Virtual Network | pci.ids | pci.ids |
-| 22C2 | Tegra T23x | T23x | PCIe Root Port | — (未入 pci.ids) | NVIDIA Tegra T23x RP0 | open-gpu nvcst.h (CS_NVIDIA_T23x) | open-gpu nvcst.h |
-| 22C3 | Tegra T23x | T23x | PCIe Root Port | — (未入 pci.ids) | NVIDIA Tegra T23x RP1 | open-gpu nvcst.h (CS_NVIDIA_T23x) | open-gpu nvcst.h |
-| 1AD0 | Xavier SoC | T194 | PCIe Root Port | Tegra PCIe x8 Endpoint | NVIDIA Tegra V1 (T194 / Xavier) RP0 x8 | pci.ids + nvcst.h + Linux quirks.c | pci.ids + Linux + og |
-| 1AD1 | Xavier SoC | T194 | PCIe Root Port | Tegra PCIe x4/x8 Endpoint/Root Complex | NVIDIA Tegra V1 (T194 / Xavier) RP1 x4/x8 | pci.ids + nvcst.h + Linux quirks.c | pci.ids + Linux + og |
-| 1AD2 | Xavier SoC | T194 | PCIe Root Port | Tegra PCIe x1 Root Complex | NVIDIA Tegra V1 (T194 / Xavier) RP2 x1 | pci.ids + nvcst.h + Linux quirks.c | pci.ids + Linux + og |
-| 1AD3 | Xavier SoC | T194 | SATA | Xavier SATA Controller | NVIDIA Jetson AGX Xavier SATA Controller | pci.ids | pci.ids |
-| 10E5 | Parker SoC | T186 | PCIe Root Port | Parker PCIe x4 Root Complex | NVIDIA Tegra P1 (T186 / TX2) RP0 x4 | pci.ids + nvcst.h + Linux quirks.c | pci.ids + Linux + og |
-| 10E6 | Parker SoC | T186 | PCIe Root Port | Parker PCIe x1 Root Complex | NVIDIA Tegra P1 (T186 / TX2) RP1 x1 | pci.ids + nvcst.h + Linux quirks.c | pci.ids + Linux + og |
-| 0FAE | Tegra X1 | T210 | PCIe Root Port | Tegra X1 PCIe x4 Root Complex | NVIDIA Tegra X1 (T210 / Nano) RP0 x4 | pci.ids + nvcst.h + Linux quirks.c | pci.ids + Linux + og |
-| 0FAF | Tegra X1 | T210 | PCIe Root Port | Tegra X1 PCIe x1 Root Complex | NVIDIA Tegra X1 (T210 / Nano) RP1 x1 | pci.ids + nvcst.h + Linux quirks.c | pci.ids + Linux + og |
-| 0E12 | Tegra K1 | T124 | PCIe Bridge | TegraK1 PCIe x4 Bridge | NVIDIA Tegra K1 PCIe x4 Bridge | pci.ids + Linux quirks.c | pci.ids + Linux |
-| 0E13 | Tegra K1 | T124 | PCIe Bridge | TegraK1 PCIe x1 Bridge | NVIDIA Tegra K1 PCIe x1 Bridge | pci.ids + Linux quirks.c | pci.ids + Linux |
-| 0E1C | Tegra 3+ | T30/T114 | PCIe Bridge | Tegra3+ PCIe x4 Bridge | NVIDIA Tegra 3+ PCIe x4 Bridge | pci.ids + Linux quirks.c | pci.ids + Linux |
-| 0E1D | Tegra 3+ | T30/T114 | PCIe Bridge | Tegra3+ PCIe x2 Bridge | NVIDIA Tegra 3+ PCIe x2 Bridge | pci.ids + Linux quirks.c | pci.ids + Linux |
-| 0BF0 | Tegra 2 | T20 | PCIe Bridge | Tegra2 PCIe x4 Bridge | NVIDIA Tegra 2 PCIe x4 Bridge | pci.ids + Linux quirks.c | pci.ids + Linux |
-| 0BF1 | Tegra 2 | T20 | PCIe Bridge | Tegra2 PCIe x2 Bridge | NVIDIA Tegra 2 PCIe x2 Bridge | pci.ids + Linux quirks.c | pci.ids + Linux |
-
-### Grace / Vera 非 PCI 关键硬件标识（Linux 主线 `nvidia_cspmu.c` & `edk2-nvidia`）
-
-Grace（`Tegra241 / TH500`，Neoverse V2 核心）与 Vera（`TB500`，88 核自研 Olympus 核心 + 不对称 SMT + OCP Caliptra Root of Trust）的片上互联与性能计数器通过 **ACPI / Arm CoreSight PMU（CSPMU）** 与 **SMMUv3 CMDQV（`tegra241-cmdqv.c`）** 暴露：
-
-| Arm CSPMU Product ID | Linux `perf` PMU 名称 | 适用平台 | 监控域与关键特性 |
-| --- | --- | --- | --- |
-| 0x10300000 | nvidia_pcie_pmu_%u | Grace (TH500) | PCIe Root Port 带宽与请求计数（v1） |
-| 0x10301000 | nvidia_pcie_pmu_%u_rc_%u | Grace / Vera | PCIe v2 PMU，支持 BDF 过滤与 `dst_loc_pcie_cxl`（CXL 流量计数！） |
-| 0x10700000 | nvidia_pcie_tgt_pmu_%u_rc_%u | Vera / Next | PCIe Target 地址区间过滤 PMU（base/mask 64-bit） |
-| 0x10400000 | nvidia_nvlink_c2c1_pmu_%u | Grace / Vera | NVLink-C2C Port 1 一致性互联流量 PMU |
-| 0x10500000 | nvidia_nvlink_c2c0_pmu_%u | Grace / Vera | NVLink-C2C Port 0 一致性互联流量 PMU |
-| 0x10600000 | nvidia_cnvlink_pmu_%u | Grace / Vera | 跨 Socket Coherent NVLink (cNVLink) PMU |
-| 0x2CF00000 | nvidia_scf_pmu_%u | Grace (TH500) | Scalable Coherency Fabric (SCF) 缓存/GMEM/CMEM PMU |
-| 0x2CF20000 | nvidia_ucf_pmu_%u | Vera / Next | Unified Coherency Fabric (UCF) SLC/Snoop/GMEM/CMEM PMU |
-
-## 三、NVSwitch（`10DE` 全量 33 项）与 `15B3` 集群互联家族（50 项）
-
-### 3.1 `10DE` NVSwitch Gen2（LR10 / LimeRock）与 Gen3（LS10 / Laguna）全量表
-
-`pci.ids` 仅收录了最常见的 `1AF1` 与 `22A3` 两条，但 `NVIDIA/open-gpu-kernel-modules` 的 `src/common/nvswitch/kernel/nvswitch.c` 完整定义了全部 **33 个** PCI Device ID（含 LS10 的管理端点、Function 0 PCI-PCI Bridge 与 Function 1 NTB）：
-
-| Vendor | ID | 代际 | 芯片代号 | 功能角色 | pci.ids 名称 | 驱动源码说明 |
-| --- | --- | --- | --- | --- | --- | --- |
-| 10DE | 1AE8 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
-| 10DE | 1AF0 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
-| 10DE | 1AF1 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | GA100 [A100 NVSwitch] | HGX/DGX A100 常见公开 ID (Class 0x068000) |
-| 10DE | 1AF2 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
-| 10DE | 1AF3 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
-| 10DE | 1AF4 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
-| 10DE | 1AF5 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
-| 10DE | 1AF6 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
-| 10DE | 1AF7 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
-| 10DE | 1AF8 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
-| 10DE | 1AF9 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
-| 10DE | 1AFA | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
-| 10DE | 1AFB | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
-| 10DE | 1AFC | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
-| 10DE | 1AFD | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
-| 10DE | 1AFE | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
-| 10DE | 1AFF | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
-| 10DE | 22A0 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NVSwitch EP | — (仅在 open-gpu nvswitch.c) | LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[]) |
-| 10DE | 22A1 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NVSwitch EP | — (仅在 open-gpu nvswitch.c) | LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[]) |
-| 10DE | 22A2 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NVSwitch EP | — (仅在 open-gpu nvswitch.c) | LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[]) |
-| 10DE | 22A3 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NVSwitch EP | GH100 [H100 NVSwitch] | HGX/DGX H100/H200 常见公开 ID (Class 0x068000) |
-| 10DE | 22A4 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NVSwitch EP | — (仅在 open-gpu nvswitch.c) | LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[]) |
-| 10DE | 22A5 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NVSwitch EP | — (仅在 open-gpu nvswitch.c) | LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[]) |
-| 10DE | 22A6 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NVSwitch EP | — (仅在 open-gpu nvswitch.c) | LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[]) |
-| 10DE | 22A7 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NVSwitch EP | — (仅在 open-gpu nvswitch.c) | LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[]) |
-| 10DE | 22A8 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | PCI-PCI Bridge F0 | — (仅在 open-gpu nvswitch.c) | Laguna Switch Function 0 PCI-PCI Bridge (nvswitch_ls10_device_ids[]) |
-| 10DE | 22A9 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | PCI-PCI Bridge F0 | — (仅在 open-gpu nvswitch.c) | Laguna Switch Function 0 PCI-PCI Bridge (nvswitch_ls10_device_ids[]) |
-| 10DE | 22AA | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | PCI-PCI Bridge F0 | — (仅在 open-gpu nvswitch.c) | Laguna Switch Function 0 PCI-PCI Bridge (nvswitch_ls10_device_ids[]) |
-| 10DE | 22AB | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | PCI-PCI Bridge F0 | — (仅在 open-gpu nvswitch.c) | Laguna Switch Function 0 PCI-PCI Bridge (nvswitch_ls10_device_ids[]) |
-| 10DE | 22AC | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NTB Bridge F1 | — (仅在 open-gpu nvswitch.c) | Laguna Switch Function 1 Non-Transparent Bridge (nvswitch_ls10_device_ids[]) |
-| 10DE | 22AD | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NTB Bridge F1 | — (仅在 open-gpu nvswitch.c) | Laguna Switch Function 1 Non-Transparent Bridge (nvswitch_ls10_device_ids[]) |
-| 10DE | 22AE | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NTB Bridge F1 | — (仅在 open-gpu nvswitch.c) | Laguna Switch Function 1 Non-Transparent Bridge (nvswitch_ls10_device_ids[]) |
-| 10DE | 22AF | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NTB Bridge F1 | — (仅在 open-gpu nvswitch.c) | Laguna Switch Function 1 Non-Transparent Bridge (nvswitch_ls10_device_ids[]) |
-
-### 3.2 `15B3` 配套高速互联核心表（NVLink-6/7/8 Switch · ConnectX-6~11 · BlueField-1~4 · Quantum / Spectrum）
-
-在大规模 Grace/Blackwell/Vera Rubin 集群的 `lspci` 中，除 `10DE` 外还会密集出现 **`15B3`（Mellanox / NVIDIA Networking）** 设备——**从 NVLink-6 Switch（Vera Rubin）起，机架级 NVLink 交换芯片的 PCI ID 已正式并入 `15B3:D2F8/D2FA/D2FC`**，而 **ConnectX-10/11（`15B3:2101/2102`）** 更是原生支持 **NVLink-C2C**：
-
-| Vendor | ID | 产品家族 | 芯片 / ASIC | 功能角色 | pci.ids 名称（v2026.11.19） | 说明 / Linux 实证 |
-| --- | --- | --- | --- | --- | --- | --- |
-| 15B3 | D2F8 | NVLink Switch Gen6 | NVLink-6 | NVLink Switch | NVLink-6 Switch | Vera Rubin 机架级 NVLink-6 交换芯片（从 Gen6 起并入 15B3 段位） |
-| 15B3 | 0278 | NVLink Switch Gen6 | NVLink-6 | Flash Recovery | NVLink-6 Switch in Flash Recovery Mode | NVLink-6 Switch Flash Recovery |
-| 15B3 | 0279 | NVLink Switch Gen6 | NVLink-6 | RMA | NVLink-6 Switch RMA | NVLink-6 Switch RMA |
-| 15B3 | D2FA | NVLink Switch Gen7 | NVLink-7 | NVLink Switch | NVLink-7 Switch | Rubin Ultra / 下一代 NVLink-7 交换芯片 |
-| 15B3 | 027C | NVLink Switch Gen7 | NVLink-7 | Flash Recovery | NVLink-7 Switch in Flash Recovery Mode | NVLink-7 Switch Flash Recovery |
-| 15B3 | 027D | NVLink Switch Gen7 | NVLink-7 | RMA | NVLink-7 Switch RMA | NVLink-7 Switch RMA |
-| 15B3 | D2FC | NVLink Switch Gen8 | NVLink-8 | NVLink Switch | NVLink-8 Switch | 远期规划 NVLink-8 交换芯片（已入 pci.ids v2026.11.19） |
-| 15B3 | 02A0 | NVLink Switch Gen8 | NVLink-8 | Flash Recovery | NVLink-8 Switch in Flash Recovery Mode | NVLink-8 Switch Flash Recovery |
-| 15B3 | 02A1 | NVLink Switch Gen8 | NVLink-8 | RMA | NVLink-8 Switch RMA | NVLink-8 Switch RMA |
-| 15B3 | 101B | ConnectX-6 | MT28908 | NIC / HCA | MT28908 Family [ConnectX-6] | 200G HDR IB / Ethernet |
-| 15B3 | 101D | ConnectX-6 Dx | MT2892 | NIC | MT2892 Family [ConnectX-6 Dx] | 100G/200G Ethernet |
-| 15B3 | 101F | ConnectX-6 Lx | MT2894 | NIC | MT2894 Family [ConnectX-6 Lx] | 25G/50G Ethernet |
-| 15B3 | 1021 | ConnectX-7 | MT2910 | NIC / HCA | MT2910 Family [ConnectX-7] | 400G NDR IB / 400GbE（HGX H100/H200/GB200 标配） |
-| 15B3 | 1979 | ConnectX-7 | MT2910 | PCIe Bridge | MT2910 Family [ConnectX-7 PCIe Bridge] | ConnectX-7 PCIe Bridge（gpu-admin-tools cx7.py 识别） |
-| 15B3 | 1023 | ConnectX-8 | CX8 | SuperNIC / HCA | CX8 Family [ConnectX-8] | 800G XDR IB / 800GbE（GB300 / B300 标配） |
-| 15B3 | 1024 | ConnectX-8 | CX8 | PCIe Switch | CX8 PCIe Switch Family [ConnectX-8 PCIe Switch] | ConnectX-8 内置 PCIe Gen6 Switch |
-| 15B3 | 197D | ConnectX-8 | CX8 | PCIe Bridge | CX8 Family [ConnectX-8 PCIe Bridge] | ConnectX-8 PCIe Bridge |
-| 15B3 | 1025 | ConnectX-9 | CX9 | SuperNIC / HCA | CX9 Family [ConnectX-9] | Vera Rubin 世代 1.6T / 800G SuperNIC |
-| 15B3 | 197E | ConnectX-9 | CX9 | PCIe Bridge | CX9 Family [ConnectX-9 PCIe Bridge] | ConnectX-9 PCIe Bridge |
-| 15B3 | 1027 | ConnectX-10 | CX10 | SuperNIC / HCA | CX10 Family [ConnectX-10] | 下一代 ConnectX-10 SuperNIC |
-| 15B3 | 1028 | ConnectX-10 | CX10 | TNCM | CX10 Family [ConnectX-10 Trusted Network Control Memory] | ConnectX-10 Trusted Network Control Memory |
-| 15B3 | 197F | ConnectX-10 | CX10 | PCIe Bridge | CX10 Family [ConnectX-10 PCIe Bridge] | ConnectX-10 PCIe Bridge |
-| 15B3 | 2101 | ConnectX-10 | CX10 | NVLink-C2C | CX10 Family [ConnectX-10 NVLink-C2C] | Linux 主线 drivers/pci/quirks.c 实锤：强制 PCIe ATS 的 NVLink-C2C 网卡 |
-| 15B3 | 1029 | ConnectX-11 | CX11 | SuperNIC / HCA | CX11 Family [ConnectX-11] | 远期 ConnectX-11 SuperNIC |
-| 15B3 | 102A | ConnectX-11 | CX11 | TNCM | CX11 Family [ConnectX-11 Trusted Network Control Memory] | ConnectX-11 Trusted Network Control Memory |
-| 15B3 | 1980 | ConnectX-11 | CX11 | PCIe Bridge | CX11 Family [ConnectX-11 PCIe Bridge] | ConnectX-11 PCIe Bridge |
-| 15B3 | 2102 | ConnectX-11 | CX11 | NVLink-C2C | CX11 Family [ConnectX-11 NVLink-C2C] | ConnectX-11 NVLink-C2C |
-| 15B3 | A2D0 | BlueField-1 | MT416842 | DPU SoC | MT416842 BlueField SoC Crypto enabled | open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD) Crypto enabled |
-| 15B3 | A2D4 | BlueField-2 | MT42822 | DPU SoC | MT42822 BlueField-2 SoC Crypto enabled | open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD2) Crypto enabled |
-| 15B3 | A2D5 | BlueField-2 | MT42822 | DPU SoC | MT42822 BlueField-2 SoC Crypto disabled | open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD2) Crypto disabled |
-| 15B3 | A2D6 | BlueField-2 | MT42822 | DPU NIC | MT42822 BlueField-2 integrated ConnectX-6 Dx network controller | BlueField-2 集成 ConnectX-6 Dx |
-| 15B3 | A2D7 | BlueField-3 Lx | MT43162 | DPU SoC | MT43162 BlueField-3 Lx SoC Crypto enabled | BlueField-3 Lx Crypto enabled |
-| 15B3 | A2DA | BlueField-3 | MT43244 | DPU SoC | MT43244 BlueField-3 SoC Crypto enabled | open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD3, Disable IOMAP WC) Crypto enabled |
-| 15B3 | A2DB | BlueField-3 | MT43244 | DPU SoC | MT43244 BlueField-3 SoC Crypto disabled | open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD3) Crypto disabled |
-| 15B3 | A2DC | BlueField-3 | MT43244 | DPU NIC | MT43244 BlueField-3 integrated ConnectX-7 network controller | BlueField-3 集成 ConnectX-7（GB200/GB300 管理/东西向 DPU） |
-| 15B3 | A2DD | BlueField-4 | BF4 | DPU SoC | BF4 Family Crypto enabled [BlueField-4 SoC Crypto enabled] | Vera Rubin 世代 BlueField-4 SoC (Crypto enabled) |
-| 15B3 | A2DE | BlueField-4 | BF4 | DPU SoC | BF4 Family Crypto disabled [BlueField-4 SoC Crypto disabled] | BlueField-4 SoC (Crypto disabled) |
-| 15B3 | A2DF | BlueField-4 | BF4 | DPU NIC | BF4 Family integrated network controller [BlueField-4 integrated network controller] | BlueField-4 集成网络控制器 |
-| 15B3 | C2D6 | BlueField-4 | BF4 | Mgmt Interface | BF4 Family Management Interface [BlueField-4 SoC Management Interface] | BlueField-4 管理接口 |
-| 15B3 | D2F0 | Quantum | QM8700 | IB Switch | Quantum HDR (200Gbps) switch | Quantum HDR (200G) InfiniBand 交换芯片 |
-| 15B3 | D2F2 | Quantum-2 | QM9700 | IB Switch | Quantum-2 NDR (400Gbps) switch | Quantum-2 NDR (400G) InfiniBand 交换芯片 |
-| 15B3 | D2F4 | Quantum-3 | Quantum-X800 | IB Switch | Quantum-3 | Quantum-3 XDR (800G) InfiniBand 交换芯片 |
-| 15B3 | D2F6 | Quantum-3 CPO | Quantum-X800 | IB Switch CPO | Quantum-3CPO | Quantum-3 共封装光学 (CPO) 交换芯片 |
-| 15B3 | CF6C | Spectrum-2 | MT53100 | Eth Switch | MT53100 [Spectrum-2] | 100G/200G Ethernet 交换芯片 |
-| 15B3 | CF70 | Spectrum-3 | SN4000 | Eth Switch | Spectrum-3 | 200G/400G Ethernet 交换芯片 |
-| 15B3 | CF80 | Spectrum-4 | SN5000 | Eth Switch | Spectrum-4 | 400G/800G Spectrum-X 交换芯片 |
-| 15B3 | CF82 | Spectrum-5 | Spectrum-5 | Eth Switch | Spectrum-5 | 新一代 Spectrum-5 交换芯片 |
-| 15B3 | CF84 | Spectrum-6 | Spectrum-6 | Eth Switch | Spectrum-6 | Spectrum-6 (含 0277 Tile) |
-| 15B3 | CF86 | Spectrum-7 | Spectrum-7 | Eth Switch | Spectrum-7 | Spectrum-7 (含 027E Tile) |
-| 15B3 | C788 | Spectrum-8 | Spectrum-8 | Eth Switch | Spectrum-8 | Spectrum-8 (含 027F Tile) |
-
-## 四、Rubin（10 个 ID · sm_107 / CC 10.7 · 深度一手考据）
-
-截至 **2026-11-20**，交叉核验 **`pci.ids v2026.11.19`**（实时比对 `pci-ids.ucw.cz` 零新增、`systemd hwdb` 零额外）、**`NVIDIA/open-gpu-kernel-modules 620.73.04`**（含编译头文件 **`g_nv_name_released.h`** 与 **`detect-self-hosted.h`**）、**`NVIDIA/gpu-admin-tools`**、**`NVIDIA/edk2-nvidia`**、**`NVIDIA/DCGM`** 与 **CUDA 13.5 GA** 官方文档，Rubin 代际目前**全球公开可信的一手 PCI Device ID 共 10 个**（GR100 7 个 + GR102 3 个），每一项的具体形态、显存/MIG 切分与用途均已逐条实锤：
-
-- **官方架构与算力实证**：Compute Capability = **`sm_107`（CC 10.7，含 `sm_107a` / `sm_107f`）**；TSMC 3nm 双裸片 CoWoS-L 封装（336B 晶体管，GR100 = 2× GR102 dielet，每 dielet 4×NVDEC / 4×NVJPG / 1×OFA）；单卡 **288 GB HBM4**（22 TB/s）、**50 PFLOPS NVFP4**、**NVLink 6（3.6 TB/s）**、每 SM 328 KB 共享内存。
-- **首发量产 `3041` 的 MIG/vGPU 显存实锤**：`open-gpu 620.73.04` 的 `g_nv_name_released.h` 不仅收录了物理卡 `10DE:3041 · 10DE:221A`（`NVIDIA VR NVL72`），还完整列出了 **`2304–230A` 共 7 档 MIG/vCS 子系统 ID**（`1-35C / 1-70C / 2-70C / 3-140C / 4-140C / 7-280C / 280C`），直接从 NVIDIA 驱动源码层面实锤单卡可用 HBM4 容量为 **280 GB**（288 GB 物理）并支持 7 切分多租户虚拟化。
-- **Endpoint vs Self-Hosted 硬编码分区**：`kernel-open/nvidia/detect-self-hosted.h` 明确硬编码 `0x3040–0x307F` 为 GR100 Self-Hosted（Vera C2C）、`0x30C0–0x30FF` 为 GR102 Self-Hosted；非 C2C 端点段 `3000–303F` 含 **`3002`**（`subsys 2277` 非 C2C SXM）与 **`3021`**（`PCIe Faber`）。
+- **官方架构实证**：Compute Capability = **`sm_107`（CC 10.7，含 `sm_107a` / `sm_107f`）**；TSMC 3nm 双裸片 CoWoS-L 封装（336B 晶体管，GR100 = 2× GR102 dielet，每 dielet 4×NVDEC / 4×NVJPG / 1×OFA）；单卡 **288 GB HBM4**（22 TB/s）、**50 PFLOPS NVFP4**、**NVLink 6（3.6 TB/s）**、每 SM 328 KB 共享内存。
+- **首发量产 `3041` 显存与 MIG 实锤**：`g_nv_name_released.h` 收录物理卡 `10DE:3041 · 10DE:221A`（`NVIDIA VR NVL72`）及 **`2304–230A` 共 7 档 MIG/vCS**（`1-35C ~ 7-280C / 280C`），源码直接实锤单卡可用 HBM4 为 **280 GB**。
+- **Endpoint vs Self-Hosted 分区**：`detect-self-hosted.h` 硬编码 `3040–307F`（GR100）与 `30C0–30FF`（GR102）为 Vera C2C Self-Hosted 段；非 C2C 端点段 `3000–303F` 含 **`3002`**（`2277` SXM）与 **`3021`**（`PCIe Faber`）。
 
 | ID | 芯片 | SM | 功能 | pci.ids 名称 | 产品名（官方 / 社区） | 用途 / 规格 / 子系统 / 一手来源 | 开放驱动 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -244,7 +41,7 @@ Grace（`Tegra241 / TH500`，Neoverse V2 核心）与 Vera（`TB500`，88 核自
 | 30C0 | GR102 | sm_107 | GPU | GR102 [Reserved Dev ID B] | — | 【硅前保留·GR102 Self-Hosted】GR102 Self-Hosted 保留基准（detect-self-hosted.h 划定 30C0–30FF 为 GR102 C2C 段） | — |
 | 30FF | GR102 | sm_107 | GPU | GR102 | — | 【数据中心·GR102 Vera+Rubin 变体】GR102 Self-Hosted C2C+SXM 变体（gpu-admin-tools 实锤 has_c2c+is_sxm，subsys 10DE:221B / 221C），用于单裸片/定制 Vera+Rubin 平台验证 | — |
 
-### Rubin 架构硬件规格与路线图可信度边界（2026-11 实证）
+### 1.1 Rubin 架构硬件规格与路线图可信度边界
 
 | 代号 / 维度 | 实锤状态、硬件规格与用途定位（严格区分已证实 vs 规划中） |
 | --- | --- |
@@ -255,14 +52,14 @@ Grace（`Tegra241 / TH500`，Neoverse V2 核心）与 Vera（`TB500`，88 核自
 | **消费级 Rubin（GR20x）** | **尚无公开 PCI ID**：仍处于未来路线阶段，目前所有公开 `30xx` ID 全部属于数据中心 GR100/GR102。 |
 | **配套 Vera CPU 与互联** | **Vera CPU（`TB500`）**：88 核自研 Olympus 核心 + 不对称 SMT + Caliptra RoT，PCIe RP `10DE:2F95–2F99`；整柜配套 36× Vera CPU + 36× **NVLink-6 Switch（`15B3:D2F8`）** + **ConnectX-9（`15B3:1025`）** + **BlueField-4（`15B3:A2DD–A2DF`）**。 |
 
-## 五、Blackwell & Blackwell Ultra（91 个 ID · sm_100 / 103 / 110 / 120 / 121 · 全量用途与子系统实证）
+## 二、Blackwell & Blackwell Ultra（91 个 ID · sm_100 / 103 / 110 / 120 / 121）
 
-Blackwell 是 NVIDIA 史上横跨产品形态最广的一代（**一个代号、5 个 SM、91 个一手实证 PCI ID**），涵盖超大规模数据中心液冷整柜（`GB100 / GB110`）、个人桌面超算（`DGX Station GB300` / `DGX Spark GB10`）、企业级虚拟化服务器（`RTX PRO 6000/4500 Server` 与中国合规 `RTX 6000D`）、专业工作站与工业宽温 MXM 嵌入模块、Arm AI PC（`RTX Spark N1X`）、具身智能机器人（`Jetson AGX Thor`）及消费级 GeForce RTX 50 全系：
+一个代号、五个 SM，涵盖超大规模数据中心整柜（`GB100 / GB110`）、个人桌面超算（`DGX Station GB300` / `DGX Spark GB10`）、企业级虚拟化服务器（`RTX PRO 6000/4500 Server` 与中国合规 `RTX 6000D`）、专业工作站与工业 MXM 嵌入模块、Arm AI PC（`RTX Spark N1X`）、机器人（`Jetson AGX Thor`）及消费级 GeForce RTX 50 全系：
 
-- **数据中心 Blackwell（`GB100 / GB102` · `sm_100`）**：`2901`（HGX/DGX B200 180GB，含 1000W/999W/850W 三种板卡与 8 档 MIG）、`2909`（HGX B200 168GB `22EB`，7×24GB 均分 MIG 专用）、`2941`（GB200 NVL72/36，186GB 可用 HBM3e，Linux `nvgrace-gpu` VFIO 白名单，1199W）、`2920 / 29BC`（B100 700W/850W/350W）、`29BB`（**DRIVE P2021** 自动驾驶 50W）。
-- **数据中心 Blackwell Ultra（`GB110 / GB112 / GB120` · `sm_103`）**：`3182`（HGX B300 SXM6 风冷 1099W，269GB 可用 HBM3e）、`31C2`（**GB300 NVL72**，278GB 可用 HBM3e；子系统区分 **`21F1` Bianca 1399W** 与 **`20E5` Galaxy 1299W**）、`31C3`（**DGX Station GB300-252**，252GB HBM3e + 496GB LPDDR5X = 748GB 桌面超算）、`31A1`（**GB300 Max-Q 1199W**，`detect-self-hosted.h` 专门硬编码的 C2C 特例）、`3183/3184/3224/323E/3340`（SXM 定制与 `GB112 / GB120` 预留）。
-- **专业工作站 / 虚拟化服务器 / 中国合规（`GB202GL / GB203GL / GB206GL` · `sm_120`）**：`2BB5`（RTX PRO 6000 Server 96GB 600W，内置 **102 档 vGPU/MIG + 云游戏 slice**）、`2BB9`（RTX 6000D 中国合规 84GB，含 **249W 液冷 LC `2279`** 与 **2×42GB MIG**）、`2BBD`（RTX PRO 5500 84GB ECC 600W ✓）、`2BB3`（RTX PRO 5000 一 ID 双容量：`204D` 48GB / `227A` 72GB + 26 档 vGPU）、`2C3A`（RTX PRO 4500 Server 单槽 32GB 165W + 46 档 vGPU）、`2C31/2C34/2C33/2D30`（4500/4000/4000 SFF/2000）及 `2C77/2C79/2D79/2DF9`（MXM 3.1 工业嵌入模块）。
-- **消费级 GeForce RTX 50 & 移动 / 端侧（`sm_120 / 110 / 121`）**：完整区分桌面分档双硅片（`RTX 5070`: GB203 `2C09` vs GB205 `2F04`；`RTX 5060`: GB205 `2F06` vs GB206 `2D05`）、中国合规两代改款（`5090 D 2B87` 32GB vs `5090 D V2 2B8C` 24GB）、未发售首个 SUPER（`2F02` RTX 5070 SUPER，**截至 2026-11 尚无 5080/5070 Ti SUPER 官宣或公开 ID**）、Arm AI PC（`RTX Spark N1X` `2E03/2E06/2E13`）、个人超算（`DGX Spark GB10` `2E12`）与机器人（`Jetson AGX Thor` `2B00` 2,070 FP4 TFLOPS）。
+- **数据中心 Blackwell（`GB100 / GB102` · `sm_100`）**：`2901`（HGX/DGX B200 180GB，含 1000W/999W/850W 与 8 档 MIG）、`2909`（HGX B200 168GB `22EB`，7×24GB 均分 MIG）、`2941`（GB200 NVL72/36，186GB 可用，1199W，`nvgrace-gpu` VFIO ✓）、`2920 / 29BC`（B100）、`29BB`（**DRIVE P2021** 50W 自动驾驶）。
+- **Blackwell Ultra（`GB110 / GB112 / GB120` · `sm_103`）**：`3182`（HGX B300 SXM6 风冷 1099W，269GB 可用）、`31C2`（**GB300 NVL72**，278GB 可用；子系统区分 **`21F1` Bianca 1399W** 与 **`20E5` Galaxy 1299W**）、`31C3`（**DGX Station GB300-252**，252GB HBM3e + 496GB LPDDR5X = 748GB）、`31A1`（**GB300 Max-Q 1199W**，`detect-self-hosted.h` 特例 C2C）、`3183/3184/3224/323E/3340`（SXM 变体与 `GB112/GB120`）。
+- **专业工作站 / 服务器 / 工业嵌入（`sm_120`）**：`2BB5`（RTX PRO 6000 Server 96GB 600W + **102 档 vGPU/MIG + 云游戏 slice**）、`2BB9`（RTX 6000D 84GB，含 **249W 液冷 LC `2279`** 与 **2×42GB MIG**）、`2BBD`（RTX PRO 5500 84GB ECC ✓）、`2BB3`（RTX PRO 5000 `204D` 48GB / `227A` 72GB + 26 档 vGPU）、`2C3A`（RTX PRO 4500 Server 单槽 32GB 165W + 46 档 vGPU）、工作站/移动/MXM 嵌入全系。
+- **消费级 RTX 50 & 端侧（`sm_120 / 110 / 121`）**：完整区分双硅片分档（`RTX 5070` `2C09/2F04`；`RTX 5060` `2F06/2D05`）、中国合规（`5090 D 2B87` / `5090 D V2 2B8C`）、未发售首个 SUPER（`2F02` RTX 5070 SUPER）、`RTX Spark N1X`（`2E03/2E06/2E13`）、`DGX Spark GB10`（`2E12`）与 `Jetson AGX Thor`（`2B00` / `T268 3400`）。
 
 | ID | 芯片 | SM | 功能 | pci.ids 名称 | 产品名（官方 / 社区） | 用途 / 规格 / 子系统 / 一手来源 | 开放驱动 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -358,9 +155,9 @@ Blackwell 是 NVIDIA 史上横跨产品形态最广的一代（**一个代号、
 | 2E13 | GB20B | sm_121 | GPU | GB20B [RTX Spark N1X (6144-core Blackwell RTX GPU)] | NVIDIA RTX Spark N1X (6144-core Blackwell RTX GPU) | 【Arm AI PC·RTX Spark N1X 6144 核 OEM/高功耗变体】6,144 CUDA 核版本第二 PCI ID（open-gpu ✓，同属 Linux quirks.c 2E00–2E3F ATS 区间），用于不同 TDP/OEM 平台区分 | ✓ |
 | 2E2A | GB20B | sm_121 | GPU | GB20B [JMJWOA-Generic-GPU] | — | 【工程样品·N1X 硅前】pci.ids 注释 '# N1X' 标为 JMJWOA-Generic-GPU（与 2E02 对应的预量产测试 ID，位于 2E00–2E3F ATS 段） | — |
 
-### 5.1 Blackwell & Rubin 关键子系统 ID（`VID:DID · SVID:SDID`）与 vGPU / MIG 细分 SKU 精解表
+### 2.1 Blackwell & Rubin 关键子系统 ID（`VID:DID · SVID:SDID`）与 vGPU / MIG 精解表
 
-在现代 NVIDIA 数据中心与专业卡中，**同一个 PCI Device ID 往往承载多款不同显存容量、不同 TDP 功耗墙（风冷 vs 液冷）、乃至上百个 vGPU/MIG 虚拟化切片**（例如 `2BB3` 同时对应 RTX PRO 5000 48GB 与 72GB，`31C2` 区分 1399W Bianca 与 1299W Galaxy，`2BB5` 挂载 106 个子系统 ID）。下表直接提取自 **`open-gpu 620.73.04` `g_nv_name_released.h`**、**`NVIDIA/DCGM`** 与 **`NVIDIA/gpu-admin-tools`**，可用于 `lspci -nnv` 精确识别：
+同一个 PCI Device ID 往往承载多款不同显存容量、不同 TDP 功耗墙（风冷 vs 液冷）乃至上百个 vGPU/MIG 虚拟化切片（例如 `2BB3` 同时对应 RTX PRO 5000 48GB 与 72GB，`31C2` 区分 1399W Bianca 与 1299W Galaxy，`2BB5` 挂载 106 个子系统 ID）。下表直接提取自 **`open-gpu 620.73.04` `g_nv_name_released.h`**、**`NVIDIA/DCGM`** 与 **`NVIDIA/gpu-admin-tools`**，可用于 `lspci -nnv` 精确识别：
 
 | 代际 | PCI DID | 芯片 | 物理子系统（SVID:SDID） | vGPU / MIG 虚拟化子系统（g_nv_name_released.h） | 官方 SKU 名称 | 核心规格与功耗 | 核心用途与部署定位 | 一手来源 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -387,9 +184,9 @@ Blackwell 是 NVIDIA 史上横跨产品形态最广的一代（**一个代号、
 | Blackwell Pro | 2C31 / 2C34 / 2C33 / 2D30 | GB203/206GL | 2051(4500) · 2052(4000) · 2053(4000 SFF) · 2054(2000) [四大 OEM] | — | RTX PRO 4500 / 4000 / 4000 SFF / 2000 | 4500 32GB 200W · 4000 24GB 140W · 4000 SFF 24GB 70W · 2000 16GB 70W | 企业级 CAD/BIM、单槽/半高 SFF 紧凑工作站、多屏显控与轻量 AI 推理 | open-gpu g_nv_name_released.h ✓ |
 | Blackwell Spark | 2E12 | GB20B (GB10) | 10DE:21EC | — | NVIDIA GB10 (DGX Spark) | 20 核 Grace + Blackwell · 128GB 统一 LPDDR5X (273GB/s) · 1 PFLOPS FP4 | 个人桌面 AI 超算：本地 200B 模型原型开发与双机 405B 微调 | open-gpu ✓ + Linux quirks.c |
 
-## 六、Hopper（29 个 ID · sm_90）
+## 三、Hopper（29 个 ID · sm_90）
 
-**GH100** 单芯片家族（含 `gpu-admin-tools` 独家收录、尚未入 `pci.ids` 的 **`2309` H20**；LS10 NVSwitch 全部 16 个 ID 归入第三章）。经 `gpu-admin-tools` 与 `DCGM` 交叉验证：`2343` / `2345` 均正式确认为 **GH200**（`has_c2c + is_sxm`），`2342` / `2345` / `2348` 位于 Linux 主线 `nvgrace-gpu` VFIO 白名单；DCGM 亦披露了内部代号 **`Scout`（`2337/2339`）**、**`SkinnyJoe`（`237F/2342`）** 与 **`PG502`（`2336/2338`）**。
+**GH100** 单芯片家族（含 `gpu-admin-tools` 独家收录、尚未入 `pci.ids` 的 **`2309` H20**；LS10 NVSwitch 全部 16 个 ID 归入第六章）。经 `gpu-admin-tools` 与 `DCGM` 交叉验证：`2343` / `2345` 均正式确认为 **GH200**（`has_c2c + is_sxm`），`2342` / `2345` / `2348` 位于 Linux 主线 `nvgrace-gpu` VFIO 白名单；DCGM 亦披露了内部代号 **`Scout`（`2337/2339`）**、**`SkinnyJoe`（`237F/2342`）** 与 **`PG502`（`2336/2338`）**。
 
 | ID | 芯片 | SM | 功能 | pci.ids 名称 | 产品名（官方 / 社区） | 说明 / 子系统 / 功耗 / 驱动注解 | 开放驱动 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -423,7 +220,7 @@ Blackwell 是 NVIDIA 史上横跨产品形态最广的一代（**一个代号、
 | 23B0 | GH100 | sm_90 | GPU | GH100 | — | GH100 internal/CSP variant — no public SKU mapping | — |
 | 23F0 | GH100 | sm_90 | GPU | GH100 | — | GH100 internal/CSP variant — no public SKU mapping | — |
 
-## 七、Ada Lovelace（69 个 ID · sm_89）
+## 四、Ada Lovelace（69 个 ID · sm_89）
 
 消费级 **RTX 40 系**、专业工作站 **RTX 6000~500 Ada**、数据中心 **L40 / L40S / L20 / L20A / L30 / L4 / L2**（含 `2682` 未发售 RTX 4090 Ti、`2687` AD102 RTX 4080 变体及 5 个 HD Audio；DCGM 补充了 L40S 350W / L20 275W / L20A 350W / L30 350W 等实测目标功耗）。
 
@@ -499,9 +296,9 @@ Blackwell 是 NVIDIA 史上横跨产品形态最广的一代（**一个代号、
 | 22BD | AD106 | sm_89 | **HD Audio** | AD106M High Definition Audio Controller | — | On-board HD Audio function of the GPU board (not a standalone product) | — |
 | 22BE | AD107 | sm_89 | **HD Audio** | AD107 High Definition Audio Controller | — | On-board HD Audio function of the GPU board (not a standalone product) | — |
 
-## 八、Ampere（146 个 ID · sm_80 / 86）
+## 五、Ampere（146 个 ID · sm_80 / 86）
 
-数据中心 **GA100**（`sm_80`，A100 / A800 / A30 / AX800 / CMP 170HX）与消费/专业卡 **GA102–GA107**（`sm_86`，RTX 30 系 / RTX A 系 / A40 / A10 / A16 / A2），含 5 个 HD Audio。（LR10 NVSwitch 全部 17 个 ID 归入第三章，Orin T234 PCIe Root Port 归入第二章。）
+数据中心 **GA100**（`sm_80`，A100 / A800 / A30 / AX800 / CMP 170HX）与消费/专业卡 **GA102–GA107**（`sm_86`，RTX 30 系 / RTX A 系 / A40 / A10 / A16 / A2），含 5 个 HD Audio。（LR10 NVSwitch 全部 17 个 ID 归入第六章，Orin T234 PCIe Root Port 归入第七章。）
 
 | ID | 芯片 | SM | 功能 | pci.ids 名称 | 产品名（官方 / 社区） | 说明 / 子系统 / 功耗 / 驱动注解 | 开放驱动 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -652,6 +449,221 @@ Blackwell 是 NVIDIA 史上横跨产品形态最广的一代（**一个代号、
 | 228E | GA106 | sm_86 | **HD Audio** | GA106 High Definition Audio Controller | — | On-board HD Audio function of the GPU board (not a standalone product) | — |
 | 2291 | GA107 | sm_86 | **HD Audio** | GA107 High Definition Audio Controller | — | On-board HD Audio function of the GPU board (not a standalone product) | — |
 
+## 六、NVSwitch（`10DE` 全量 33 项）与 `15B3` 集群互联家族（50 项）
+
+### 6.1 `10DE` NVSwitch Gen2（LR10 / LimeRock）与 Gen3（LS10 / Laguna）全量表
+
+`pci.ids` 仅收录了最常见的 `1AF1` 与 `22A3` 两条，`NVIDIA/open-gpu-kernel-modules` 的 `src/common/nvswitch/kernel/nvswitch.c` 完整定义了全部 **33 个** PCI Device ID（含 LS10 的管理端点、Function 0 PCI-PCI Bridge 与 Function 1 NTB）：
+
+| Vendor | ID | 代际 | 芯片代号 | 功能角色 | pci.ids 名称 | 驱动源码说明 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 10DE | 1AE8 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
+| 10DE | 1AF0 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
+| 10DE | 1AF1 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | GA100 [A100 NVSwitch] | HGX/DGX A100 常见公开 ID (Class 0x068000) |
+| 10DE | 1AF2 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
+| 10DE | 1AF3 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
+| 10DE | 1AF4 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
+| 10DE | 1AF5 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
+| 10DE | 1AF6 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
+| 10DE | 1AF7 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
+| 10DE | 1AF8 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
+| 10DE | 1AF9 | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
+| 10DE | 1AFA | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
+| 10DE | 1AFB | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
+| 10DE | 1AFC | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
+| 10DE | 1AFD | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
+| 10DE | 1AFE | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
+| 10DE | 1AFF | NVSwitch Gen2 (Ampere) | LR10 (LimeRock) | NVSwitch | — (仅在 open-gpu nvswitch.c) | open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2) |
+| 10DE | 22A0 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NVSwitch EP | — (仅在 open-gpu nvswitch.c) | LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[]) |
+| 10DE | 22A1 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NVSwitch EP | — (仅在 open-gpu nvswitch.c) | LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[]) |
+| 10DE | 22A2 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NVSwitch EP | — (仅在 open-gpu nvswitch.c) | LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[]) |
+| 10DE | 22A3 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NVSwitch EP | GH100 [H100 NVSwitch] | HGX/DGX H100/H200 常见公开 ID (Class 0x068000) |
+| 10DE | 22A4 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NVSwitch EP | — (仅在 open-gpu nvswitch.c) | LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[]) |
+| 10DE | 22A5 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NVSwitch EP | — (仅在 open-gpu nvswitch.c) | LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[]) |
+| 10DE | 22A6 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NVSwitch EP | — (仅在 open-gpu nvswitch.c) | LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[]) |
+| 10DE | 22A7 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NVSwitch EP | — (仅在 open-gpu nvswitch.c) | LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[]) |
+| 10DE | 22A8 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | PCI-PCI Bridge F0 | — (仅在 open-gpu nvswitch.c) | Laguna Switch Function 0 PCI-PCI Bridge (nvswitch_ls10_device_ids[]) |
+| 10DE | 22A9 | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | PCI-PCI Bridge F0 | — (仅在 open-gpu nvswitch.c) | Laguna Switch Function 0 PCI-PCI Bridge (nvswitch_ls10_device_ids[]) |
+| 10DE | 22AA | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | PCI-PCI Bridge F0 | — (仅在 open-gpu nvswitch.c) | Laguna Switch Function 0 PCI-PCI Bridge (nvswitch_ls10_device_ids[]) |
+| 10DE | 22AB | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | PCI-PCI Bridge F0 | — (仅在 open-gpu nvswitch.c) | Laguna Switch Function 0 PCI-PCI Bridge (nvswitch_ls10_device_ids[]) |
+| 10DE | 22AC | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NTB Bridge F1 | — (仅在 open-gpu nvswitch.c) | Laguna Switch Function 1 Non-Transparent Bridge (nvswitch_ls10_device_ids[]) |
+| 10DE | 22AD | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NTB Bridge F1 | — (仅在 open-gpu nvswitch.c) | Laguna Switch Function 1 Non-Transparent Bridge (nvswitch_ls10_device_ids[]) |
+| 10DE | 22AE | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NTB Bridge F1 | — (仅在 open-gpu nvswitch.c) | Laguna Switch Function 1 Non-Transparent Bridge (nvswitch_ls10_device_ids[]) |
+| 10DE | 22AF | NVSwitch Gen3 (Hopper) | LS10 (Laguna) | NTB Bridge F1 | — (仅在 open-gpu nvswitch.c) | Laguna Switch Function 1 Non-Transparent Bridge (nvswitch_ls10_device_ids[]) |
+
+### 6.2 `15B3` 配套高速互联表（NVLink-6/7/8 Switch · ConnectX-6~11 · BlueField-1~4 · Quantum / Spectrum）
+
+在大规模 Grace/Blackwell/Vera Rubin 集群的 `lspci` 中，除 `10DE` 外还会密集出现 **`15B3`（Mellanox / NVIDIA Networking）** 设备——**从 NVLink-6 Switch（Vera Rubin）起，机架级 NVLink 交换芯片的 PCI ID 已正式并入 `15B3:D2F8/D2FA/D2FC`**，而 **ConnectX-10/11（`15B3:2101/2102`）** 更是原生支持 **NVLink-C2C**：
+
+| Vendor | ID | 产品家族 | 芯片 / ASIC | 功能角色 | pci.ids 名称（v2026.11.19） | 说明 / Linux 实证 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 15B3 | D2F8 | NVLink Switch Gen6 | NVLink-6 | NVLink Switch | NVLink-6 Switch | Vera Rubin 机架级 NVLink-6 交换芯片（从 Gen6 起并入 15B3 段位） |
+| 15B3 | 0278 | NVLink Switch Gen6 | NVLink-6 | Flash Recovery | NVLink-6 Switch in Flash Recovery Mode | NVLink-6 Switch Flash Recovery |
+| 15B3 | 0279 | NVLink Switch Gen6 | NVLink-6 | RMA | NVLink-6 Switch RMA | NVLink-6 Switch RMA |
+| 15B3 | D2FA | NVLink Switch Gen7 | NVLink-7 | NVLink Switch | NVLink-7 Switch | Rubin Ultra / 下一代 NVLink-7 交换芯片 |
+| 15B3 | 027C | NVLink Switch Gen7 | NVLink-7 | Flash Recovery | NVLink-7 Switch in Flash Recovery Mode | NVLink-7 Switch Flash Recovery |
+| 15B3 | 027D | NVLink Switch Gen7 | NVLink-7 | RMA | NVLink-7 Switch RMA | NVLink-7 Switch RMA |
+| 15B3 | D2FC | NVLink Switch Gen8 | NVLink-8 | NVLink Switch | NVLink-8 Switch | 远期规划 NVLink-8 交换芯片（已入 pci.ids v2026.11.19） |
+| 15B3 | 02A0 | NVLink Switch Gen8 | NVLink-8 | Flash Recovery | NVLink-8 Switch in Flash Recovery Mode | NVLink-8 Switch Flash Recovery |
+| 15B3 | 02A1 | NVLink Switch Gen8 | NVLink-8 | RMA | NVLink-8 Switch RMA | NVLink-8 Switch RMA |
+| 15B3 | 101B | ConnectX-6 | MT28908 | NIC / HCA | MT28908 Family [ConnectX-6] | 200G HDR IB / Ethernet |
+| 15B3 | 101D | ConnectX-6 Dx | MT2892 | NIC | MT2892 Family [ConnectX-6 Dx] | 100G/200G Ethernet |
+| 15B3 | 101F | ConnectX-6 Lx | MT2894 | NIC | MT2894 Family [ConnectX-6 Lx] | 25G/50G Ethernet |
+| 15B3 | 1021 | ConnectX-7 | MT2910 | NIC / HCA | MT2910 Family [ConnectX-7] | 400G NDR IB / 400GbE（HGX H100/H200/GB200 标配） |
+| 15B3 | 1979 | ConnectX-7 | MT2910 | PCIe Bridge | MT2910 Family [ConnectX-7 PCIe Bridge] | ConnectX-7 PCIe Bridge（gpu-admin-tools cx7.py 识别） |
+| 15B3 | 1023 | ConnectX-8 | CX8 | SuperNIC / HCA | CX8 Family [ConnectX-8] | 800G XDR IB / 800GbE（GB300 / B300 标配） |
+| 15B3 | 1024 | ConnectX-8 | CX8 | PCIe Switch | CX8 PCIe Switch Family [ConnectX-8 PCIe Switch] | ConnectX-8 内置 PCIe Gen6 Switch |
+| 15B3 | 197D | ConnectX-8 | CX8 | PCIe Bridge | CX8 Family [ConnectX-8 PCIe Bridge] | ConnectX-8 PCIe Bridge |
+| 15B3 | 1025 | ConnectX-9 | CX9 | SuperNIC / HCA | CX9 Family [ConnectX-9] | Vera Rubin 世代 1.6T / 800G SuperNIC |
+| 15B3 | 197E | ConnectX-9 | CX9 | PCIe Bridge | CX9 Family [ConnectX-9 PCIe Bridge] | ConnectX-9 PCIe Bridge |
+| 15B3 | 1027 | ConnectX-10 | CX10 | SuperNIC / HCA | CX10 Family [ConnectX-10] | 下一代 ConnectX-10 SuperNIC |
+| 15B3 | 1028 | ConnectX-10 | CX10 | TNCM | CX10 Family [ConnectX-10 Trusted Network Control Memory] | ConnectX-10 Trusted Network Control Memory |
+| 15B3 | 197F | ConnectX-10 | CX10 | PCIe Bridge | CX10 Family [ConnectX-10 PCIe Bridge] | ConnectX-10 PCIe Bridge |
+| 15B3 | 2101 | ConnectX-10 | CX10 | NVLink-C2C | CX10 Family [ConnectX-10 NVLink-C2C] | Linux 主线 drivers/pci/quirks.c 实锤：强制 PCIe ATS 的 NVLink-C2C 网卡 |
+| 15B3 | 1029 | ConnectX-11 | CX11 | SuperNIC / HCA | CX11 Family [ConnectX-11] | 远期 ConnectX-11 SuperNIC |
+| 15B3 | 102A | ConnectX-11 | CX11 | TNCM | CX11 Family [ConnectX-11 Trusted Network Control Memory] | ConnectX-11 Trusted Network Control Memory |
+| 15B3 | 1980 | ConnectX-11 | CX11 | PCIe Bridge | CX11 Family [ConnectX-11 PCIe Bridge] | ConnectX-11 PCIe Bridge |
+| 15B3 | 2102 | ConnectX-11 | CX11 | NVLink-C2C | CX11 Family [ConnectX-11 NVLink-C2C] | ConnectX-11 NVLink-C2C |
+| 15B3 | A2D0 | BlueField-1 | MT416842 | DPU SoC | MT416842 BlueField SoC Crypto enabled | open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD) Crypto enabled |
+| 15B3 | A2D4 | BlueField-2 | MT42822 | DPU SoC | MT42822 BlueField-2 SoC Crypto enabled | open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD2) Crypto enabled |
+| 15B3 | A2D5 | BlueField-2 | MT42822 | DPU SoC | MT42822 BlueField-2 SoC Crypto disabled | open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD2) Crypto disabled |
+| 15B3 | A2D6 | BlueField-2 | MT42822 | DPU NIC | MT42822 BlueField-2 integrated ConnectX-6 Dx network controller | BlueField-2 集成 ConnectX-6 Dx |
+| 15B3 | A2D7 | BlueField-3 Lx | MT43162 | DPU SoC | MT43162 BlueField-3 Lx SoC Crypto enabled | BlueField-3 Lx Crypto enabled |
+| 15B3 | A2DA | BlueField-3 | MT43244 | DPU SoC | MT43244 BlueField-3 SoC Crypto enabled | open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD3, Disable IOMAP WC) Crypto enabled |
+| 15B3 | A2DB | BlueField-3 | MT43244 | DPU SoC | MT43244 BlueField-3 SoC Crypto disabled | open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD3) Crypto disabled |
+| 15B3 | A2DC | BlueField-3 | MT43244 | DPU NIC | MT43244 BlueField-3 integrated ConnectX-7 network controller | BlueField-3 集成 ConnectX-7（GB200/GB300 管理/东西向 DPU） |
+| 15B3 | A2DD | BlueField-4 | BF4 | DPU SoC | BF4 Family Crypto enabled [BlueField-4 SoC Crypto enabled] | Vera Rubin 世代 BlueField-4 SoC (Crypto enabled) |
+| 15B3 | A2DE | BlueField-4 | BF4 | DPU SoC | BF4 Family Crypto disabled [BlueField-4 SoC Crypto disabled] | BlueField-4 SoC (Crypto disabled) |
+| 15B3 | A2DF | BlueField-4 | BF4 | DPU NIC | BF4 Family integrated network controller [BlueField-4 integrated network controller] | BlueField-4 集成网络控制器 |
+| 15B3 | C2D6 | BlueField-4 | BF4 | Mgmt Interface | BF4 Family Management Interface [BlueField-4 SoC Management Interface] | BlueField-4 管理接口 |
+| 15B3 | D2F0 | Quantum | QM8700 | IB Switch | Quantum HDR (200Gbps) switch | Quantum HDR (200G) InfiniBand 交换芯片 |
+| 15B3 | D2F2 | Quantum-2 | QM9700 | IB Switch | Quantum-2 NDR (400Gbps) switch | Quantum-2 NDR (400G) InfiniBand 交换芯片 |
+| 15B3 | D2F4 | Quantum-3 | Quantum-X800 | IB Switch | Quantum-3 | Quantum-3 XDR (800G) InfiniBand 交换芯片 |
+| 15B3 | D2F6 | Quantum-3 CPO | Quantum-X800 | IB Switch CPO | Quantum-3CPO | Quantum-3 共封装光学 (CPO) 交换芯片 |
+| 15B3 | CF6C | Spectrum-2 | MT53100 | Eth Switch | MT53100 [Spectrum-2] | 100G/200G Ethernet 交换芯片 |
+| 15B3 | CF70 | Spectrum-3 | SN4000 | Eth Switch | Spectrum-3 | 200G/400G Ethernet 交换芯片 |
+| 15B3 | CF80 | Spectrum-4 | SN5000 | Eth Switch | Spectrum-4 | 400G/800G Spectrum-X 交换芯片 |
+| 15B3 | CF82 | Spectrum-5 | Spectrum-5 | Eth Switch | Spectrum-5 | 新一代 Spectrum-5 交换芯片 |
+| 15B3 | CF84 | Spectrum-6 | Spectrum-6 | Eth Switch | Spectrum-6 | Spectrum-6 (含 0277 Tile) |
+| 15B3 | CF86 | Spectrum-7 | Spectrum-7 | Eth Switch | Spectrum-7 | Spectrum-7 (含 027E Tile) |
+| 15B3 | C788 | Spectrum-8 | Spectrum-8 | Eth Switch | Spectrum-8 | Spectrum-8 (含 027F Tile) |
+
+## 七、Grace（`TH500`）· Vera（`TB500`）· Tegra / Thor / N1 CPU & SoC（40 项）
+
+> [!IMPORTANT]
+> Grace（`TH500`）的 6 个 Root Port ID（`22B1–22B4 / 22B8 / 22B9`）和 Thor（`T264`）的 `22D6 / 22DA` 并未录入 `pci.ids`，全部提取自 `open-gpu-kernel-modules` 的 `src/nvidia/inc/kernel/core/nvcst.h`；Vera（`TB500`）的 `2F95–2F99` 与 N1 客户端 SoC `2F88`（`T256`）则已在 `pci.ids v2026.11.19` 与 `nvcst.h` 中双双落地。
+
+| ID | 平台 / CPU | 内部代号 | 功能 | pci.ids 名称 | 驱动 / 官方定义 | 技术说明 | 来源 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 2F95 | Vera CPU | TB500 | PCIe Root Port | TB500 RP x16 | NVIDIA Vera CPU (TB500) PCIe Root Port x16 | pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500, I/O Coherent + PCIe Atomics) | pci.ids + open-gpu |
+| 2F96 | Vera CPU | TB500 | PCIe Root Port | TB500 RP x8 | NVIDIA Vera CPU (TB500) PCIe Root Port x8 | pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500, Nvidia_TB500_setupFunc) | pci.ids + open-gpu |
+| 2F97 | Vera CPU | TB500 | PCIe Root Port | TB500 RP x4 | NVIDIA Vera CPU (TB500) PCIe Root Port x4 | pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500) | pci.ids + open-gpu |
+| 2F98 | Vera CPU | TB500 | PCIe Root Port | TB500 RP x2 | NVIDIA Vera CPU (TB500) PCIe Root Port x2 | pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500) | pci.ids + open-gpu |
+| 2F99 | Vera CPU | TB500 | PCIe Root Port | TB500 RP x1 | NVIDIA Vera CPU (TB500) PCIe Root Port x1 | pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500) | pci.ids + open-gpu |
+| 22B1 | Grace CPU | TH500 | PCIe Root Port | — (未入 pci.ids) | NVIDIA Grace CPU (TH500) RP for GH100 GPU in GH180 | open-gpu nvcst.h (CS_NVIDIA_TH500, I/O Coherent + PCIe Atomics WAR 3562968) | open-gpu nvcst.h |
+| 22B2 | Grace CPU | TH500 | PCIe Root Port | — (未入 pci.ids) | NVIDIA Grace CPU (TH500) PCIe Root Port x16 | open-gpu nvcst.h (CS_NVIDIA_TH500; P2P via PCIe switch enabled in chipset_pcie.c) | open-gpu nvcst.h |
+| 22B3 | Grace CPU | TH500 | PCIe Root Port | — (未入 pci.ids) | NVIDIA Grace CPU (TH500) PCIe Root Port x4 | open-gpu nvcst.h (CS_NVIDIA_TH500) | open-gpu nvcst.h |
+| 22B4 | Grace CPU | TH500 | PCIe Root Port | — (未入 pci.ids) | NVIDIA Grace CPU (TH500) PCIe Root Port x1 | open-gpu nvcst.h (CS_NVIDIA_TH500) | open-gpu nvcst.h |
+| 22B8 | Grace CPU | TH500 | PCIe Root Port | — (未入 pci.ids) | NVIDIA Grace CPU (TH500) PCIe Root Port x8 | open-gpu nvcst.h (CS_NVIDIA_TH500) | open-gpu nvcst.h |
+| 22B9 | Grace CPU | TH500 | PCIe Root Port | — (未入 pci.ids) | NVIDIA Grace CPU (TH500) PCIe Root Port x2 | open-gpu nvcst.h (CS_NVIDIA_TH500) | open-gpu nvcst.h |
+| 22D6 | Thor SoC | T264 | PCIe Root Port | — (未入 pci.ids) | NVIDIA Tegra T264 (Thor) PCIe Root Port x8 | open-gpu nvcst.h (CS_NVIDIA_T264) | open-gpu nvcst.h |
+| 22D8 | Thor SoC | T264 | PCIe Root Port | THOR Processor PCI Express Root Port | NVIDIA Tegra T264 (Thor) PCIe Root Port x4 | pci.ids + open-gpu nvcst.h (CS_NVIDIA_T264) | pci.ids + open-gpu |
+| 22DA | Thor SoC | T264 | PCIe Root Port | — (未入 pci.ids) | NVIDIA Tegra T264 (Thor) PCIe Root Port x2 | open-gpu nvcst.h (CS_NVIDIA_T264) | open-gpu nvcst.h |
+| 22E6 | Thor SoC | T264 | iGPU Root Port | THOR Processor PCI Express x16 Controller | NVIDIA Tegra T264 (Thor) iGPU Root Port | pci.ids + open-gpu nvcst.h (CS_NVIDIA_T264) | pci.ids + open-gpu |
+| 22CE | DGX Spark / GB10 | GB10 | PCIe Host Bridge | GB10 GEN5 X4 PCIe host | NVIDIA GB10 Gen5 x4 PCIe Host | pci.ids + Linux quirks.c (quirk_no_bus_reset) | pci.ids + Linux |
+| 22D0 | DGX Spark / GB10 | GB10 | PCIe Host Bridge | GB10 GEN4 X1 PCIe host | NVIDIA GB10 Gen4 x1 PCIe Host | pci.ids + Linux quirks.c (quirk_no_bus_reset) | pci.ids + Linux |
+| 22D1 | Spark / N1 SoC | T254 / GB20B | PCI Bridge | GB20B PCI bridge | NVIDIA T254 / GB20B PCI Bridge | pci.ids + open-gpu nvcst.h (CS_NVIDIA_T254) | pci.ids + open-gpu |
+| 2F88 | N1 Client SoC | T256 (N1) | PCIe Root/Host | T256 | NVIDIA T256 (N1) Client Arm SoC | pci.ids + open-gpu nvcst.h (CS_NVIDIA_T256, comment: NVIDIA T256 (N1)) | pci.ids + open-gpu |
+| 200A | Tegra / SoC | NPU | NPU | NPU | NVIDIA Neural Processing Unit (NPU) | Added in pci.ids v2026.11.19 | pci.ids |
+| 229A | Orin SoC | T234 | PCIe Root Port | Orin PCIe x8 Root Complex | NVIDIA Tegra T234 (Orin) RP0 x8 | pci.ids + nvcst.h + Linux quirks.c (disable_rp_msi) | pci.ids + Linux + og |
+| 229C | Orin SoC | T234 | PCIe Root Port | Orin PCIe x4/x8 Endpoint/Root Complex | NVIDIA Tegra T234 (Orin) RP1 x4/x8 | pci.ids + nvcst.h + Linux quirks.c (disable_rp_msi) | pci.ids + Linux + og |
+| 229E | Orin SoC | T234 | PCIe Root Port | Orin PCIe x1 Root Complex | NVIDIA Tegra T234 (Orin) RP2 x1 | pci.ids + nvcst.h + Linux quirks.c (disable_rp_msi) | pci.ids + Linux + og |
+| 2296 | Orin / Tegra | Tegra | Virtual NIC | Tegra PCIe Endpoint Virtual Network | Tegra PCIe Endpoint Virtual Network | pci.ids | pci.ids |
+| 22C2 | Tegra T23x | T23x | PCIe Root Port | — (未入 pci.ids) | NVIDIA Tegra T23x RP0 | open-gpu nvcst.h (CS_NVIDIA_T23x) | open-gpu nvcst.h |
+| 22C3 | Tegra T23x | T23x | PCIe Root Port | — (未入 pci.ids) | NVIDIA Tegra T23x RP1 | open-gpu nvcst.h (CS_NVIDIA_T23x) | open-gpu nvcst.h |
+| 1AD0 | Xavier SoC | T194 | PCIe Root Port | Tegra PCIe x8 Endpoint | NVIDIA Tegra V1 (T194 / Xavier) RP0 x8 | pci.ids + nvcst.h + Linux quirks.c | pci.ids + Linux + og |
+| 1AD1 | Xavier SoC | T194 | PCIe Root Port | Tegra PCIe x4/x8 Endpoint/Root Complex | NVIDIA Tegra V1 (T194 / Xavier) RP1 x4/x8 | pci.ids + nvcst.h + Linux quirks.c | pci.ids + Linux + og |
+| 1AD2 | Xavier SoC | T194 | PCIe Root Port | Tegra PCIe x1 Root Complex | NVIDIA Tegra V1 (T194 / Xavier) RP2 x1 | pci.ids + nvcst.h + Linux quirks.c | pci.ids + Linux + og |
+| 1AD3 | Xavier SoC | T194 | SATA | Xavier SATA Controller | NVIDIA Jetson AGX Xavier SATA Controller | pci.ids | pci.ids |
+| 10E5 | Parker SoC | T186 | PCIe Root Port | Parker PCIe x4 Root Complex | NVIDIA Tegra P1 (T186 / TX2) RP0 x4 | pci.ids + nvcst.h + Linux quirks.c | pci.ids + Linux + og |
+| 10E6 | Parker SoC | T186 | PCIe Root Port | Parker PCIe x1 Root Complex | NVIDIA Tegra P1 (T186 / TX2) RP1 x1 | pci.ids + nvcst.h + Linux quirks.c | pci.ids + Linux + og |
+| 0FAE | Tegra X1 | T210 | PCIe Root Port | Tegra X1 PCIe x4 Root Complex | NVIDIA Tegra X1 (T210 / Nano) RP0 x4 | pci.ids + nvcst.h + Linux quirks.c | pci.ids + Linux + og |
+| 0FAF | Tegra X1 | T210 | PCIe Root Port | Tegra X1 PCIe x1 Root Complex | NVIDIA Tegra X1 (T210 / Nano) RP1 x1 | pci.ids + nvcst.h + Linux quirks.c | pci.ids + Linux + og |
+| 0E12 | Tegra K1 | T124 | PCIe Bridge | TegraK1 PCIe x4 Bridge | NVIDIA Tegra K1 PCIe x4 Bridge | pci.ids + Linux quirks.c | pci.ids + Linux |
+| 0E13 | Tegra K1 | T124 | PCIe Bridge | TegraK1 PCIe x1 Bridge | NVIDIA Tegra K1 PCIe x1 Bridge | pci.ids + Linux quirks.c | pci.ids + Linux |
+| 0E1C | Tegra 3+ | T30/T114 | PCIe Bridge | Tegra3+ PCIe x4 Bridge | NVIDIA Tegra 3+ PCIe x4 Bridge | pci.ids + Linux quirks.c | pci.ids + Linux |
+| 0E1D | Tegra 3+ | T30/T114 | PCIe Bridge | Tegra3+ PCIe x2 Bridge | NVIDIA Tegra 3+ PCIe x2 Bridge | pci.ids + Linux quirks.c | pci.ids + Linux |
+| 0BF0 | Tegra 2 | T20 | PCIe Bridge | Tegra2 PCIe x4 Bridge | NVIDIA Tegra 2 PCIe x4 Bridge | pci.ids + Linux quirks.c | pci.ids + Linux |
+| 0BF1 | Tegra 2 | T20 | PCIe Bridge | Tegra2 PCIe x2 Bridge | NVIDIA Tegra 2 PCIe x2 Bridge | pci.ids + Linux quirks.c | pci.ids + Linux |
+
+### 7.1 Grace / Vera 非 PCI 硬件标识（Linux 主线 `nvidia_cspmu.c` & `edk2-nvidia`）
+
+Grace（`Tegra241 / TH500`，Neoverse V2 核心）与 Vera（`TB500`，88 核自研 Olympus 核心 + 不对称 SMT + OCP Caliptra Root of Trust）的片上互联与性能计数器通过 **ACPI / Arm CoreSight PMU（CSPMU）** 与 **SMMUv3 CMDQV（`tegra241-cmdqv.c`）** 暴露：
+
+| Arm CSPMU Product ID | Linux `perf` PMU 名称 | 适用平台 | 监控域与关键特性 |
+| --- | --- | --- | --- |
+| 0x10300000 | nvidia_pcie_pmu_%u | Grace (TH500) | PCIe Root Port 带宽与请求计数（v1） |
+| 0x10301000 | nvidia_pcie_pmu_%u_rc_%u | Grace / Vera | PCIe v2 PMU，支持 BDF 过滤与 `dst_loc_pcie_cxl`（CXL 流量计数！） |
+| 0x10700000 | nvidia_pcie_tgt_pmu_%u_rc_%u | Vera / Next | PCIe Target 地址区间过滤 PMU（base/mask 64-bit） |
+| 0x10400000 | nvidia_nvlink_c2c1_pmu_%u | Grace / Vera | NVLink-C2C Port 1 一致性互联流量 PMU |
+| 0x10500000 | nvidia_nvlink_c2c0_pmu_%u | Grace / Vera | NVLink-C2C Port 0 一致性互联流量 PMU |
+| 0x10600000 | nvidia_cnvlink_pmu_%u | Grace / Vera | 跨 Socket Coherent NVLink (cNVLink) PMU |
+| 0x2CF00000 | nvidia_scf_pmu_%u | Grace (TH500) | Scalable Coherency Fabric (SCF) 缓存/GMEM/CMEM PMU |
+| 0x2CF20000 | nvidia_ucf_pmu_%u | Vera / Next | Unified Coherency Fabric (UCF) SLC/Snoop/GMEM/CMEM PMU |
+
+## 八、架构 × SM / Bit-6 硬件分配规律与核对方法论
+
+### 8.1 全架构 × SM / Compute Capability × PCI Hex 段位速查
+
+| 架构 | 芯片 | SM | CC | PCI Hex 段位 | 代表产品 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Rubin (DC) | GR100 / GR102 | sm_107 | 10.7 | 3000–307F (GR100) / 3080–30FF (GR102) | VR NVL72 (3041), PCIe Faber (3021), R100/R200 | CUDA 13.4/13.5 GA (sm_107a/107f); 328 KB SMEM; 288GB HBM4 (280GB 可用), NVLink 6; open-gpu 620.x |
+| Blackwell (Spark/N1X) | GB10 / GB20B | sm_121 | 12.1 | 2E00–2E3F (Linux quirks ATS) | DGX Spark (GB10), RTX Spark N1X (5120/6144-core) | sm_121a; 强制 PCIe ATS 模拟 CXL.cache; 128GB 统一 LPDDR5X |
+| Blackwell (Consumer/Pro) | GB202/203/205/206/207 | sm_120 | 12.0 | 2B80–2DFF, 2F00–2F7F | RTX 50 / 5070 SUPER, RTX PRO 6000/5500/5000/4500/4000/2000 | mma.sync (非 tcgen05); FP4/FP6; 另有 GB20C 车载虚拟化 |
+| Blackwell (Thor/T268) | GB10B (T264 / T268) | sm_110 | 11.0 | 2B00 (T264), 3400 (T268) | Jetson AGX Thor (2070 FP4 TFLOPS), DRIVE Thor, T268 | CUDA 13.0 由 sm_101 改名; 另有 GB10C |
+| Blackwell Ultra (DC) | GB110 / GB112 / GB120 | sm_103 | 10.3 | 3180–327F, 3300–337F | B300 (3182), GB300 Bianca/Galaxy (31C2), GB300-252 (31C3) | sm_103a/103f; 288GB HBM3e; 1400W 级; edk2 确认 GB120 段 3341–337F |
+| Blackwell (DC) | GB100 / GB102 | sm_100 | 10.0 | 2900–297F (GB100) / 2980–29FF (GB102) | B100, B200 (180/168GB), GB200 NVL72 (2941), DRIVE P2021 (29BB) | TMEM, tcgen05, 2-SM MMA; sm_100a/100f; nvtrust CC 架构 10 |
+| Hopper | GH100 | sm_90 | 9.0 | 2300–237F (+ 23B0/23F0) | H100, H200, H800, H20/H20-3e, GH200 (2342/2345/2348) | WGMMA, TMA; sm_90a; 2301–233F EP vs 2341–237F SH |
+| Ada Lovelace | AD102/103/104/106/107 | sm_89 | 8.9 | 2680–28FF | RTX 40 系, RTX 6000 Ada, L40/L40S/L20/L4/L2 | FP8 Transformer Engine |
+| Ampere (Orin) | GA10B (T234) | sm_87 | 8.7 | SoC 集成 (RP: 229A/9C/9E) | Jetson AGX Orin, DRIVE Orin | Tegra 嵌入式 iGPU |
+| Ampere (Consumer/Pro) | GA102/103/104/106/107 | sm_86 | 8.6 | 2200–227F, 2400–25FF | RTX 30 系, RTX A6000~A2000, A40/A10/A16/A2 | 2× FP32/SM vs sm_80 |
+| Ampere (DC) | GA100 | sm_80 | 8.0 | 2080–20FF | A100, A800, A30, AX800, CMP 170HX | HBM2e; TF32 + 原生 FP64 Tensor Core |
+| Turing | TU102/104/106/116/117 | sm_75 | 7.5 | 1E00–1FFF, 2180–21FF | RTX 20 / GTX 16, T4/T4G, Quadro RTX 8000 | open-gpu-kernel-modules 支持起点 (81 IDs ✓) |
+| Volta | GV100 / GV11B | sm_70 / 72 | 7.0 / 7.2 | 1D80–1DFF (GV100) | Tesla V100 / V100S, TITAN V, Quadro GV100, Xavier (7.2) | 初代 Tensor Core + HBM2 + NVLink 2.0 |
+| Pascal | GP100 / GP102–108 / GP10B | sm_60 / 61 / 62 | 6.0–6.2 | 15C0–15FF, 1700–173F, 1B00–1D7F | Tesla P100 (6.0), P40/P4/GTX 10 系 (6.1), TX2 (6.2) | GP100 原生 FP16 + HBM2; GP102–108 补 DP4A |
+| Maxwell | GM107–108 / GM200–206 / GM20B | sm_50 / 52 / 53 | 5.0–5.3 | 1340–143F, 1600–167F, 1740–183F | GTX 750/900/TITAN X, Tesla M60/M40/M10/M4, Nano (5.3) | SMM 高能效重构 |
+| Kepler | GK104–107 / GK110–208 / GK210 | sm_30 / 35 / 37 | 3.0 / 3.5 / 3.7 | 0FC0–103F, 1180–12BF | GTX 600/700, Tesla K10/K20/K40 (3.5), K80 (3.7) | Dynamic Parallelism; GK210 (K80) 独享 sm_37 |
+| Fermi | GF100/110 · GF104–119 | sm_20 / 21 | 2.0 / 2.1 | 06C0–06FF, 0DC0–107F | GTX 480/580, Tesla C2050/M2090 (2.0), GTX 460/560 (2.1) | 初代 IEEE-754 + ECC + L1/L2 缓存 CUDA 架构 |
+
+### 8.2 数据中心 GPU Bit-6（`+0x40`）Endpoint vs Self-Hosted 分配规律
+
+来自 **`NVIDIA/open-gpu-kernel-modules` `kernel-open/nvidia/detect-self-hosted.h`** 与 **`NVIDIA/edk2-nvidia` `TH500GpuDxe/DriverBinding.c`** 的双源码交叉确认：从 Hopper 起，数据中心芯片按 **Bit-6（`+0x40`）** 严格区分独立主机直连（Endpoint，x86/HGX）与 Grace/Vera C2C 一致性内存耦合（Self-Hosted）：
+
+| 芯片家族 | Recovery / 保留基准 | Endpoint 段（`+0x00`） | Self-Hosted C2C 段（`+0x40`） | 源码来源 | 典型实例 |
+| --- | --- | --- | --- | --- | --- |
+| GH100 (Hopper) | 0x2300 (Recovery) | 0x2301 – 0x233F | 0x2340 – 0x237F | detect-self-hosted.h + edk2 | 2330 H100 SXM (EP) vs 2342/2345/2348 GH200 (SH) |
+| GB100 (Blackwell) | 0x2900 (Reserved A) | 0x2901 – 0x293F | 0x2940 – 0x297F | detect-self-hosted.h + edk2 | 2901/2909 B200 (EP) vs 2941/297E GB200 (TH500 SH) |
+| GB102 (Blackwell) | 0x2980 (Reserved A) | 0x2981 – 0x29BF | 0x29C0 – 0x29FF | edk2-nvidia TH500GpuDxe | 29BB DRIVE P2021 / 29BC B100 (EP) vs 29C1–29FF (TH500 SH) |
+| GB110 (Blackwell Ultra) | 0x3180 (Reserved A) | 0x3181 – 0x31BF (特例 31A1=SH) | 0x31C0 – 0x31FF (+ 31A1) | detect-self-hosted.h + edk2 | 3182 B300 (EP) vs 31C2/31C3 GB300 & 31A1 MaxQ (SH) |
+| GB120 (Blackwell Ultra) | 0x3300 / 0x3340 | 0x3301 – 0x333F | 0x3341 – 0x337F | edk2-nvidia TH500GpuDxe | edk2 明确预留 TH500+GB120 SH 段 3341–337F |
+| GR100 (Rubin) | 0x3000 (Reserved A) | 0x3000 – 0x303F | 0x3040 – 0x307F | detect-self-hosted.h + edk2 | 3002 SXM / 3021 PCIe Faber (EP) vs 3041 VR NVL72 / 307E / 307F (Vera SH) |
+| GR102 (Rubin) | 0x3080 (Reserved A) | 0x3081 – 0x30BF | 0x30C0 – 0x30FF | detect-self-hosted.h + gat | 30C0 Reserved B / 30FF [221B/221C] C2C+SXM (Vera SH) |
+
+### 8.3 Linux 主线内核、PCI-SIG 与八大一手数据源
+
+- **Linux `nvgrace-gpu` + PCI-SIG CXL DVSEC**：主线 `drivers/vfio/pci/nvgrace-gpu/main.c` 明确收录 5 个一致性内存 VFIO ID（`2342` / `2345` / `2348` / `2941` / `31C2`），并通过 PCI-SIG CXL DVSEC（`PCI_VENDOR_ID_CXL`）探测 Blackwell-Next / Rubin 显存就绪状态（物理层仍为 NVLink-C2C，接口走向 CXL 标准化，详见本站 [Blackwell-Next CXL DVSEC 考据](/posts/blackwell-next-cxl-dvsec/)）。
+- **Linux `drivers/pci/quirks.c` 的两处 CXL.cache / ATS 特例**：`quirk_nvidia_gpu_ats_required()` 强制对 **`10DE:2E00–2E3F`（GB20B / Spark / N1X）** 与 **`15B3:2101`（ConnectX-10 NVLink-C2C）** 开启 PCIe ATS，注释明确说明这些设备不暴露标准 CXL 配置空间但会发出类似 `CXL.cache` 的一致性事务。
+- **Linux Rust 驱动 `nova-core` & `rmconfig.h` & `nvtrust`**：主线 `drivers/gpu/nova-core/gpu.rs` 已定义 `GA100–GA107`、`GH100`、`AD102–AD107`、`GB100/102`、`GB202–GB207`，并留下注释 *`Somewhere in the Rubin timeframe, boot0 will no longer have space to add new GPU IDs.`*；R620 `rmconfig.h` 已枚举 `GB10C / GB20C / GB112 / GR100 / GR102`；`NVIDIA/nvtrust` 将 Blackwell 注册为机密计算硬件架构 `GPU_ARCH = 10`（Hopper 为 `9`）。
+
+1. **`pciutils/pciids`（`pci.ids v2026.11.19`）**：实时核对 `pci-ids.ucw.cz` 一致，`systemd/hwdb` 与 `NVIDIA/go-nvlib` 验证 `>= 0x2900` 零额外条目。
+2. **`NVIDIA/open-gpu-kernel-modules`（`620.73.04`，2026-11-18）**：`g_nv_name_released.h`（全部 1,985 条物理+vGPU/MIG 编译表）、`detect-self-hosted.h`、`README.md`、`nvcst.h`、`nvswitch.c`、`rmconfig.h`、`arch/rubin/` 与 `arch/blackwell/`。
+3. **`NVIDIA/gpu-admin-tools`（`main`）**：`devid_chips.py`、`devid_names.py`、`devid_properties.py`（子系统级 `is_sxm` / `is_pcie` / `has_c2c` 硬件属性）。
+4. **`NVIDIA/DCGM`（`master` / `v4.7.0`）**：`nvvs/diag-skus.yaml.in`（实测目标功耗、内部板卡代号 `Bianca / Galaxy / Galaxy TS2 / TS4 / PG153 / RTX6000D LC`）与 Rubin `3041 / 307E / 307F` 诊断支持。
+5. **`NVIDIA/edk2-nvidia`（`main`）**：`TH500GpuDxe/efihand/DriverBinding.c`（Endpoint vs Self-Hosted Bit-6 分配规则与 `GB120 3341–337F`）。
+6. **`torvalds/linux` 主线源码**：`nvgrace-gpu/main.c`、`nova-core/gpu.rs`、`drivers/pci/quirks.c`、`drivers/perf/arm_cspmu/nvidia_cspmu.c`、`sound/hda/controllers/intel.c`。
+7. **`NVIDIA/nvtrust`**：机密计算 GPU 架构校验（`Hopper=9 / Blackwell=10`）与 VBIOS RIM 签章识别。
+8. **NVIDIA 官方规格书、GTC 2026 与 CUDA 13.5 GA 文档**：核实 Vera Rubin `sm_107`、B300/GB300/DGX Station GB300/DGX Spark/Thor/RTX PRO Blackwell 与 GeForce RTX 50 全系官方参数与定位。
+
 ## 九、Ampere 之前的历史架构：Turing ← Fermi（6 代 · 681 项）
 
 <div class="legacy-fold-bar" id="legacy-pre-ampere" data-fold-section="legacy-pre-ampere" data-expanded="false" data-closed-label="展开 Ampere 前 6 代历史架构（681 项）" data-open-label="收起历史架构（Turing ~ Fermi）" data-toc-closed-label="展开 6 代老卡目录 (Turing~Fermi)" data-toc-open-label="收起 6 代老卡目录">
@@ -792,7 +804,7 @@ Blackwell 是 NVIDIA 史上横跨产品形态最广的一代（**一个代号、
 
 ### Volta（21 个 ID · sm_70 / 72 · 初代 Tensor Core）
 
-**GV100** 单芯片（`sm_70`；Jetson AGX Xavier 嵌入式 `GV11B` 为 `sm_72`，其 PCIe RC 归入第二章）。虽不在开放内核模块支持列表内（仅闭源 R580 及之前分支支持），但在存量集群中 **V100 SXM2 16GB/32GB（`1DB0/1DB1`）**、**V100 PCIe 16GB/32GB（`1DB4/1DB6`）**、**V100S（`1DF6`）** 与 **DGX-1V / DGX Station（`1DBD/1DB2`）** 依然极常见。
+**GV100** 单芯片（`sm_70`；Jetson AGX Xavier 嵌入式 `GV11B` 为 `sm_72`，其 PCIe RC 归入第七章）。虽不在开放内核模块支持列表内（仅闭源 R580 及之前分支支持），但在存量集群中 **V100 SXM2 16GB/32GB（`1DB0/1DB1`）**、**V100 PCIe 16GB/32GB（`1DB4/1DB6`）**、**V100S（`1DF6`）** 与 **DGX-1V / DGX Station（`1DBD/1DB2`）** 依然极常见。
 
 | ID | 芯片 | SM | 功能 | pci.ids 名称 | 产品名（官方 / 社区） | 说明 / 子系统 / 功耗 / 驱动注解 | 开放驱动 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1381,27 +1393,3 @@ Blackwell 是 NVIDIA 史上横跨产品形态最广的一代（**一个代号、
 | 0BEE | GF116 | sm_21 | **HD Audio** | GF116 High Definition Audio Controller | — | On-board HD Audio function (not a standalone GPU) | — |
 | 0E08 | GF119 | sm_21 | **HD Audio** | GF119 HDMI Audio Controller | — | On-board HD Audio function (not a standalone GPU) | — |
 | 0E0C | GF114 | sm_21 | **HD Audio** | GF114 HDMI Audio Controller | — | On-board HD Audio function (not a standalone GPU) | — |
-
-## 十、Linux 主线内核、PCI-SIG 与多源核对方法论
-
-### 关键内核与规范实证
-
-- **Linux `nvgrace-gpu` + PCI-SIG CXL DVSEC**：主线 `drivers/vfio/pci/nvgrace-gpu/main.c` 明确收录 5 个一致性内存 VFIO ID（`2342` / `2345` / `2348` / `2941` / `31C2`），并通过 PCI-SIG CXL DVSEC（`PCI_VENDOR_ID_CXL`）探测 Blackwell-Next / Rubin 显存就绪状态（物理层仍为 NVLink-C2C，接口走向 CXL 标准化，详见本站 [Blackwell-Next CXL DVSEC 考据](/posts/blackwell-next-cxl-dvsec/)）。
-- **Linux `drivers/pci/quirks.c` 的两处 CXL.cache / ATS 特例**：`quirk_nvidia_gpu_ats_required()` 强制对 **`10DE:2E00–2E3F`（GB20B / Spark / N1X）** 与 **`15B3:2101`（ConnectX-10 NVLink-C2C）** 开启 PCIe ATS，注释明确说明这些设备不暴露标准 CXL 配置空间但会发出类似 `CXL.cache` 的一致性事务。
-- **Linux Rust 驱动 `nova-core`**：主线 `drivers/gpu/nova-core/gpu.rs` 已定义 `GA100–GA107`、`GH100`、`AD102–AD107`、`GB100/102`、`GB202–GB207`，并留下关键注释——*`Somewhere in the Rubin timeframe, boot0 will no longer have space to add new GPU IDs.`*
-- **Open GPU `rmconfig.h` & `nvtrust` 机密计算**：R620（`620.73.04`）已内置 `TU102–TU117`、`GA100–GA107`、`AD102–AD107`、`GH100`、`GB100/102/10B/10C/110/112`、`GB202–GB207/GB20B/GB20C`、`GR100/GR102`、`T234D/T238D/T264D`；`NVIDIA/nvtrust` 将 Blackwell 注册为机密计算硬件架构 `GPU_ARCH = 10`（Hopper 为 `9`）。
-
-### 八大可信一手数据源
-
-1. **`pciutils/pciids`（`pci.ids v2026.11.19`）**：实时核对 `pci-ids.ucw.cz` 一致，`systemd/hwdb` 与 `NVIDIA/go-nvlib` 验证 `>= 0x2900` 零额外条目。
-2. **`NVIDIA/open-gpu-kernel-modules`（`620.73.04`，2026-11-18）**：`src/nvidia/generated/g_nv_name_released.h`（全部 1,985 条物理+vGPU/MIG 编译表）、`kernel-open/nvidia/detect-self-hosted.h`、`README.md`、`nvcst.h`、`nvswitch.c`、`rmconfig.h`、`arch/rubin/` 与 `arch/blackwell/`。
-3. **`NVIDIA/gpu-admin-tools`（`main`）**：`devid_chips.py`、`devid_names.py`、`devid_properties.py`（子系统级 `is_sxm` / `is_pcie` / `has_c2c` 硬件属性）。
-4. **`NVIDIA/DCGM`（`master` / `v4.7.0`）**：`nvvs/diag-skus.yaml.in`（实测目标功耗、内部板卡代号 `Bianca / Galaxy / Galaxy TS2 / TS4 / PG153 / RTX6000D LC`）与 Rubin `3041 / 307E / 307F` 诊断支持。
-5. **`NVIDIA/edk2-nvidia`（`main`）**：`TH500GpuDxe/efihand/DriverBinding.c`（Endpoint vs Self-Hosted Bit-6 分配规则与 `GB120 3341–337F`）。
-6. **`torvalds/linux` 主线源码**：`nvgrace-gpu/main.c`、`nova-core/gpu.rs`、`drivers/pci/quirks.c`、`drivers/perf/arm_cspmu/nvidia_cspmu.c`、`sound/hda/controllers/intel.c`。
-7. **`NVIDIA/nvtrust`**：机密计算 GPU 架构校验（`Hopper=9 / Blackwell=10`）与 VBIOS RIM 签章识别。
-8. **NVIDIA 官方规格书、GTC 2026 与 CUDA 13.5 GA 文档**：核实 Vera Rubin `sm_107`、B300/GB300/DGX Station GB300/DGX Spark/Thor/RTX PRO Blackwell（Desktop/Server/Laptop/Embedded）及 GeForce RTX 50 全系官方参数与定位。
-
-> [!NOTE]
-> **最终汇总统计（2026-11-20）**：本文与配套 17 表 Excel 共收录 **1149** 条一手实证 PCI Device ID —— 其中 `10DE` CUDA GPU（Fermi → Rubin 11 代）**1026** 条（开放驱动 `620.73.04` 官方收录 **299** 条，Rubin 10 条 + Blackwell 91 条均完成全量规格/用途/子系统精校）、`10DE` Grace/Vera/Tegra CPU & SoC **40** 条、`10DE` NVSwitch **33** 条、`15B3` 配套高速互联与 NVLink-6/7/8 Switch **50** 条。
-

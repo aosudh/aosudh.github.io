@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NVIDIA PCI Device ID 全量对照：Fermi → Rubin × Grace / Vera × NVSwitch · 繁星若尘</title>
-  <meta name="description" content="全量 1149 项 NVIDIA PCI Device ID：深度考据 Rubin（10 项）与 Blackwell（91 项）全量 ID、子系统与用途，覆盖 Fermi → Rubin 11 代 CUDA GPU、Grace TH500 / Vera TB500 CPU、NVSwitch LR10/LS10 与 15B3 高速互联。" />
+  <title>NVIDIA GPU PCI Device ID 全量对照：Rubin / Blackwell × Vera / Grace / NVSwitch · 繁星若尘</title>
+  <meta name="description" content="全量 1149 项 NVIDIA PCI Device ID（最后更新：2026-11-21）：按 Rubin → Blackwell → Hopper → Ada → Ampere 排序，附 NVSwitch/15B3、Grace/Vera CPU 与可折叠历史 6 代老卡。" />
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="icon" type="image/svg+xml" href="/assets/covers/favicon.svg" />
   <link rel="stylesheet" href="/assets/css/post-v3.css" />
@@ -112,14 +112,14 @@
     <main>
       <a class="back-link" href="/posts/nvidia-gpu-pci-device-ids/">← 返回 Astro 文章页</a>
       <article class="post-content">
-        <h1>NVIDIA PCI Device ID 全量对照：Fermi → Rubin × Grace / Vera × NVSwitch</h1>
-        <p class="post-meta">2026-06-24 · 2026-11-20 Rubin × Blackwell 全量精校（1149 条）</p>
+        <h1>NVIDIA GPU PCI Device ID 全量对照：Rubin / Blackwell × Vera / Grace / NVSwitch</h1>
+        <p class="post-meta">2026-06-24 · 最后更新：2026-11-21（共 1149 条）</p>
 
         <blockquote>
-          <p>整合 <strong>pci.ids v2026.11.19</strong>、<strong>open-gpu-kernel-modules 620.73.04（含 g_nv_name_released.h 1,985 条物理+vGPU/MIG 映射与 detect-self-hosted.h）</strong>、<strong>NVIDIA/gpu-admin-tools</strong>、<strong>NVIDIA/DCGM</strong>、<strong>NVIDIA/edk2-nvidia</strong> 与 <strong>Linux 主线内核</strong>，对 <strong>Rubin（10 项）与 Blackwell（91 项）</strong> 全量补齐官方规格、子系统（<code>SVID:SDID</code>）与具体用途，并完整覆盖 <strong>11 代 CUDA GPU（1026 项）</strong>、<strong>Grace/Vera/Tegra（40 项）</strong>、<strong>NVSwitch（33 项）</strong> 及 <strong>15B3 配套高速互联（50 项）</strong>。</p>
+          <p><strong>最后更新日期：2026-11-21</strong> ｜ 整合 <strong>pci.ids v2026.11.19</strong>、<strong>open-gpu-kernel-modules 620.73.04（含 g_nv_name_released.h 1,985 条物理+vGPU/MIG 映射与 detect-self-hosted.h）</strong>、<strong>NVIDIA/gpu-admin-tools</strong>、<strong>NVIDIA/DCGM</strong>、<strong>NVIDIA/edk2-nvidia</strong> 与 <strong>Linux 主线内核</strong>，按 <strong>Rubin → Blackwell → Hopper → Ada → Ampere</strong> 排序，后附 <strong>NVSwitch / 15B3（83 项）</strong>、<strong>Grace / Vera / Tegra（40 项）</strong> 及默认折叠的历史 6 代老卡（681 项）。</p>
         </blockquote>
 
-        <p class="download">📊 <strong>原始数据</strong>：<a href="/assets/files/nvidia-gpu-pci-ids-ampere-to-rubin.xlsx" download>下载最新全量多表 Excel（.xlsx · 17 个工作表 · 含 Blackwell/Rubin 子系统精解表 · 1149 条 · 156&nbsp;KB）</a></p>
+        <p class="download">📊 <strong>原始数据</strong>：<a href="/assets/files/nvidia-gpu-pci-ids-ampere-to-rubin.xlsx" download>下载最新全量多表 Excel（.xlsx · 17 个工作表 · 1149 条 · 156&nbsp;KB）</a></p>
 
         <div class="pci-toolbar" role="search" aria-label="快速检索 PCI Device ID">
           <div class="pci-toolbar-top">
@@ -129,13 +129,13 @@
           </div>
           <div class="pci-chips" id="pciChips">
           <button type="button" class="pci-chip is-active" data-filter-group="ALL">全部 (1149)</button>
-          <button type="button" class="pci-chip" data-filter-group="Grace_Vera">Grace / Vera / Tegra (40)</button>
-          <button type="button" class="pci-chip" data-filter-group="NVSwitch_15B3">NVSwitch &amp; 15B3 (83)</button>
           <button type="button" class="pci-chip" data-filter-group="Rubin">Rubin (10)</button>
           <button type="button" class="pci-chip" data-filter-group="Blackwell">Blackwell (91)</button>
           <button type="button" class="pci-chip" data-filter-group="Hopper">Hopper (29)</button>
           <button type="button" class="pci-chip" data-filter-group="Ada Lovelace">Ada Lovelace (69)</button>
           <button type="button" class="pci-chip" data-filter-group="Ampere">Ampere (146)</button>
+          <button type="button" class="pci-chip" data-filter-group="NVSwitch_15B3">NVSwitch &amp; 15B3 (83)</button>
+          <button type="button" class="pci-chip" data-filter-group="Grace_Vera">Grace / Vera / Tegra (40)</button>
           <button type="button" class="pci-chip-toggle" id="toggleLegacyChips">▸ 展开 Ampere 前 6 代 (Turing~Fermi · 681)</button>
           <div class="legacy-chip-group" id="legacyChipGroup">
             <button type="button" class="pci-chip" data-filter-group="Turing">Turing (124)</button>
@@ -151,15 +151,15 @@
         <nav class="toc" aria-label="目录">
           <p class="toc-title">快速跳转</p>
           <ul>
-            <li><a href="#sec-smmap">一、架构 × SM / Bit-6 速查</a></li>
-            <li><a href="#sec-grace-vera">二、Grace / Vera / Tegra (40)</a></li>
-            <li><a href="#sec-nvswitch">三、NVSwitch &amp; 15B3 (83)</a></li>
-            <li><a href="#sec-rubin">四、Rubin (10 · sm_107)</a></li>
-            <li><a href="#sec-blackwell">五、Blackwell (91)</a></li>
-            <li><a href="#sec-bw-rubin-subsys">5.1 BW/Rubin 子系统与 MIG 精解</a></li>
-            <li><a href="#sec-hopper">六、Hopper (29)</a></li>
-            <li><a href="#sec-ada-lovelace">七、Ada Lovelace (69)</a></li>
-            <li><a href="#sec-ampere">八、Ampere (146)</a></li>
+            <li><a href="#sec-rubin">一、Rubin (10 · sm_107)</a></li>
+            <li><a href="#sec-blackwell">二、Blackwell (91)</a></li>
+            <li><a href="#sec-bw-rubin-subsys">2.1 BW/Rubin 子系统与 MIG 精解</a></li>
+            <li><a href="#sec-hopper">三、Hopper (29)</a></li>
+            <li><a href="#sec-ada-lovelace">四、Ada Lovelace (69)</a></li>
+            <li><a href="#sec-ampere">五、Ampere (146)</a></li>
+            <li><a href="#sec-nvswitch">六、NVSwitch &amp; 15B3 (83)</a></li>
+            <li><a href="#sec-grace-vera">七、Grace / Vera / Tegra (40)</a></li>
+            <li><a href="#sec-smmap">八、SM / Hex / Bit-6 速查</a></li>
             <li><a href="#sec-legacy-pre-ampere">九、历史 6 代：Turing ← Fermi (681，默认折叠)</a></li>
           </ul>
           <button type="button" class="toc-legacy-btn" id="tocLegacyToggle" aria-expanded="false">▸ 展开 Ampere 前 6 代目录（Turing ~ Fermi · 681）</button>
@@ -173,198 +173,7 @@
           </ul>
         </nav>
 
-        <h2 id="sec-smmap">一、架构 × SM / Hex 段位与 Bit-6（+0x40）硬件分配规律</h2>
-        <div class="table-scroll wide">
-          <table>
-            <caption>全架构 × SM / Compute Capability × PCI Hex 段位速查</caption>
-            <thead><tr><th>架构</th><th>芯片</th><th>SM</th><th>CC</th><th>PCI Hex 段位</th><th>代表产品</th><th>备注</th></tr></thead>
-            <tbody><tr><td>Rubin (DC)</td><td>GR100 / GR102</td><td>sm_107</td><td>10.7</td><td>3000–307F (GR100) / 3080–30FF (GR102)</td><td>VR NVL72 (3041), PCIe Faber (3021), R100/R200</td><td>CUDA 13.4/13.5 GA (sm_107a/107f); 328 KB SMEM; 288GB HBM4 (280GB 可用), NVLink 6; open-gpu 620.x</td></tr>
-<tr><td>Blackwell (Spark/N1X)</td><td>GB10 / GB20B</td><td>sm_121</td><td>12.1</td><td>2E00–2E3F (Linux quirks ATS)</td><td>DGX Spark (GB10), RTX Spark N1X (5120/6144-core)</td><td>sm_121a; 强制 PCIe ATS 模拟 CXL.cache; 128GB 统一 LPDDR5X</td></tr>
-<tr><td>Blackwell (Consumer/Pro)</td><td>GB202/203/205/206/207</td><td>sm_120</td><td>12.0</td><td>2B80–2DFF, 2F00–2F7F</td><td>RTX 50 / 5070 SUPER, RTX PRO 6000/5500/5000/4500/4000/2000</td><td>mma.sync (非 tcgen05); FP4/FP6; 另有 GB20C 车载虚拟化</td></tr>
-<tr><td>Blackwell (Thor/T268)</td><td>GB10B (T264 / T268)</td><td>sm_110</td><td>11.0</td><td>2B00 (T264), 3400 (T268)</td><td>Jetson AGX Thor (2070 FP4 TFLOPS), DRIVE Thor, T268</td><td>CUDA 13.0 由 sm_101 改名; 另有 GB10C</td></tr>
-<tr><td>Blackwell Ultra (DC)</td><td>GB110 / GB112 / GB120</td><td>sm_103</td><td>10.3</td><td>3180–327F, 3300–337F</td><td>B300 (3182), GB300 Bianca/Galaxy (31C2), GB300-252 (31C3)</td><td>sm_103a/103f; 288GB HBM3e; 1400W 级; edk2 确认 GB120 段 3341–337F</td></tr>
-<tr><td>Blackwell (DC)</td><td>GB100 / GB102</td><td>sm_100</td><td>10.0</td><td>2900–297F (GB100) / 2980–29FF (GB102)</td><td>B100, B200 (180/168GB), GB200 NVL72 (2941), DRIVE P2021 (29BB)</td><td>TMEM, tcgen05, 2-SM MMA; sm_100a/100f; nvtrust CC 架构 10</td></tr>
-<tr><td>Hopper</td><td>GH100</td><td>sm_90</td><td>9.0</td><td>2300–237F (+ 23B0/23F0)</td><td>H100, H200, H800, H20/H20-3e, GH200 (2342/2345/2348)</td><td>WGMMA, TMA; sm_90a; 2301–233F EP vs 2341–237F SH</td></tr>
-<tr><td>Ada Lovelace</td><td>AD102/103/104/106/107</td><td>sm_89</td><td>8.9</td><td>2680–28FF</td><td>RTX 40 系, RTX 6000 Ada, L40/L40S/L20/L4/L2</td><td>FP8 Transformer Engine</td></tr>
-<tr><td>Ampere (Orin)</td><td>GA10B (T234)</td><td>sm_87</td><td>8.7</td><td>SoC 集成 (RP: 229A/9C/9E)</td><td>Jetson AGX Orin, DRIVE Orin</td><td>Tegra 嵌入式 iGPU</td></tr>
-<tr><td>Ampere (Consumer/Pro)</td><td>GA102/103/104/106/107</td><td>sm_86</td><td>8.6</td><td>2200–227F, 2400–25FF</td><td>RTX 30 系, RTX A6000~A2000, A40/A10/A16/A2</td><td>2× FP32/SM vs sm_80</td></tr>
-<tr><td>Ampere (DC)</td><td>GA100</td><td>sm_80</td><td>8.0</td><td>2080–20FF</td><td>A100, A800, A30, AX800, CMP 170HX</td><td>HBM2e; TF32 + 原生 FP64 Tensor Core</td></tr>
-<tr><td>Turing</td><td>TU102/104/106/116/117</td><td>sm_75</td><td>7.5</td><td>1E00–1FFF, 2180–21FF</td><td>RTX 20 / GTX 16, T4/T4G, Quadro RTX 8000</td><td>open-gpu-kernel-modules 支持起点 (81 IDs ✓)</td></tr>
-<tr><td>Volta</td><td>GV100 / GV11B</td><td>sm_70 / 72</td><td>7.0 / 7.2</td><td>1D80–1DFF (GV100)</td><td>Tesla V100 / V100S, TITAN V, Quadro GV100, Xavier (7.2)</td><td>初代 Tensor Core + HBM2 + NVLink 2.0</td></tr>
-<tr><td>Pascal</td><td>GP100 / GP102–108 / GP10B</td><td>sm_60 / 61 / 62</td><td>6.0–6.2</td><td>15C0–15FF, 1700–173F, 1B00–1D7F</td><td>Tesla P100 (6.0), P40/P4/GTX 10 系 (6.1), TX2 (6.2)</td><td>GP100 原生 FP16 + HBM2; GP102–108 补 DP4A</td></tr>
-<tr><td>Maxwell</td><td>GM107–108 / GM200–206 / GM20B</td><td>sm_50 / 52 / 53</td><td>5.0–5.3</td><td>1340–143F, 1600–167F, 1740–183F</td><td>GTX 750/900/TITAN X, Tesla M60/M40/M10/M4, Nano (5.3)</td><td>SMM 高能效重构</td></tr>
-<tr><td>Kepler</td><td>GK104–107 / GK110–208 / GK210</td><td>sm_30 / 35 / 37</td><td>3.0 / 3.5 / 3.7</td><td>0FC0–103F, 1180–12BF</td><td>GTX 600/700, Tesla K10/K20/K40 (3.5), K80 (3.7)</td><td>Dynamic Parallelism; GK210 (K80) 独享 sm_37</td></tr>
-<tr><td>Fermi</td><td>GF100/110 · GF104–119</td><td>sm_20 / 21</td><td>2.0 / 2.1</td><td>06C0–06FF, 0DC0–107F</td><td>GTX 480/580, Tesla C2050/M2090 (2.0), GTX 460/560 (2.1)</td><td>初代 IEEE-754 + ECC + L1/L2 缓存 CUDA 架构</td></tr></tbody>
-          </table>
-        </div>
-        <div class="table-scroll wide">
-          <table>
-            <caption>数据中心 GPU Bit-6（+0x40）Endpoint vs Self-Hosted 分配规律（detect-self-hosted.h / edk2-nvidia）</caption>
-            <thead><tr><th>芯片家族</th><th>Recovery / 保留</th><th>Endpoint 段 (+0x00)</th><th>Self-Hosted 段 (+0x40)</th><th>来源</th><th>典型实例</th></tr></thead>
-            <tbody><tr><td>GH100 (Hopper)</td><td>0x2300 (Recovery)</td><td>0x2301 – 0x233F</td><td>0x2340 – 0x237F</td><td>detect-self-hosted.h + edk2</td><td>2330 H100 SXM (EP) vs 2342/2345/2348 GH200 (SH)</td></tr>
-<tr><td>GB100 (Blackwell)</td><td>0x2900 (Reserved A)</td><td>0x2901 – 0x293F</td><td>0x2940 – 0x297F</td><td>detect-self-hosted.h + edk2</td><td>2901/2909 B200 (EP) vs 2941/297E GB200 (TH500 SH)</td></tr>
-<tr><td>GB102 (Blackwell)</td><td>0x2980 (Reserved A)</td><td>0x2981 – 0x29BF</td><td>0x29C0 – 0x29FF</td><td>edk2-nvidia TH500GpuDxe</td><td>29BB DRIVE P2021 / 29BC B100 (EP) vs 29C1–29FF (TH500 SH)</td></tr>
-<tr><td>GB110 (Blackwell Ultra)</td><td>0x3180 (Reserved A)</td><td>0x3181 – 0x31BF (特例 31A1=SH)</td><td>0x31C0 – 0x31FF (+ 31A1)</td><td>detect-self-hosted.h + edk2</td><td>3182 B300 (EP) vs 31C2/31C3 GB300 &amp; 31A1 MaxQ (SH)</td></tr>
-<tr><td>GB120 (Blackwell Ultra)</td><td>0x3300 / 0x3340</td><td>0x3301 – 0x333F</td><td>0x3341 – 0x337F</td><td>edk2-nvidia TH500GpuDxe</td><td>edk2 明确预留 TH500+GB120 SH 段 3341–337F</td></tr>
-<tr><td>GR100 (Rubin)</td><td>0x3000 (Reserved A)</td><td>0x3000 – 0x303F</td><td>0x3040 – 0x307F</td><td>detect-self-hosted.h + edk2</td><td>3002 SXM / 3021 PCIe Faber (EP) vs 3041 VR NVL72 / 307E / 307F (Vera SH)</td></tr>
-<tr><td>GR102 (Rubin)</td><td>0x3080 (Reserved A)</td><td>0x3081 – 0x30BF</td><td>0x30C0 – 0x30FF</td><td>detect-self-hosted.h + gat</td><td>30C0 Reserved B / 30FF [221B/221C] C2C+SXM (Vera SH)</td></tr></tbody>
-          </table>
-        </div>
-
-        <h2 id="sec-grace-vera" data-group-box="Grace_Vera">二、Grace（TH500）· Vera（TB500）· Tegra / Thor / N1 CPU &amp; SoC（40 项）</h2>
-        <div class="table-scroll wide" data-group-box="Grace_Vera">
-          <table>
-            <caption>Grace TH500 / Vera TB500 / Tegra SoC PCI Root Port &amp; Bridge 全表（10DE:xxxx）</caption>
-            <thead><tr><th>ID</th><th>平台 / CPU</th><th>内部代号</th><th>功能</th><th>pci.ids 名称</th><th>驱动 / 官方定义</th><th>技术说明</th><th>来源</th></tr></thead>
-            <tbody><tr data-group="Grace_Vera"><td>2F95</td><td>Vera CPU</td><td>TB500</td><td><strong>PCIe Root Port</strong></td><td>TB500 RP x16</td><td>NVIDIA Vera CPU (TB500) PCIe Root Port x16</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500, I/O Coherent + PCIe Atomics)</td><td>pci.ids + open-gpu</td></tr>
-<tr data-group="Grace_Vera"><td>2F96</td><td>Vera CPU</td><td>TB500</td><td><strong>PCIe Root Port</strong></td><td>TB500 RP x8</td><td>NVIDIA Vera CPU (TB500) PCIe Root Port x8</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500, Nvidia_TB500_setupFunc)</td><td>pci.ids + open-gpu</td></tr>
-<tr data-group="Grace_Vera"><td>2F97</td><td>Vera CPU</td><td>TB500</td><td><strong>PCIe Root Port</strong></td><td>TB500 RP x4</td><td>NVIDIA Vera CPU (TB500) PCIe Root Port x4</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500)</td><td>pci.ids + open-gpu</td></tr>
-<tr data-group="Grace_Vera"><td>2F98</td><td>Vera CPU</td><td>TB500</td><td><strong>PCIe Root Port</strong></td><td>TB500 RP x2</td><td>NVIDIA Vera CPU (TB500) PCIe Root Port x2</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500)</td><td>pci.ids + open-gpu</td></tr>
-<tr data-group="Grace_Vera"><td>2F99</td><td>Vera CPU</td><td>TB500</td><td><strong>PCIe Root Port</strong></td><td>TB500 RP x1</td><td>NVIDIA Vera CPU (TB500) PCIe Root Port x1</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500)</td><td>pci.ids + open-gpu</td></tr>
-<tr data-group="Grace_Vera"><td>22B1</td><td>Grace CPU</td><td>TH500</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Grace CPU (TH500) RP for GH100 GPU in GH180</td><td>open-gpu nvcst.h (CS_NVIDIA_TH500, I/O Coherent + PCIe Atomics WAR 3562968)</td><td>open-gpu nvcst.h</td></tr>
-<tr data-group="Grace_Vera"><td>22B2</td><td>Grace CPU</td><td>TH500</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Grace CPU (TH500) PCIe Root Port x16</td><td>open-gpu nvcst.h (CS_NVIDIA_TH500; P2P via PCIe switch enabled in chipset_pcie.c)</td><td>open-gpu nvcst.h</td></tr>
-<tr data-group="Grace_Vera"><td>22B3</td><td>Grace CPU</td><td>TH500</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Grace CPU (TH500) PCIe Root Port x4</td><td>open-gpu nvcst.h (CS_NVIDIA_TH500)</td><td>open-gpu nvcst.h</td></tr>
-<tr data-group="Grace_Vera"><td>22B4</td><td>Grace CPU</td><td>TH500</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Grace CPU (TH500) PCIe Root Port x1</td><td>open-gpu nvcst.h (CS_NVIDIA_TH500)</td><td>open-gpu nvcst.h</td></tr>
-<tr data-group="Grace_Vera"><td>22B8</td><td>Grace CPU</td><td>TH500</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Grace CPU (TH500) PCIe Root Port x8</td><td>open-gpu nvcst.h (CS_NVIDIA_TH500)</td><td>open-gpu nvcst.h</td></tr>
-<tr data-group="Grace_Vera"><td>22B9</td><td>Grace CPU</td><td>TH500</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Grace CPU (TH500) PCIe Root Port x2</td><td>open-gpu nvcst.h (CS_NVIDIA_TH500)</td><td>open-gpu nvcst.h</td></tr>
-<tr data-group="Grace_Vera"><td>22D6</td><td>Thor SoC</td><td>T264</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Tegra T264 (Thor) PCIe Root Port x8</td><td>open-gpu nvcst.h (CS_NVIDIA_T264)</td><td>open-gpu nvcst.h</td></tr>
-<tr data-group="Grace_Vera"><td>22D8</td><td>Thor SoC</td><td>T264</td><td><strong>PCIe Root Port</strong></td><td>THOR Processor PCI Express Root Port</td><td>NVIDIA Tegra T264 (Thor) PCIe Root Port x4</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_T264)</td><td>pci.ids + open-gpu</td></tr>
-<tr data-group="Grace_Vera"><td>22DA</td><td>Thor SoC</td><td>T264</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Tegra T264 (Thor) PCIe Root Port x2</td><td>open-gpu nvcst.h (CS_NVIDIA_T264)</td><td>open-gpu nvcst.h</td></tr>
-<tr data-group="Grace_Vera"><td>22E6</td><td>Thor SoC</td><td>T264</td><td><strong>iGPU Root Port</strong></td><td>THOR Processor PCI Express x16 Controller</td><td>NVIDIA Tegra T264 (Thor) iGPU Root Port</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_T264)</td><td>pci.ids + open-gpu</td></tr>
-<tr data-group="Grace_Vera"><td>22CE</td><td>DGX Spark / GB10</td><td>GB10</td><td><strong>PCIe Host Bridge</strong></td><td>GB10 GEN5 X4 PCIe host</td><td>NVIDIA GB10 Gen5 x4 PCIe Host</td><td>pci.ids + Linux quirks.c (quirk_no_bus_reset)</td><td>pci.ids + Linux</td></tr>
-<tr data-group="Grace_Vera"><td>22D0</td><td>DGX Spark / GB10</td><td>GB10</td><td><strong>PCIe Host Bridge</strong></td><td>GB10 GEN4 X1 PCIe host</td><td>NVIDIA GB10 Gen4 x1 PCIe Host</td><td>pci.ids + Linux quirks.c (quirk_no_bus_reset)</td><td>pci.ids + Linux</td></tr>
-<tr data-group="Grace_Vera"><td>22D1</td><td>Spark / N1 SoC</td><td>T254 / GB20B</td><td><strong>PCI Bridge</strong></td><td>GB20B PCI bridge</td><td>NVIDIA T254 / GB20B PCI Bridge</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_T254)</td><td>pci.ids + open-gpu</td></tr>
-<tr data-group="Grace_Vera"><td>2F88</td><td>N1 Client SoC</td><td>T256 (N1)</td><td><strong>PCIe Root/Host</strong></td><td>T256</td><td>NVIDIA T256 (N1) Client Arm SoC</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_T256, comment: NVIDIA T256 (N1))</td><td>pci.ids + open-gpu</td></tr>
-<tr data-group="Grace_Vera"><td>200A</td><td>Tegra / SoC</td><td>NPU</td><td><strong>NPU</strong></td><td>NPU</td><td>NVIDIA Neural Processing Unit (NPU)</td><td>Added in pci.ids v2026.11.19</td><td>pci.ids</td></tr>
-<tr data-group="Grace_Vera"><td>229A</td><td>Orin SoC</td><td>T234</td><td><strong>PCIe Root Port</strong></td><td>Orin PCIe x8 Root Complex</td><td>NVIDIA Tegra T234 (Orin) RP0 x8</td><td>pci.ids + nvcst.h + Linux quirks.c (disable_rp_msi)</td><td>pci.ids + Linux + og</td></tr>
-<tr data-group="Grace_Vera"><td>229C</td><td>Orin SoC</td><td>T234</td><td><strong>PCIe Root Port</strong></td><td>Orin PCIe x4/x8 Endpoint/Root Complex</td><td>NVIDIA Tegra T234 (Orin) RP1 x4/x8</td><td>pci.ids + nvcst.h + Linux quirks.c (disable_rp_msi)</td><td>pci.ids + Linux + og</td></tr>
-<tr data-group="Grace_Vera"><td>229E</td><td>Orin SoC</td><td>T234</td><td><strong>PCIe Root Port</strong></td><td>Orin PCIe x1 Root Complex</td><td>NVIDIA Tegra T234 (Orin) RP2 x1</td><td>pci.ids + nvcst.h + Linux quirks.c (disable_rp_msi)</td><td>pci.ids + Linux + og</td></tr>
-<tr data-group="Grace_Vera"><td>2296</td><td>Orin / Tegra</td><td>Tegra</td><td><strong>Virtual NIC</strong></td><td>Tegra PCIe Endpoint Virtual Network</td><td>Tegra PCIe Endpoint Virtual Network</td><td>pci.ids</td><td>pci.ids</td></tr>
-<tr data-group="Grace_Vera"><td>22C2</td><td>Tegra T23x</td><td>T23x</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Tegra T23x RP0</td><td>open-gpu nvcst.h (CS_NVIDIA_T23x)</td><td>open-gpu nvcst.h</td></tr>
-<tr data-group="Grace_Vera"><td>22C3</td><td>Tegra T23x</td><td>T23x</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Tegra T23x RP1</td><td>open-gpu nvcst.h (CS_NVIDIA_T23x)</td><td>open-gpu nvcst.h</td></tr>
-<tr data-group="Grace_Vera"><td>1AD0</td><td>Xavier SoC</td><td>T194</td><td><strong>PCIe Root Port</strong></td><td>Tegra PCIe x8 Endpoint</td><td>NVIDIA Tegra V1 (T194 / Xavier) RP0 x8</td><td>pci.ids + nvcst.h + Linux quirks.c</td><td>pci.ids + Linux + og</td></tr>
-<tr data-group="Grace_Vera"><td>1AD1</td><td>Xavier SoC</td><td>T194</td><td><strong>PCIe Root Port</strong></td><td>Tegra PCIe x4/x8 Endpoint/Root Complex</td><td>NVIDIA Tegra V1 (T194 / Xavier) RP1 x4/x8</td><td>pci.ids + nvcst.h + Linux quirks.c</td><td>pci.ids + Linux + og</td></tr>
-<tr data-group="Grace_Vera"><td>1AD2</td><td>Xavier SoC</td><td>T194</td><td><strong>PCIe Root Port</strong></td><td>Tegra PCIe x1 Root Complex</td><td>NVIDIA Tegra V1 (T194 / Xavier) RP2 x1</td><td>pci.ids + nvcst.h + Linux quirks.c</td><td>pci.ids + Linux + og</td></tr>
-<tr data-group="Grace_Vera"><td>1AD3</td><td>Xavier SoC</td><td>T194</td><td><strong>SATA</strong></td><td>Xavier SATA Controller</td><td>NVIDIA Jetson AGX Xavier SATA Controller</td><td>pci.ids</td><td>pci.ids</td></tr>
-<tr data-group="Grace_Vera"><td>10E5</td><td>Parker SoC</td><td>T186</td><td><strong>PCIe Root Port</strong></td><td>Parker PCIe x4 Root Complex</td><td>NVIDIA Tegra P1 (T186 / TX2) RP0 x4</td><td>pci.ids + nvcst.h + Linux quirks.c</td><td>pci.ids + Linux + og</td></tr>
-<tr data-group="Grace_Vera"><td>10E6</td><td>Parker SoC</td><td>T186</td><td><strong>PCIe Root Port</strong></td><td>Parker PCIe x1 Root Complex</td><td>NVIDIA Tegra P1 (T186 / TX2) RP1 x1</td><td>pci.ids + nvcst.h + Linux quirks.c</td><td>pci.ids + Linux + og</td></tr>
-<tr data-group="Grace_Vera"><td>0FAE</td><td>Tegra X1</td><td>T210</td><td><strong>PCIe Root Port</strong></td><td>Tegra X1 PCIe x4 Root Complex</td><td>NVIDIA Tegra X1 (T210 / Nano) RP0 x4</td><td>pci.ids + nvcst.h + Linux quirks.c</td><td>pci.ids + Linux + og</td></tr>
-<tr data-group="Grace_Vera"><td>0FAF</td><td>Tegra X1</td><td>T210</td><td><strong>PCIe Root Port</strong></td><td>Tegra X1 PCIe x1 Root Complex</td><td>NVIDIA Tegra X1 (T210 / Nano) RP1 x1</td><td>pci.ids + nvcst.h + Linux quirks.c</td><td>pci.ids + Linux + og</td></tr>
-<tr data-group="Grace_Vera"><td>0E12</td><td>Tegra K1</td><td>T124</td><td><strong>PCIe Bridge</strong></td><td>TegraK1 PCIe x4 Bridge</td><td>NVIDIA Tegra K1 PCIe x4 Bridge</td><td>pci.ids + Linux quirks.c</td><td>pci.ids + Linux</td></tr>
-<tr data-group="Grace_Vera"><td>0E13</td><td>Tegra K1</td><td>T124</td><td><strong>PCIe Bridge</strong></td><td>TegraK1 PCIe x1 Bridge</td><td>NVIDIA Tegra K1 PCIe x1 Bridge</td><td>pci.ids + Linux quirks.c</td><td>pci.ids + Linux</td></tr>
-<tr data-group="Grace_Vera"><td>0E1C</td><td>Tegra 3+</td><td>T30/T114</td><td><strong>PCIe Bridge</strong></td><td>Tegra3+ PCIe x4 Bridge</td><td>NVIDIA Tegra 3+ PCIe x4 Bridge</td><td>pci.ids + Linux quirks.c</td><td>pci.ids + Linux</td></tr>
-<tr data-group="Grace_Vera"><td>0E1D</td><td>Tegra 3+</td><td>T30/T114</td><td><strong>PCIe Bridge</strong></td><td>Tegra3+ PCIe x2 Bridge</td><td>NVIDIA Tegra 3+ PCIe x2 Bridge</td><td>pci.ids + Linux quirks.c</td><td>pci.ids + Linux</td></tr>
-<tr data-group="Grace_Vera"><td>0BF0</td><td>Tegra 2</td><td>T20</td><td><strong>PCIe Bridge</strong></td><td>Tegra2 PCIe x4 Bridge</td><td>NVIDIA Tegra 2 PCIe x4 Bridge</td><td>pci.ids + Linux quirks.c</td><td>pci.ids + Linux</td></tr>
-<tr data-group="Grace_Vera"><td>0BF1</td><td>Tegra 2</td><td>T20</td><td><strong>PCIe Bridge</strong></td><td>Tegra2 PCIe x2 Bridge</td><td>NVIDIA Tegra 2 PCIe x2 Bridge</td><td>pci.ids + Linux quirks.c</td><td>pci.ids + Linux</td></tr></tbody>
-          </table>
-        </div>
-        <div class="table-scroll" data-group-box="Grace_Vera">
-          <table>
-            <caption>Grace / Vera Arm CoreSight PMU Product ID（Linux drivers/perf/arm_cspmu/nvidia_cspmu.c）</caption>
-            <thead><tr><th>Product ID</th><th>Linux perf PMU</th><th>适用平台</th><th>说明</th></tr></thead>
-            <tbody><tr><td>0x10300000</td><td>nvidia_pcie_pmu_%u</td><td>Grace (TH500)</td><td>PCIe Root Port 带宽与请求计数（v1）</td></tr>
-<tr><td>0x10301000</td><td>nvidia_pcie_pmu_%u_rc_%u</td><td>Grace / Vera</td><td>PCIe v2 PMU，支持 BDF 过滤与 `dst_loc_pcie_cxl`（CXL 流量计数！）</td></tr>
-<tr><td>0x10700000</td><td>nvidia_pcie_tgt_pmu_%u_rc_%u</td><td>Vera / Next</td><td>PCIe Target 地址区间过滤 PMU（base/mask 64-bit）</td></tr>
-<tr><td>0x10400000</td><td>nvidia_nvlink_c2c1_pmu_%u</td><td>Grace / Vera</td><td>NVLink-C2C Port 1 一致性互联流量 PMU</td></tr>
-<tr><td>0x10500000</td><td>nvidia_nvlink_c2c0_pmu_%u</td><td>Grace / Vera</td><td>NVLink-C2C Port 0 一致性互联流量 PMU</td></tr>
-<tr><td>0x10600000</td><td>nvidia_cnvlink_pmu_%u</td><td>Grace / Vera</td><td>跨 Socket Coherent NVLink (cNVLink) PMU</td></tr>
-<tr><td>0x2CF00000</td><td>nvidia_scf_pmu_%u</td><td>Grace (TH500)</td><td>Scalable Coherency Fabric (SCF) 缓存/GMEM/CMEM PMU</td></tr>
-<tr><td>0x2CF20000</td><td>nvidia_ucf_pmu_%u</td><td>Vera / Next</td><td>Unified Coherency Fabric (UCF) SLC/Snoop/GMEM/CMEM PMU</td></tr></tbody>
-          </table>
-        </div>
-
-        <h2 id="sec-nvswitch" data-group-box="NVSwitch_15B3">三、NVSwitch（10DE · 33 项）与 15B3 集群互联家族（50 项）</h2>
-        <div class="table-scroll wide" data-group-box="NVSwitch_15B3">
-          <table>
-            <caption>10DE NVSwitch（LR10 / LS10）+ 15B3 NVLink-6/7/8 Switch · ConnectX-6~11 · BlueField-1~4 · Quantum / Spectrum</caption>
-            <thead><tr><th>VID:DID</th><th>家族 / 代际</th><th>芯片 / ASIC</th><th>功能角色</th><th>pci.ids 名称</th><th>技术说明</th></tr></thead>
-            <tbody><tr data-group="NVSwitch_15B3"><td>10DE:1AE8</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:1AF0</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:1AF1</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>GA100 [A100 NVSwitch]</td><td>HGX/DGX A100 常见公开 ID (Class 0x068000)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:1AF2</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:1AF3</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:1AF4</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:1AF5</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:1AF6</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:1AF7</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:1AF8</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:1AF9</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:1AFA</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:1AFB</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:1AFC</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:1AFD</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:1AFE</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:1AFF</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:22A0</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NVSwitch EP</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[])</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:22A1</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NVSwitch EP</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[])</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:22A2</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NVSwitch EP</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[])</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:22A3</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NVSwitch EP</strong></td><td>GH100 [H100 NVSwitch]</td><td>HGX/DGX H100/H200 常见公开 ID (Class 0x068000)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:22A4</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NVSwitch EP</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[])</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:22A5</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NVSwitch EP</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[])</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:22A6</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NVSwitch EP</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[])</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:22A7</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NVSwitch EP</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[])</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:22A8</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>PCI-PCI Bridge F0</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>Laguna Switch Function 0 PCI-PCI Bridge (nvswitch_ls10_device_ids[])</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:22A9</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>PCI-PCI Bridge F0</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>Laguna Switch Function 0 PCI-PCI Bridge (nvswitch_ls10_device_ids[])</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:22AA</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>PCI-PCI Bridge F0</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>Laguna Switch Function 0 PCI-PCI Bridge (nvswitch_ls10_device_ids[])</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:22AB</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>PCI-PCI Bridge F0</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>Laguna Switch Function 0 PCI-PCI Bridge (nvswitch_ls10_device_ids[])</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:22AC</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NTB Bridge F1</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>Laguna Switch Function 1 Non-Transparent Bridge (nvswitch_ls10_device_ids[])</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:22AD</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NTB Bridge F1</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>Laguna Switch Function 1 Non-Transparent Bridge (nvswitch_ls10_device_ids[])</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:22AE</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NTB Bridge F1</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>Laguna Switch Function 1 Non-Transparent Bridge (nvswitch_ls10_device_ids[])</td></tr>
-<tr data-group="NVSwitch_15B3"><td>10DE:22AF</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NTB Bridge F1</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>Laguna Switch Function 1 Non-Transparent Bridge (nvswitch_ls10_device_ids[])</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:D2F8</td><td>NVLink Switch Gen6</td><td>NVLink-6</td><td><strong>NVLink Switch</strong></td><td>NVLink-6 Switch</td><td>Vera Rubin 机架级 NVLink-6 交换芯片（从 Gen6 起并入 15B3 段位）</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:0278</td><td>NVLink Switch Gen6</td><td>NVLink-6</td><td><strong>Flash Recovery</strong></td><td>NVLink-6 Switch in Flash Recovery Mode</td><td>NVLink-6 Switch Flash Recovery</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:0279</td><td>NVLink Switch Gen6</td><td>NVLink-6</td><td><strong>RMA</strong></td><td>NVLink-6 Switch RMA</td><td>NVLink-6 Switch RMA</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:D2FA</td><td>NVLink Switch Gen7</td><td>NVLink-7</td><td><strong>NVLink Switch</strong></td><td>NVLink-7 Switch</td><td>Rubin Ultra / 下一代 NVLink-7 交换芯片</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:027C</td><td>NVLink Switch Gen7</td><td>NVLink-7</td><td><strong>Flash Recovery</strong></td><td>NVLink-7 Switch in Flash Recovery Mode</td><td>NVLink-7 Switch Flash Recovery</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:027D</td><td>NVLink Switch Gen7</td><td>NVLink-7</td><td><strong>RMA</strong></td><td>NVLink-7 Switch RMA</td><td>NVLink-7 Switch RMA</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:D2FC</td><td>NVLink Switch Gen8</td><td>NVLink-8</td><td><strong>NVLink Switch</strong></td><td>NVLink-8 Switch</td><td>远期规划 NVLink-8 交换芯片（已入 pci.ids v2026.11.19）</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:02A0</td><td>NVLink Switch Gen8</td><td>NVLink-8</td><td><strong>Flash Recovery</strong></td><td>NVLink-8 Switch in Flash Recovery Mode</td><td>NVLink-8 Switch Flash Recovery</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:02A1</td><td>NVLink Switch Gen8</td><td>NVLink-8</td><td><strong>RMA</strong></td><td>NVLink-8 Switch RMA</td><td>NVLink-8 Switch RMA</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:101B</td><td>ConnectX-6</td><td>MT28908</td><td><strong>NIC / HCA</strong></td><td>MT28908 Family [ConnectX-6]</td><td>200G HDR IB / Ethernet</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:101D</td><td>ConnectX-6 Dx</td><td>MT2892</td><td><strong>NIC</strong></td><td>MT2892 Family [ConnectX-6 Dx]</td><td>100G/200G Ethernet</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:101F</td><td>ConnectX-6 Lx</td><td>MT2894</td><td><strong>NIC</strong></td><td>MT2894 Family [ConnectX-6 Lx]</td><td>25G/50G Ethernet</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:1021</td><td>ConnectX-7</td><td>MT2910</td><td><strong>NIC / HCA</strong></td><td>MT2910 Family [ConnectX-7]</td><td>400G NDR IB / 400GbE（HGX H100/H200/GB200 标配）</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:1979</td><td>ConnectX-7</td><td>MT2910</td><td><strong>PCIe Bridge</strong></td><td>MT2910 Family [ConnectX-7 PCIe Bridge]</td><td>ConnectX-7 PCIe Bridge（gpu-admin-tools cx7.py 识别）</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:1023</td><td>ConnectX-8</td><td>CX8</td><td><strong>SuperNIC / HCA</strong></td><td>CX8 Family [ConnectX-8]</td><td>800G XDR IB / 800GbE（GB300 / B300 标配）</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:1024</td><td>ConnectX-8</td><td>CX8</td><td><strong>PCIe Switch</strong></td><td>CX8 PCIe Switch Family [ConnectX-8 PCIe Switch]</td><td>ConnectX-8 内置 PCIe Gen6 Switch</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:197D</td><td>ConnectX-8</td><td>CX8</td><td><strong>PCIe Bridge</strong></td><td>CX8 Family [ConnectX-8 PCIe Bridge]</td><td>ConnectX-8 PCIe Bridge</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:1025</td><td>ConnectX-9</td><td>CX9</td><td><strong>SuperNIC / HCA</strong></td><td>CX9 Family [ConnectX-9]</td><td>Vera Rubin 世代 1.6T / 800G SuperNIC</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:197E</td><td>ConnectX-9</td><td>CX9</td><td><strong>PCIe Bridge</strong></td><td>CX9 Family [ConnectX-9 PCIe Bridge]</td><td>ConnectX-9 PCIe Bridge</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:1027</td><td>ConnectX-10</td><td>CX10</td><td><strong>SuperNIC / HCA</strong></td><td>CX10 Family [ConnectX-10]</td><td>下一代 ConnectX-10 SuperNIC</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:1028</td><td>ConnectX-10</td><td>CX10</td><td><strong>TNCM</strong></td><td>CX10 Family [ConnectX-10 Trusted Network Control Memory]</td><td>ConnectX-10 Trusted Network Control Memory</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:197F</td><td>ConnectX-10</td><td>CX10</td><td><strong>PCIe Bridge</strong></td><td>CX10 Family [ConnectX-10 PCIe Bridge]</td><td>ConnectX-10 PCIe Bridge</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:2101</td><td>ConnectX-10</td><td>CX10</td><td><strong>NVLink-C2C</strong></td><td>CX10 Family [ConnectX-10 NVLink-C2C]</td><td>Linux 主线 drivers/pci/quirks.c 实锤：强制 PCIe ATS 的 NVLink-C2C 网卡</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:1029</td><td>ConnectX-11</td><td>CX11</td><td><strong>SuperNIC / HCA</strong></td><td>CX11 Family [ConnectX-11]</td><td>远期 ConnectX-11 SuperNIC</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:102A</td><td>ConnectX-11</td><td>CX11</td><td><strong>TNCM</strong></td><td>CX11 Family [ConnectX-11 Trusted Network Control Memory]</td><td>ConnectX-11 Trusted Network Control Memory</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:1980</td><td>ConnectX-11</td><td>CX11</td><td><strong>PCIe Bridge</strong></td><td>CX11 Family [ConnectX-11 PCIe Bridge]</td><td>ConnectX-11 PCIe Bridge</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:2102</td><td>ConnectX-11</td><td>CX11</td><td><strong>NVLink-C2C</strong></td><td>CX11 Family [ConnectX-11 NVLink-C2C]</td><td>ConnectX-11 NVLink-C2C</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:A2D0</td><td>BlueField-1</td><td>MT416842</td><td><strong>DPU SoC</strong></td><td>MT416842 BlueField SoC Crypto enabled</td><td>open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD) Crypto enabled</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:A2D4</td><td>BlueField-2</td><td>MT42822</td><td><strong>DPU SoC</strong></td><td>MT42822 BlueField-2 SoC Crypto enabled</td><td>open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD2) Crypto enabled</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:A2D5</td><td>BlueField-2</td><td>MT42822</td><td><strong>DPU SoC</strong></td><td>MT42822 BlueField-2 SoC Crypto disabled</td><td>open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD2) Crypto disabled</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:A2D6</td><td>BlueField-2</td><td>MT42822</td><td><strong>DPU NIC</strong></td><td>MT42822 BlueField-2 integrated ConnectX-6 Dx network controller</td><td>BlueField-2 集成 ConnectX-6 Dx</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:A2D7</td><td>BlueField-3 Lx</td><td>MT43162</td><td><strong>DPU SoC</strong></td><td>MT43162 BlueField-3 Lx SoC Crypto enabled</td><td>BlueField-3 Lx Crypto enabled</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:A2DA</td><td>BlueField-3</td><td>MT43244</td><td><strong>DPU SoC</strong></td><td>MT43244 BlueField-3 SoC Crypto enabled</td><td>open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD3, Disable IOMAP WC) Crypto enabled</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:A2DB</td><td>BlueField-3</td><td>MT43244</td><td><strong>DPU SoC</strong></td><td>MT43244 BlueField-3 SoC Crypto disabled</td><td>open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD3) Crypto disabled</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:A2DC</td><td>BlueField-3</td><td>MT43244</td><td><strong>DPU NIC</strong></td><td>MT43244 BlueField-3 integrated ConnectX-7 network controller</td><td>BlueField-3 集成 ConnectX-7（GB200/GB300 管理/东西向 DPU）</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:A2DD</td><td>BlueField-4</td><td>BF4</td><td><strong>DPU SoC</strong></td><td>BF4 Family Crypto enabled [BlueField-4 SoC Crypto enabled]</td><td>Vera Rubin 世代 BlueField-4 SoC (Crypto enabled)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:A2DE</td><td>BlueField-4</td><td>BF4</td><td><strong>DPU SoC</strong></td><td>BF4 Family Crypto disabled [BlueField-4 SoC Crypto disabled]</td><td>BlueField-4 SoC (Crypto disabled)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:A2DF</td><td>BlueField-4</td><td>BF4</td><td><strong>DPU NIC</strong></td><td>BF4 Family integrated network controller [BlueField-4 integrated network controller]</td><td>BlueField-4 集成网络控制器</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:C2D6</td><td>BlueField-4</td><td>BF4</td><td><strong>Mgmt Interface</strong></td><td>BF4 Family Management Interface [BlueField-4 SoC Management Interface]</td><td>BlueField-4 管理接口</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:D2F0</td><td>Quantum</td><td>QM8700</td><td><strong>IB Switch</strong></td><td>Quantum HDR (200Gbps) switch</td><td>Quantum HDR (200G) InfiniBand 交换芯片</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:D2F2</td><td>Quantum-2</td><td>QM9700</td><td><strong>IB Switch</strong></td><td>Quantum-2 NDR (400Gbps) switch</td><td>Quantum-2 NDR (400G) InfiniBand 交换芯片</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:D2F4</td><td>Quantum-3</td><td>Quantum-X800</td><td><strong>IB Switch</strong></td><td>Quantum-3</td><td>Quantum-3 XDR (800G) InfiniBand 交换芯片</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:D2F6</td><td>Quantum-3 CPO</td><td>Quantum-X800</td><td><strong>IB Switch CPO</strong></td><td>Quantum-3CPO</td><td>Quantum-3 共封装光学 (CPO) 交换芯片</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:CF6C</td><td>Spectrum-2</td><td>MT53100</td><td><strong>Eth Switch</strong></td><td>MT53100 [Spectrum-2]</td><td>100G/200G Ethernet 交换芯片</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:CF70</td><td>Spectrum-3</td><td>SN4000</td><td><strong>Eth Switch</strong></td><td>Spectrum-3</td><td>200G/400G Ethernet 交换芯片</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:CF80</td><td>Spectrum-4</td><td>SN5000</td><td><strong>Eth Switch</strong></td><td>Spectrum-4</td><td>400G/800G Spectrum-X 交换芯片</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:CF82</td><td>Spectrum-5</td><td>Spectrum-5</td><td><strong>Eth Switch</strong></td><td>Spectrum-5</td><td>新一代 Spectrum-5 交换芯片</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:CF84</td><td>Spectrum-6</td><td>Spectrum-6</td><td><strong>Eth Switch</strong></td><td>Spectrum-6</td><td>Spectrum-6 (含 0277 Tile)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:CF86</td><td>Spectrum-7</td><td>Spectrum-7</td><td><strong>Eth Switch</strong></td><td>Spectrum-7</td><td>Spectrum-7 (含 027E Tile)</td></tr>
-<tr data-group="NVSwitch_15B3"><td>15B3:C788</td><td>Spectrum-8</td><td>Spectrum-8</td><td><strong>Eth Switch</strong></td><td>Spectrum-8</td><td>Spectrum-8 (含 027F Tile)</td></tr></tbody>
-          </table>
-        </div>
-
-        <h2 id="sec-rubin" data-group-box="Rubin">四、Rubin（10 个 ID · sm_107 / CC 10.7 · 深度一手考据）</h2>
+        <h2 id="sec-rubin" data-group-box="Rubin">一、Rubin（10 个 ID · sm_107 / CC 10.7）</h2>
 <div class="table-scroll wide" id="sec-rubin-tbl" data-group-box="Rubin">
 <table>
 <caption>Rubin · 10 个 device ID（10DE:xxxx）</caption>
@@ -382,7 +191,7 @@
 <tr data-group="Rubin"><td>30FF</td><td>GR102</td><td>sm_107</td><td>GPU</td><td>GR102</td><td>—</td><td>【数据中心·GR102 Vera+Rubin 变体】GR102 Self-Hosted C2C+SXM 变体（gpu-admin-tools 实锤 has_c2c+is_sxm，subsys 10DE:221B / 221C），用于单裸片/定制 Vera+Rubin 平台验证</td><td>—</td></tr>
 </tbody>
 </table>
-</div><h2 id="sec-blackwell" data-group-box="Blackwell">五、Blackwell &amp; Blackwell Ultra（91 个 ID · sm_100 / 103 / 110 / 120 / 121 · 全量用途与子系统实证）</h2>
+</div><h2 id="sec-blackwell" data-group-box="Blackwell">二、Blackwell &amp; Blackwell Ultra（91 个 ID · sm_100 / 103 / 110 / 120 / 121）</h2>
 <div class="table-scroll wide" id="sec-blackwell-tbl" data-group-box="Blackwell">
 <table>
 <caption>Blackwell · 91 个 device ID（10DE:xxxx）</caption>
@@ -481,7 +290,7 @@
 <tr data-group="Blackwell"><td>2E2A</td><td>GB20B</td><td>sm_121</td><td>GPU</td><td>GB20B [JMJWOA-Generic-GPU]</td><td>—</td><td>【工程样品·N1X 硅前】pci.ids 注释 &#x27;# N1X&#x27; 标为 JMJWOA-Generic-GPU（与 2E02 对应的预量产测试 ID，位于 2E00–2E3F ATS 段）</td><td>—</td></tr>
 </tbody>
 </table>
-</div><h3 id="sec-bw-rubin-subsys" data-group-box="Blackwell">5.1 Blackwell &amp; Rubin 关键子系统 ID（SVID:SDID）与 vGPU / MIG 细分 SKU 精解表</h3>
+</div><h3 id="sec-bw-rubin-subsys" data-group-box="Blackwell">2.1 Blackwell &amp; Rubin 关键子系统 ID（SVID:SDID）与 vGPU / MIG 精解表</h3>
 <div class="table-scroll wide" data-group-box="Blackwell">
 <table>
 <caption>Blackwell &amp; Rubin 多 SKU / vGPU / MIG 子系统对照（来源：open-gpu 620.73.04 g_nv_name_released.h / DCGM / gpu-admin-tools）</caption>
@@ -511,7 +320,7 @@
 <tr data-group="Blackwell"><td>Blackwell Spark</td><td>2E12</td><td>GB20B (GB10)</td><td>10DE:21EC</td><td>—</td><td>NVIDIA GB10 (DGX Spark)</td><td>20 核 Grace + Blackwell · 128GB 统一 LPDDR5X (273GB/s) · 1 PFLOPS FP4</td><td>个人桌面 AI 超算：本地 200B 模型原型开发与双机 405B 微调</td><td>open-gpu ✓ + Linux quirks.c</td></tr>
 </tbody>
 </table>
-</div><h2 id="sec-hopper" data-group-box="Hopper">六、Hopper（29 个 ID · sm_90）</h2>
+</div><h2 id="sec-hopper" data-group-box="Hopper">三、Hopper（29 个 ID · sm_90）</h2>
 <div class="table-scroll wide" id="sec-hopper-tbl" data-group-box="Hopper">
 <table>
 <caption>Hopper · 29 个 device ID（10DE:xxxx）</caption>
@@ -548,7 +357,7 @@
 <tr data-group="Hopper"><td>23F0</td><td>GH100</td><td>sm_90</td><td>GPU</td><td>GH100</td><td>—</td><td>GH100 internal/CSP variant — no public SKU mapping</td><td>—</td></tr>
 </tbody>
 </table>
-</div><h2 id="sec-ada-lovelace" data-group-box="Ada Lovelace">七、Ada Lovelace（69 个 ID · sm_89）</h2>
+</div><h2 id="sec-ada-lovelace" data-group-box="Ada Lovelace">四、Ada Lovelace（69 个 ID · sm_89）</h2>
 <div class="table-scroll wide" id="sec-ada-lovelace-tbl" data-group-box="Ada Lovelace">
 <table>
 <caption>Ada Lovelace · 69 个 device ID（10DE:xxxx）</caption>
@@ -625,7 +434,7 @@
 <tr data-group="Ada Lovelace"><td>22BE</td><td>AD107</td><td>sm_89</td><td><strong>HD Audio</strong></td><td>AD107 High Definition Audio Controller</td><td>—</td><td>On-board HD Audio function of the GPU board (not a standalone product)</td><td>—</td></tr>
 </tbody>
 </table>
-</div><h2 id="sec-ampere" data-group-box="Ampere">八、Ampere（146 个 ID · sm_80 / 86）</h2>
+</div><h2 id="sec-ampere" data-group-box="Ampere">五、Ampere（146 个 ID · sm_80 / 86）</h2>
 <div class="table-scroll wide" id="sec-ampere-tbl" data-group-box="Ampere">
 <table>
 <caption>Ampere · 146 个 device ID（10DE:xxxx）</caption>
@@ -780,6 +589,197 @@
 </tbody>
 </table>
 </div>
+
+        <h2 id="sec-nvswitch" data-group-box="NVSwitch_15B3">六、NVSwitch（10DE · 33 项）与 15B3 集群互联家族（50 项）</h2>
+        <div class="table-scroll wide" data-group-box="NVSwitch_15B3">
+          <table>
+            <caption>10DE NVSwitch（LR10 / LS10）+ 15B3 NVLink-6/7/8 Switch · ConnectX-6~11 · BlueField-1~4 · Quantum / Spectrum</caption>
+            <thead><tr><th>VID:DID</th><th>家族 / 代际</th><th>芯片 / ASIC</th><th>功能角色</th><th>pci.ids 名称</th><th>技术说明</th></tr></thead>
+            <tbody><tr data-group="NVSwitch_15B3"><td>10DE:1AE8</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:1AF0</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:1AF1</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>GA100 [A100 NVSwitch]</td><td>HGX/DGX A100 常见公开 ID (Class 0x068000)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:1AF2</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:1AF3</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:1AF4</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:1AF5</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:1AF6</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:1AF7</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:1AF8</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:1AF9</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:1AFA</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:1AFB</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:1AFC</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:1AFD</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:1AFE</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:1AFF</td><td>NVSwitch Gen2 (Ampere)</td><td>LR10 (LimeRock)</td><td><strong>NVSwitch</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>open-gpu nvswitch_lr10_device_ids[] (LimeRock / NVSwitch Gen2)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:22A0</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NVSwitch EP</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[])</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:22A1</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NVSwitch EP</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[])</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:22A2</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NVSwitch EP</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[])</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:22A3</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NVSwitch EP</strong></td><td>GH100 [H100 NVSwitch]</td><td>HGX/DGX H100/H200 常见公开 ID (Class 0x068000)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:22A4</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NVSwitch EP</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[])</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:22A5</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NVSwitch EP</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[])</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:22A6</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NVSwitch EP</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[])</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:22A7</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NVSwitch EP</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>LS10 PCIe endpoint to manage NVLink switch HW (nvswitch_ls10_device_ids[])</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:22A8</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>PCI-PCI Bridge F0</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>Laguna Switch Function 0 PCI-PCI Bridge (nvswitch_ls10_device_ids[])</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:22A9</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>PCI-PCI Bridge F0</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>Laguna Switch Function 0 PCI-PCI Bridge (nvswitch_ls10_device_ids[])</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:22AA</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>PCI-PCI Bridge F0</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>Laguna Switch Function 0 PCI-PCI Bridge (nvswitch_ls10_device_ids[])</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:22AB</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>PCI-PCI Bridge F0</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>Laguna Switch Function 0 PCI-PCI Bridge (nvswitch_ls10_device_ids[])</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:22AC</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NTB Bridge F1</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>Laguna Switch Function 1 Non-Transparent Bridge (nvswitch_ls10_device_ids[])</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:22AD</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NTB Bridge F1</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>Laguna Switch Function 1 Non-Transparent Bridge (nvswitch_ls10_device_ids[])</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:22AE</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NTB Bridge F1</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>Laguna Switch Function 1 Non-Transparent Bridge (nvswitch_ls10_device_ids[])</td></tr>
+<tr data-group="NVSwitch_15B3"><td>10DE:22AF</td><td>NVSwitch Gen3 (Hopper)</td><td>LS10 (Laguna)</td><td><strong>NTB Bridge F1</strong></td><td>— (仅在 open-gpu nvswitch.c)</td><td>Laguna Switch Function 1 Non-Transparent Bridge (nvswitch_ls10_device_ids[])</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:D2F8</td><td>NVLink Switch Gen6</td><td>NVLink-6</td><td><strong>NVLink Switch</strong></td><td>NVLink-6 Switch</td><td>Vera Rubin 机架级 NVLink-6 交换芯片（从 Gen6 起并入 15B3 段位）</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:0278</td><td>NVLink Switch Gen6</td><td>NVLink-6</td><td><strong>Flash Recovery</strong></td><td>NVLink-6 Switch in Flash Recovery Mode</td><td>NVLink-6 Switch Flash Recovery</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:0279</td><td>NVLink Switch Gen6</td><td>NVLink-6</td><td><strong>RMA</strong></td><td>NVLink-6 Switch RMA</td><td>NVLink-6 Switch RMA</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:D2FA</td><td>NVLink Switch Gen7</td><td>NVLink-7</td><td><strong>NVLink Switch</strong></td><td>NVLink-7 Switch</td><td>Rubin Ultra / 下一代 NVLink-7 交换芯片</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:027C</td><td>NVLink Switch Gen7</td><td>NVLink-7</td><td><strong>Flash Recovery</strong></td><td>NVLink-7 Switch in Flash Recovery Mode</td><td>NVLink-7 Switch Flash Recovery</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:027D</td><td>NVLink Switch Gen7</td><td>NVLink-7</td><td><strong>RMA</strong></td><td>NVLink-7 Switch RMA</td><td>NVLink-7 Switch RMA</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:D2FC</td><td>NVLink Switch Gen8</td><td>NVLink-8</td><td><strong>NVLink Switch</strong></td><td>NVLink-8 Switch</td><td>远期规划 NVLink-8 交换芯片（已入 pci.ids v2026.11.19）</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:02A0</td><td>NVLink Switch Gen8</td><td>NVLink-8</td><td><strong>Flash Recovery</strong></td><td>NVLink-8 Switch in Flash Recovery Mode</td><td>NVLink-8 Switch Flash Recovery</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:02A1</td><td>NVLink Switch Gen8</td><td>NVLink-8</td><td><strong>RMA</strong></td><td>NVLink-8 Switch RMA</td><td>NVLink-8 Switch RMA</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:101B</td><td>ConnectX-6</td><td>MT28908</td><td><strong>NIC / HCA</strong></td><td>MT28908 Family [ConnectX-6]</td><td>200G HDR IB / Ethernet</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:101D</td><td>ConnectX-6 Dx</td><td>MT2892</td><td><strong>NIC</strong></td><td>MT2892 Family [ConnectX-6 Dx]</td><td>100G/200G Ethernet</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:101F</td><td>ConnectX-6 Lx</td><td>MT2894</td><td><strong>NIC</strong></td><td>MT2894 Family [ConnectX-6 Lx]</td><td>25G/50G Ethernet</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:1021</td><td>ConnectX-7</td><td>MT2910</td><td><strong>NIC / HCA</strong></td><td>MT2910 Family [ConnectX-7]</td><td>400G NDR IB / 400GbE（HGX H100/H200/GB200 标配）</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:1979</td><td>ConnectX-7</td><td>MT2910</td><td><strong>PCIe Bridge</strong></td><td>MT2910 Family [ConnectX-7 PCIe Bridge]</td><td>ConnectX-7 PCIe Bridge（gpu-admin-tools cx7.py 识别）</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:1023</td><td>ConnectX-8</td><td>CX8</td><td><strong>SuperNIC / HCA</strong></td><td>CX8 Family [ConnectX-8]</td><td>800G XDR IB / 800GbE（GB300 / B300 标配）</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:1024</td><td>ConnectX-8</td><td>CX8</td><td><strong>PCIe Switch</strong></td><td>CX8 PCIe Switch Family [ConnectX-8 PCIe Switch]</td><td>ConnectX-8 内置 PCIe Gen6 Switch</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:197D</td><td>ConnectX-8</td><td>CX8</td><td><strong>PCIe Bridge</strong></td><td>CX8 Family [ConnectX-8 PCIe Bridge]</td><td>ConnectX-8 PCIe Bridge</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:1025</td><td>ConnectX-9</td><td>CX9</td><td><strong>SuperNIC / HCA</strong></td><td>CX9 Family [ConnectX-9]</td><td>Vera Rubin 世代 1.6T / 800G SuperNIC</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:197E</td><td>ConnectX-9</td><td>CX9</td><td><strong>PCIe Bridge</strong></td><td>CX9 Family [ConnectX-9 PCIe Bridge]</td><td>ConnectX-9 PCIe Bridge</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:1027</td><td>ConnectX-10</td><td>CX10</td><td><strong>SuperNIC / HCA</strong></td><td>CX10 Family [ConnectX-10]</td><td>下一代 ConnectX-10 SuperNIC</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:1028</td><td>ConnectX-10</td><td>CX10</td><td><strong>TNCM</strong></td><td>CX10 Family [ConnectX-10 Trusted Network Control Memory]</td><td>ConnectX-10 Trusted Network Control Memory</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:197F</td><td>ConnectX-10</td><td>CX10</td><td><strong>PCIe Bridge</strong></td><td>CX10 Family [ConnectX-10 PCIe Bridge]</td><td>ConnectX-10 PCIe Bridge</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:2101</td><td>ConnectX-10</td><td>CX10</td><td><strong>NVLink-C2C</strong></td><td>CX10 Family [ConnectX-10 NVLink-C2C]</td><td>Linux 主线 drivers/pci/quirks.c 实锤：强制 PCIe ATS 的 NVLink-C2C 网卡</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:1029</td><td>ConnectX-11</td><td>CX11</td><td><strong>SuperNIC / HCA</strong></td><td>CX11 Family [ConnectX-11]</td><td>远期 ConnectX-11 SuperNIC</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:102A</td><td>ConnectX-11</td><td>CX11</td><td><strong>TNCM</strong></td><td>CX11 Family [ConnectX-11 Trusted Network Control Memory]</td><td>ConnectX-11 Trusted Network Control Memory</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:1980</td><td>ConnectX-11</td><td>CX11</td><td><strong>PCIe Bridge</strong></td><td>CX11 Family [ConnectX-11 PCIe Bridge]</td><td>ConnectX-11 PCIe Bridge</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:2102</td><td>ConnectX-11</td><td>CX11</td><td><strong>NVLink-C2C</strong></td><td>CX11 Family [ConnectX-11 NVLink-C2C]</td><td>ConnectX-11 NVLink-C2C</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:A2D0</td><td>BlueField-1</td><td>MT416842</td><td><strong>DPU SoC</strong></td><td>MT416842 BlueField SoC Crypto enabled</td><td>open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD) Crypto enabled</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:A2D4</td><td>BlueField-2</td><td>MT42822</td><td><strong>DPU SoC</strong></td><td>MT42822 BlueField-2 SoC Crypto enabled</td><td>open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD2) Crypto enabled</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:A2D5</td><td>BlueField-2</td><td>MT42822</td><td><strong>DPU SoC</strong></td><td>MT42822 BlueField-2 SoC Crypto disabled</td><td>open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD2) Crypto disabled</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:A2D6</td><td>BlueField-2</td><td>MT42822</td><td><strong>DPU NIC</strong></td><td>MT42822 BlueField-2 integrated ConnectX-6 Dx network controller</td><td>BlueField-2 集成 ConnectX-6 Dx</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:A2D7</td><td>BlueField-3 Lx</td><td>MT43162</td><td><strong>DPU SoC</strong></td><td>MT43162 BlueField-3 Lx SoC Crypto enabled</td><td>BlueField-3 Lx Crypto enabled</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:A2DA</td><td>BlueField-3</td><td>MT43244</td><td><strong>DPU SoC</strong></td><td>MT43244 BlueField-3 SoC Crypto enabled</td><td>open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD3, Disable IOMAP WC) Crypto enabled</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:A2DB</td><td>BlueField-3</td><td>MT43244</td><td><strong>DPU SoC</strong></td><td>MT43244 BlueField-3 SoC Crypto disabled</td><td>open-gpu nvcst.h (CS_MELLANOX_BLUEFIELD3) Crypto disabled</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:A2DC</td><td>BlueField-3</td><td>MT43244</td><td><strong>DPU NIC</strong></td><td>MT43244 BlueField-3 integrated ConnectX-7 network controller</td><td>BlueField-3 集成 ConnectX-7（GB200/GB300 管理/东西向 DPU）</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:A2DD</td><td>BlueField-4</td><td>BF4</td><td><strong>DPU SoC</strong></td><td>BF4 Family Crypto enabled [BlueField-4 SoC Crypto enabled]</td><td>Vera Rubin 世代 BlueField-4 SoC (Crypto enabled)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:A2DE</td><td>BlueField-4</td><td>BF4</td><td><strong>DPU SoC</strong></td><td>BF4 Family Crypto disabled [BlueField-4 SoC Crypto disabled]</td><td>BlueField-4 SoC (Crypto disabled)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:A2DF</td><td>BlueField-4</td><td>BF4</td><td><strong>DPU NIC</strong></td><td>BF4 Family integrated network controller [BlueField-4 integrated network controller]</td><td>BlueField-4 集成网络控制器</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:C2D6</td><td>BlueField-4</td><td>BF4</td><td><strong>Mgmt Interface</strong></td><td>BF4 Family Management Interface [BlueField-4 SoC Management Interface]</td><td>BlueField-4 管理接口</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:D2F0</td><td>Quantum</td><td>QM8700</td><td><strong>IB Switch</strong></td><td>Quantum HDR (200Gbps) switch</td><td>Quantum HDR (200G) InfiniBand 交换芯片</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:D2F2</td><td>Quantum-2</td><td>QM9700</td><td><strong>IB Switch</strong></td><td>Quantum-2 NDR (400Gbps) switch</td><td>Quantum-2 NDR (400G) InfiniBand 交换芯片</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:D2F4</td><td>Quantum-3</td><td>Quantum-X800</td><td><strong>IB Switch</strong></td><td>Quantum-3</td><td>Quantum-3 XDR (800G) InfiniBand 交换芯片</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:D2F6</td><td>Quantum-3 CPO</td><td>Quantum-X800</td><td><strong>IB Switch CPO</strong></td><td>Quantum-3CPO</td><td>Quantum-3 共封装光学 (CPO) 交换芯片</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:CF6C</td><td>Spectrum-2</td><td>MT53100</td><td><strong>Eth Switch</strong></td><td>MT53100 [Spectrum-2]</td><td>100G/200G Ethernet 交换芯片</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:CF70</td><td>Spectrum-3</td><td>SN4000</td><td><strong>Eth Switch</strong></td><td>Spectrum-3</td><td>200G/400G Ethernet 交换芯片</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:CF80</td><td>Spectrum-4</td><td>SN5000</td><td><strong>Eth Switch</strong></td><td>Spectrum-4</td><td>400G/800G Spectrum-X 交换芯片</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:CF82</td><td>Spectrum-5</td><td>Spectrum-5</td><td><strong>Eth Switch</strong></td><td>Spectrum-5</td><td>新一代 Spectrum-5 交换芯片</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:CF84</td><td>Spectrum-6</td><td>Spectrum-6</td><td><strong>Eth Switch</strong></td><td>Spectrum-6</td><td>Spectrum-6 (含 0277 Tile)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:CF86</td><td>Spectrum-7</td><td>Spectrum-7</td><td><strong>Eth Switch</strong></td><td>Spectrum-7</td><td>Spectrum-7 (含 027E Tile)</td></tr>
+<tr data-group="NVSwitch_15B3"><td>15B3:C788</td><td>Spectrum-8</td><td>Spectrum-8</td><td><strong>Eth Switch</strong></td><td>Spectrum-8</td><td>Spectrum-8 (含 027F Tile)</td></tr></tbody>
+          </table>
+        </div>
+
+        <h2 id="sec-grace-vera" data-group-box="Grace_Vera">七、Grace（TH500）· Vera（TB500）· Tegra / Thor / N1 CPU &amp; SoC（40 项）</h2>
+        <div class="table-scroll wide" data-group-box="Grace_Vera">
+          <table>
+            <caption>Grace TH500 / Vera TB500 / Tegra SoC PCI Root Port &amp; Bridge 全表（10DE:xxxx）</caption>
+            <thead><tr><th>ID</th><th>平台 / CPU</th><th>内部代号</th><th>功能</th><th>pci.ids 名称</th><th>驱动 / 官方定义</th><th>技术说明</th><th>来源</th></tr></thead>
+            <tbody><tr data-group="Grace_Vera"><td>2F95</td><td>Vera CPU</td><td>TB500</td><td><strong>PCIe Root Port</strong></td><td>TB500 RP x16</td><td>NVIDIA Vera CPU (TB500) PCIe Root Port x16</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500, I/O Coherent + PCIe Atomics)</td><td>pci.ids + open-gpu</td></tr>
+<tr data-group="Grace_Vera"><td>2F96</td><td>Vera CPU</td><td>TB500</td><td><strong>PCIe Root Port</strong></td><td>TB500 RP x8</td><td>NVIDIA Vera CPU (TB500) PCIe Root Port x8</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500, Nvidia_TB500_setupFunc)</td><td>pci.ids + open-gpu</td></tr>
+<tr data-group="Grace_Vera"><td>2F97</td><td>Vera CPU</td><td>TB500</td><td><strong>PCIe Root Port</strong></td><td>TB500 RP x4</td><td>NVIDIA Vera CPU (TB500) PCIe Root Port x4</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500)</td><td>pci.ids + open-gpu</td></tr>
+<tr data-group="Grace_Vera"><td>2F98</td><td>Vera CPU</td><td>TB500</td><td><strong>PCIe Root Port</strong></td><td>TB500 RP x2</td><td>NVIDIA Vera CPU (TB500) PCIe Root Port x2</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500)</td><td>pci.ids + open-gpu</td></tr>
+<tr data-group="Grace_Vera"><td>2F99</td><td>Vera CPU</td><td>TB500</td><td><strong>PCIe Root Port</strong></td><td>TB500 RP x1</td><td>NVIDIA Vera CPU (TB500) PCIe Root Port x1</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_TB500)</td><td>pci.ids + open-gpu</td></tr>
+<tr data-group="Grace_Vera"><td>22B1</td><td>Grace CPU</td><td>TH500</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Grace CPU (TH500) RP for GH100 GPU in GH180</td><td>open-gpu nvcst.h (CS_NVIDIA_TH500, I/O Coherent + PCIe Atomics WAR 3562968)</td><td>open-gpu nvcst.h</td></tr>
+<tr data-group="Grace_Vera"><td>22B2</td><td>Grace CPU</td><td>TH500</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Grace CPU (TH500) PCIe Root Port x16</td><td>open-gpu nvcst.h (CS_NVIDIA_TH500; P2P via PCIe switch enabled in chipset_pcie.c)</td><td>open-gpu nvcst.h</td></tr>
+<tr data-group="Grace_Vera"><td>22B3</td><td>Grace CPU</td><td>TH500</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Grace CPU (TH500) PCIe Root Port x4</td><td>open-gpu nvcst.h (CS_NVIDIA_TH500)</td><td>open-gpu nvcst.h</td></tr>
+<tr data-group="Grace_Vera"><td>22B4</td><td>Grace CPU</td><td>TH500</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Grace CPU (TH500) PCIe Root Port x1</td><td>open-gpu nvcst.h (CS_NVIDIA_TH500)</td><td>open-gpu nvcst.h</td></tr>
+<tr data-group="Grace_Vera"><td>22B8</td><td>Grace CPU</td><td>TH500</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Grace CPU (TH500) PCIe Root Port x8</td><td>open-gpu nvcst.h (CS_NVIDIA_TH500)</td><td>open-gpu nvcst.h</td></tr>
+<tr data-group="Grace_Vera"><td>22B9</td><td>Grace CPU</td><td>TH500</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Grace CPU (TH500) PCIe Root Port x2</td><td>open-gpu nvcst.h (CS_NVIDIA_TH500)</td><td>open-gpu nvcst.h</td></tr>
+<tr data-group="Grace_Vera"><td>22D6</td><td>Thor SoC</td><td>T264</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Tegra T264 (Thor) PCIe Root Port x8</td><td>open-gpu nvcst.h (CS_NVIDIA_T264)</td><td>open-gpu nvcst.h</td></tr>
+<tr data-group="Grace_Vera"><td>22D8</td><td>Thor SoC</td><td>T264</td><td><strong>PCIe Root Port</strong></td><td>THOR Processor PCI Express Root Port</td><td>NVIDIA Tegra T264 (Thor) PCIe Root Port x4</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_T264)</td><td>pci.ids + open-gpu</td></tr>
+<tr data-group="Grace_Vera"><td>22DA</td><td>Thor SoC</td><td>T264</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Tegra T264 (Thor) PCIe Root Port x2</td><td>open-gpu nvcst.h (CS_NVIDIA_T264)</td><td>open-gpu nvcst.h</td></tr>
+<tr data-group="Grace_Vera"><td>22E6</td><td>Thor SoC</td><td>T264</td><td><strong>iGPU Root Port</strong></td><td>THOR Processor PCI Express x16 Controller</td><td>NVIDIA Tegra T264 (Thor) iGPU Root Port</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_T264)</td><td>pci.ids + open-gpu</td></tr>
+<tr data-group="Grace_Vera"><td>22CE</td><td>DGX Spark / GB10</td><td>GB10</td><td><strong>PCIe Host Bridge</strong></td><td>GB10 GEN5 X4 PCIe host</td><td>NVIDIA GB10 Gen5 x4 PCIe Host</td><td>pci.ids + Linux quirks.c (quirk_no_bus_reset)</td><td>pci.ids + Linux</td></tr>
+<tr data-group="Grace_Vera"><td>22D0</td><td>DGX Spark / GB10</td><td>GB10</td><td><strong>PCIe Host Bridge</strong></td><td>GB10 GEN4 X1 PCIe host</td><td>NVIDIA GB10 Gen4 x1 PCIe Host</td><td>pci.ids + Linux quirks.c (quirk_no_bus_reset)</td><td>pci.ids + Linux</td></tr>
+<tr data-group="Grace_Vera"><td>22D1</td><td>Spark / N1 SoC</td><td>T254 / GB20B</td><td><strong>PCI Bridge</strong></td><td>GB20B PCI bridge</td><td>NVIDIA T254 / GB20B PCI Bridge</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_T254)</td><td>pci.ids + open-gpu</td></tr>
+<tr data-group="Grace_Vera"><td>2F88</td><td>N1 Client SoC</td><td>T256 (N1)</td><td><strong>PCIe Root/Host</strong></td><td>T256</td><td>NVIDIA T256 (N1) Client Arm SoC</td><td>pci.ids + open-gpu nvcst.h (CS_NVIDIA_T256, comment: NVIDIA T256 (N1))</td><td>pci.ids + open-gpu</td></tr>
+<tr data-group="Grace_Vera"><td>200A</td><td>Tegra / SoC</td><td>NPU</td><td><strong>NPU</strong></td><td>NPU</td><td>NVIDIA Neural Processing Unit (NPU)</td><td>Added in pci.ids v2026.11.19</td><td>pci.ids</td></tr>
+<tr data-group="Grace_Vera"><td>229A</td><td>Orin SoC</td><td>T234</td><td><strong>PCIe Root Port</strong></td><td>Orin PCIe x8 Root Complex</td><td>NVIDIA Tegra T234 (Orin) RP0 x8</td><td>pci.ids + nvcst.h + Linux quirks.c (disable_rp_msi)</td><td>pci.ids + Linux + og</td></tr>
+<tr data-group="Grace_Vera"><td>229C</td><td>Orin SoC</td><td>T234</td><td><strong>PCIe Root Port</strong></td><td>Orin PCIe x4/x8 Endpoint/Root Complex</td><td>NVIDIA Tegra T234 (Orin) RP1 x4/x8</td><td>pci.ids + nvcst.h + Linux quirks.c (disable_rp_msi)</td><td>pci.ids + Linux + og</td></tr>
+<tr data-group="Grace_Vera"><td>229E</td><td>Orin SoC</td><td>T234</td><td><strong>PCIe Root Port</strong></td><td>Orin PCIe x1 Root Complex</td><td>NVIDIA Tegra T234 (Orin) RP2 x1</td><td>pci.ids + nvcst.h + Linux quirks.c (disable_rp_msi)</td><td>pci.ids + Linux + og</td></tr>
+<tr data-group="Grace_Vera"><td>2296</td><td>Orin / Tegra</td><td>Tegra</td><td><strong>Virtual NIC</strong></td><td>Tegra PCIe Endpoint Virtual Network</td><td>Tegra PCIe Endpoint Virtual Network</td><td>pci.ids</td><td>pci.ids</td></tr>
+<tr data-group="Grace_Vera"><td>22C2</td><td>Tegra T23x</td><td>T23x</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Tegra T23x RP0</td><td>open-gpu nvcst.h (CS_NVIDIA_T23x)</td><td>open-gpu nvcst.h</td></tr>
+<tr data-group="Grace_Vera"><td>22C3</td><td>Tegra T23x</td><td>T23x</td><td><strong>PCIe Root Port</strong></td><td>— (未入 pci.ids)</td><td>NVIDIA Tegra T23x RP1</td><td>open-gpu nvcst.h (CS_NVIDIA_T23x)</td><td>open-gpu nvcst.h</td></tr>
+<tr data-group="Grace_Vera"><td>1AD0</td><td>Xavier SoC</td><td>T194</td><td><strong>PCIe Root Port</strong></td><td>Tegra PCIe x8 Endpoint</td><td>NVIDIA Tegra V1 (T194 / Xavier) RP0 x8</td><td>pci.ids + nvcst.h + Linux quirks.c</td><td>pci.ids + Linux + og</td></tr>
+<tr data-group="Grace_Vera"><td>1AD1</td><td>Xavier SoC</td><td>T194</td><td><strong>PCIe Root Port</strong></td><td>Tegra PCIe x4/x8 Endpoint/Root Complex</td><td>NVIDIA Tegra V1 (T194 / Xavier) RP1 x4/x8</td><td>pci.ids + nvcst.h + Linux quirks.c</td><td>pci.ids + Linux + og</td></tr>
+<tr data-group="Grace_Vera"><td>1AD2</td><td>Xavier SoC</td><td>T194</td><td><strong>PCIe Root Port</strong></td><td>Tegra PCIe x1 Root Complex</td><td>NVIDIA Tegra V1 (T194 / Xavier) RP2 x1</td><td>pci.ids + nvcst.h + Linux quirks.c</td><td>pci.ids + Linux + og</td></tr>
+<tr data-group="Grace_Vera"><td>1AD3</td><td>Xavier SoC</td><td>T194</td><td><strong>SATA</strong></td><td>Xavier SATA Controller</td><td>NVIDIA Jetson AGX Xavier SATA Controller</td><td>pci.ids</td><td>pci.ids</td></tr>
+<tr data-group="Grace_Vera"><td>10E5</td><td>Parker SoC</td><td>T186</td><td><strong>PCIe Root Port</strong></td><td>Parker PCIe x4 Root Complex</td><td>NVIDIA Tegra P1 (T186 / TX2) RP0 x4</td><td>pci.ids + nvcst.h + Linux quirks.c</td><td>pci.ids + Linux + og</td></tr>
+<tr data-group="Grace_Vera"><td>10E6</td><td>Parker SoC</td><td>T186</td><td><strong>PCIe Root Port</strong></td><td>Parker PCIe x1 Root Complex</td><td>NVIDIA Tegra P1 (T186 / TX2) RP1 x1</td><td>pci.ids + nvcst.h + Linux quirks.c</td><td>pci.ids + Linux + og</td></tr>
+<tr data-group="Grace_Vera"><td>0FAE</td><td>Tegra X1</td><td>T210</td><td><strong>PCIe Root Port</strong></td><td>Tegra X1 PCIe x4 Root Complex</td><td>NVIDIA Tegra X1 (T210 / Nano) RP0 x4</td><td>pci.ids + nvcst.h + Linux quirks.c</td><td>pci.ids + Linux + og</td></tr>
+<tr data-group="Grace_Vera"><td>0FAF</td><td>Tegra X1</td><td>T210</td><td><strong>PCIe Root Port</strong></td><td>Tegra X1 PCIe x1 Root Complex</td><td>NVIDIA Tegra X1 (T210 / Nano) RP1 x1</td><td>pci.ids + nvcst.h + Linux quirks.c</td><td>pci.ids + Linux + og</td></tr>
+<tr data-group="Grace_Vera"><td>0E12</td><td>Tegra K1</td><td>T124</td><td><strong>PCIe Bridge</strong></td><td>TegraK1 PCIe x4 Bridge</td><td>NVIDIA Tegra K1 PCIe x4 Bridge</td><td>pci.ids + Linux quirks.c</td><td>pci.ids + Linux</td></tr>
+<tr data-group="Grace_Vera"><td>0E13</td><td>Tegra K1</td><td>T124</td><td><strong>PCIe Bridge</strong></td><td>TegraK1 PCIe x1 Bridge</td><td>NVIDIA Tegra K1 PCIe x1 Bridge</td><td>pci.ids + Linux quirks.c</td><td>pci.ids + Linux</td></tr>
+<tr data-group="Grace_Vera"><td>0E1C</td><td>Tegra 3+</td><td>T30/T114</td><td><strong>PCIe Bridge</strong></td><td>Tegra3+ PCIe x4 Bridge</td><td>NVIDIA Tegra 3+ PCIe x4 Bridge</td><td>pci.ids + Linux quirks.c</td><td>pci.ids + Linux</td></tr>
+<tr data-group="Grace_Vera"><td>0E1D</td><td>Tegra 3+</td><td>T30/T114</td><td><strong>PCIe Bridge</strong></td><td>Tegra3+ PCIe x2 Bridge</td><td>NVIDIA Tegra 3+ PCIe x2 Bridge</td><td>pci.ids + Linux quirks.c</td><td>pci.ids + Linux</td></tr>
+<tr data-group="Grace_Vera"><td>0BF0</td><td>Tegra 2</td><td>T20</td><td><strong>PCIe Bridge</strong></td><td>Tegra2 PCIe x4 Bridge</td><td>NVIDIA Tegra 2 PCIe x4 Bridge</td><td>pci.ids + Linux quirks.c</td><td>pci.ids + Linux</td></tr>
+<tr data-group="Grace_Vera"><td>0BF1</td><td>Tegra 2</td><td>T20</td><td><strong>PCIe Bridge</strong></td><td>Tegra2 PCIe x2 Bridge</td><td>NVIDIA Tegra 2 PCIe x2 Bridge</td><td>pci.ids + Linux quirks.c</td><td>pci.ids + Linux</td></tr></tbody>
+          </table>
+        </div>
+        <div class="table-scroll" data-group-box="Grace_Vera">
+          <table>
+            <caption>Grace / Vera Arm CoreSight PMU Product ID（Linux drivers/perf/arm_cspmu/nvidia_cspmu.c）</caption>
+            <thead><tr><th>Product ID</th><th>Linux perf PMU</th><th>适用平台</th><th>说明</th></tr></thead>
+            <tbody><tr><td>0x10300000</td><td>nvidia_pcie_pmu_%u</td><td>Grace (TH500)</td><td>PCIe Root Port 带宽与请求计数（v1）</td></tr>
+<tr><td>0x10301000</td><td>nvidia_pcie_pmu_%u_rc_%u</td><td>Grace / Vera</td><td>PCIe v2 PMU，支持 BDF 过滤与 `dst_loc_pcie_cxl`（CXL 流量计数！）</td></tr>
+<tr><td>0x10700000</td><td>nvidia_pcie_tgt_pmu_%u_rc_%u</td><td>Vera / Next</td><td>PCIe Target 地址区间过滤 PMU（base/mask 64-bit）</td></tr>
+<tr><td>0x10400000</td><td>nvidia_nvlink_c2c1_pmu_%u</td><td>Grace / Vera</td><td>NVLink-C2C Port 1 一致性互联流量 PMU</td></tr>
+<tr><td>0x10500000</td><td>nvidia_nvlink_c2c0_pmu_%u</td><td>Grace / Vera</td><td>NVLink-C2C Port 0 一致性互联流量 PMU</td></tr>
+<tr><td>0x10600000</td><td>nvidia_cnvlink_pmu_%u</td><td>Grace / Vera</td><td>跨 Socket Coherent NVLink (cNVLink) PMU</td></tr>
+<tr><td>0x2CF00000</td><td>nvidia_scf_pmu_%u</td><td>Grace (TH500)</td><td>Scalable Coherency Fabric (SCF) 缓存/GMEM/CMEM PMU</td></tr>
+<tr><td>0x2CF20000</td><td>nvidia_ucf_pmu_%u</td><td>Vera / Next</td><td>Unified Coherency Fabric (UCF) SLC/Snoop/GMEM/CMEM PMU</td></tr></tbody>
+          </table>
+        </div>
+
+        <h2 id="sec-smmap">八、架构 × SM / Hex 段位与 Bit-6（+0x40）硬件分配规律</h2>
+        <div class="table-scroll wide">
+          <table>
+            <caption>全架构 × SM / Compute Capability × PCI Hex 段位速查</caption>
+            <thead><tr><th>架构</th><th>芯片</th><th>SM</th><th>CC</th><th>PCI Hex 段位</th><th>代表产品</th><th>备注</th></tr></thead>
+            <tbody><tr><td>Rubin (DC)</td><td>GR100 / GR102</td><td>sm_107</td><td>10.7</td><td>3000–307F (GR100) / 3080–30FF (GR102)</td><td>VR NVL72 (3041), PCIe Faber (3021), R100/R200</td><td>CUDA 13.4/13.5 GA (sm_107a/107f); 328 KB SMEM; 288GB HBM4 (280GB 可用), NVLink 6; open-gpu 620.x</td></tr>
+<tr><td>Blackwell (Spark/N1X)</td><td>GB10 / GB20B</td><td>sm_121</td><td>12.1</td><td>2E00–2E3F (Linux quirks ATS)</td><td>DGX Spark (GB10), RTX Spark N1X (5120/6144-core)</td><td>sm_121a; 强制 PCIe ATS 模拟 CXL.cache; 128GB 统一 LPDDR5X</td></tr>
+<tr><td>Blackwell (Consumer/Pro)</td><td>GB202/203/205/206/207</td><td>sm_120</td><td>12.0</td><td>2B80–2DFF, 2F00–2F7F</td><td>RTX 50 / 5070 SUPER, RTX PRO 6000/5500/5000/4500/4000/2000</td><td>mma.sync (非 tcgen05); FP4/FP6; 另有 GB20C 车载虚拟化</td></tr>
+<tr><td>Blackwell (Thor/T268)</td><td>GB10B (T264 / T268)</td><td>sm_110</td><td>11.0</td><td>2B00 (T264), 3400 (T268)</td><td>Jetson AGX Thor (2070 FP4 TFLOPS), DRIVE Thor, T268</td><td>CUDA 13.0 由 sm_101 改名; 另有 GB10C</td></tr>
+<tr><td>Blackwell Ultra (DC)</td><td>GB110 / GB112 / GB120</td><td>sm_103</td><td>10.3</td><td>3180–327F, 3300–337F</td><td>B300 (3182), GB300 Bianca/Galaxy (31C2), GB300-252 (31C3)</td><td>sm_103a/103f; 288GB HBM3e; 1400W 级; edk2 确认 GB120 段 3341–337F</td></tr>
+<tr><td>Blackwell (DC)</td><td>GB100 / GB102</td><td>sm_100</td><td>10.0</td><td>2900–297F (GB100) / 2980–29FF (GB102)</td><td>B100, B200 (180/168GB), GB200 NVL72 (2941), DRIVE P2021 (29BB)</td><td>TMEM, tcgen05, 2-SM MMA; sm_100a/100f; nvtrust CC 架构 10</td></tr>
+<tr><td>Hopper</td><td>GH100</td><td>sm_90</td><td>9.0</td><td>2300–237F (+ 23B0/23F0)</td><td>H100, H200, H800, H20/H20-3e, GH200 (2342/2345/2348)</td><td>WGMMA, TMA; sm_90a; 2301–233F EP vs 2341–237F SH</td></tr>
+<tr><td>Ada Lovelace</td><td>AD102/103/104/106/107</td><td>sm_89</td><td>8.9</td><td>2680–28FF</td><td>RTX 40 系, RTX 6000 Ada, L40/L40S/L20/L4/L2</td><td>FP8 Transformer Engine</td></tr>
+<tr><td>Ampere (Orin)</td><td>GA10B (T234)</td><td>sm_87</td><td>8.7</td><td>SoC 集成 (RP: 229A/9C/9E)</td><td>Jetson AGX Orin, DRIVE Orin</td><td>Tegra 嵌入式 iGPU</td></tr>
+<tr><td>Ampere (Consumer/Pro)</td><td>GA102/103/104/106/107</td><td>sm_86</td><td>8.6</td><td>2200–227F, 2400–25FF</td><td>RTX 30 系, RTX A6000~A2000, A40/A10/A16/A2</td><td>2× FP32/SM vs sm_80</td></tr>
+<tr><td>Ampere (DC)</td><td>GA100</td><td>sm_80</td><td>8.0</td><td>2080–20FF</td><td>A100, A800, A30, AX800, CMP 170HX</td><td>HBM2e; TF32 + 原生 FP64 Tensor Core</td></tr>
+<tr><td>Turing</td><td>TU102/104/106/116/117</td><td>sm_75</td><td>7.5</td><td>1E00–1FFF, 2180–21FF</td><td>RTX 20 / GTX 16, T4/T4G, Quadro RTX 8000</td><td>open-gpu-kernel-modules 支持起点 (81 IDs ✓)</td></tr>
+<tr><td>Volta</td><td>GV100 / GV11B</td><td>sm_70 / 72</td><td>7.0 / 7.2</td><td>1D80–1DFF (GV100)</td><td>Tesla V100 / V100S, TITAN V, Quadro GV100, Xavier (7.2)</td><td>初代 Tensor Core + HBM2 + NVLink 2.0</td></tr>
+<tr><td>Pascal</td><td>GP100 / GP102–108 / GP10B</td><td>sm_60 / 61 / 62</td><td>6.0–6.2</td><td>15C0–15FF, 1700–173F, 1B00–1D7F</td><td>Tesla P100 (6.0), P40/P4/GTX 10 系 (6.1), TX2 (6.2)</td><td>GP100 原生 FP16 + HBM2; GP102–108 补 DP4A</td></tr>
+<tr><td>Maxwell</td><td>GM107–108 / GM200–206 / GM20B</td><td>sm_50 / 52 / 53</td><td>5.0–5.3</td><td>1340–143F, 1600–167F, 1740–183F</td><td>GTX 750/900/TITAN X, Tesla M60/M40/M10/M4, Nano (5.3)</td><td>SMM 高能效重构</td></tr>
+<tr><td>Kepler</td><td>GK104–107 / GK110–208 / GK210</td><td>sm_30 / 35 / 37</td><td>3.0 / 3.5 / 3.7</td><td>0FC0–103F, 1180–12BF</td><td>GTX 600/700, Tesla K10/K20/K40 (3.5), K80 (3.7)</td><td>Dynamic Parallelism; GK210 (K80) 独享 sm_37</td></tr>
+<tr><td>Fermi</td><td>GF100/110 · GF104–119</td><td>sm_20 / 21</td><td>2.0 / 2.1</td><td>06C0–06FF, 0DC0–107F</td><td>GTX 480/580, Tesla C2050/M2090 (2.0), GTX 460/560 (2.1)</td><td>初代 IEEE-754 + ECC + L1/L2 缓存 CUDA 架构</td></tr></tbody>
+          </table>
+        </div>
+        <div class="table-scroll wide">
+          <table>
+            <caption>数据中心 GPU Bit-6（+0x40）Endpoint vs Self-Hosted 分配规律（detect-self-hosted.h / edk2-nvidia）</caption>
+            <thead><tr><th>芯片家族</th><th>Recovery / 保留</th><th>Endpoint 段 (+0x00)</th><th>Self-Hosted 段 (+0x40)</th><th>来源</th><th>典型实例</th></tr></thead>
+            <tbody><tr><td>GH100 (Hopper)</td><td>0x2300 (Recovery)</td><td>0x2301 – 0x233F</td><td>0x2340 – 0x237F</td><td>detect-self-hosted.h + edk2</td><td>2330 H100 SXM (EP) vs 2342/2345/2348 GH200 (SH)</td></tr>
+<tr><td>GB100 (Blackwell)</td><td>0x2900 (Reserved A)</td><td>0x2901 – 0x293F</td><td>0x2940 – 0x297F</td><td>detect-self-hosted.h + edk2</td><td>2901/2909 B200 (EP) vs 2941/297E GB200 (TH500 SH)</td></tr>
+<tr><td>GB102 (Blackwell)</td><td>0x2980 (Reserved A)</td><td>0x2981 – 0x29BF</td><td>0x29C0 – 0x29FF</td><td>edk2-nvidia TH500GpuDxe</td><td>29BB DRIVE P2021 / 29BC B100 (EP) vs 29C1–29FF (TH500 SH)</td></tr>
+<tr><td>GB110 (Blackwell Ultra)</td><td>0x3180 (Reserved A)</td><td>0x3181 – 0x31BF (特例 31A1=SH)</td><td>0x31C0 – 0x31FF (+ 31A1)</td><td>detect-self-hosted.h + edk2</td><td>3182 B300 (EP) vs 31C2/31C3 GB300 &amp; 31A1 MaxQ (SH)</td></tr>
+<tr><td>GB120 (Blackwell Ultra)</td><td>0x3300 / 0x3340</td><td>0x3301 – 0x333F</td><td>0x3341 – 0x337F</td><td>edk2-nvidia TH500GpuDxe</td><td>edk2 明确预留 TH500+GB120 SH 段 3341–337F</td></tr>
+<tr><td>GR100 (Rubin)</td><td>0x3000 (Reserved A)</td><td>0x3000 – 0x303F</td><td>0x3040 – 0x307F</td><td>detect-self-hosted.h + edk2</td><td>3002 SXM / 3021 PCIe Faber (EP) vs 3041 VR NVL72 / 307E / 307F (Vera SH)</td></tr>
+<tr><td>GR102 (Rubin)</td><td>0x3080 (Reserved A)</td><td>0x3081 – 0x30BF</td><td>0x30C0 – 0x30FF</td><td>detect-self-hosted.h + gat</td><td>30C0 Reserved B / 30FF [221B/221C] C2C+SXM (Vera SH)</td></tr></tbody>
+          </table>
+        </div>
 
         <h2 id="sec-legacy-pre-ampere">九、Ampere 之前的历史架构：Turing ← Fermi（6 代 · 681 项）</h2>
         <div class="legacy-fold-bar" id="legacyFoldBar">
@@ -1519,7 +1519,7 @@
 </div>
         </div>
 
-        <p class="legend">数据来源：pciutils/pciids (v2026.11.19)、NVIDIA/open-gpu-kernel-modules (620.73.04，含 g_nv_name_released.h &amp; detect-self-hosted.h)、NVIDIA/gpu-admin-tools、NVIDIA/DCGM、NVIDIA/edk2-nvidia、NVIDIA/nvtrust、torvalds/linux 与 CUDA 13.5 官方文档。更新日期：2026-11-20。</p>
+        <p class="legend">最后更新日期：2026-11-21 ｜ 数据来源：pciutils/pciids (v2026.11.19)、NVIDIA/open-gpu-kernel-modules (620.73.04，含 g_nv_name_released.h &amp; detect-self-hosted.h)、NVIDIA/gpu-admin-tools、NVIDIA/DCGM、NVIDIA/edk2-nvidia、NVIDIA/nvtrust、torvalds/linux 与 CUDA 13.5 官方文档。</p>
       </article>
     </main>
 

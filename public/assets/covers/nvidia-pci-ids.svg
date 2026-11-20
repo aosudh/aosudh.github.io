@@ -49,6 +49,6 @@
     <text x="438" y="192" text-anchor="end" fill="#f472b6">Gen6 Fabric</text>
   </g>
 
-  <text x="28" y="250" fill="#f8fafc" font-family="system-ui,'Microsoft YaHei',sans-serif" font-size="23" font-weight="700">NVIDIA PCI ID 全量图谱</text>
-  <text x="28" y="276" fill="#94a3b8" font-family="Consolas,monospace" font-size="12.5">Fermi → Rubin × Grace / Vera × NVSwitch</text>
+  <text x="28" y="250" fill="#f8fafc" font-family="system-ui,'Microsoft YaHei',sans-serif" font-size="23" font-weight="700">NVIDIA GPU PCI Device ID</text>
+  <text x="28" y="276" fill="#94a3b8" font-family="Consolas,monospace" font-size="12.5">Rubin / Blackwell · Vera / Grace · NVSwitch</text>
 </svg>
