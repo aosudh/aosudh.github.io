@@ -3,9 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Blackwell-Next CXL DVSEC：代码考据与最终结论 · 我的博客</title>
+  <title>Blackwell-Next CXL DVSEC：代码考据与最终结论 · 繁星若尘</title>
   <meta name="description" content="从微信一句&quot;Blackwell-Next&quot;出发，全树核查这个 NVIDIA 代号在 Linux 内核源码里的唯一落地点——nvgrace-gpu 驱动新增的 CXL DVSEC 显存就绪探测路径，并给出&quot;VR200 是否从 PCIe+C2C 变成 CXL+C2C&quot;的最终结论。" />
   <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="icon" type="image/svg+xml" href="/assets/covers/favicon.svg" />
+  <link rel="stylesheet" href="/assets/css/post-v3.css" />
+  <script>(function(){try{var t=localStorage.getItem('site-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var h=localStorage.getItem('site-v3-hue');if(h!==null&&!isNaN(Number(h)))document.documentElement.style.setProperty('--hue',h);}catch(e){}})();</script>
   <style>
     /* 文章内表格样式——仅作用于本页，用中性灰 + currentColor，浅色/深色模式都适配，不动全局 style.css。
        本文表格首列多为整句而非短编号，故去掉 nowrap，允许换行。 */
@@ -21,7 +24,7 @@
 <body>
   <div class="wrap">
     <header class="site-header">
-      <a class="site-title" href="/">我的博客</a>
+      <a class="site-title" href="/">繁星若尘</a>
       <nav class="site-nav">
         <a href="/">首页</a>
         <a href="/about.html">关于</a>
@@ -436,5 +439,6 @@ static int nvgrace_gpu_probe_check_device_ready(struct nvgrace_gpu_pci_core_devi
       <span>由 <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a> 托管</span>
     </footer>
   </div>
+  <script src="/assets/js/post-shell.js" defer></script>
 </body>
 </html>

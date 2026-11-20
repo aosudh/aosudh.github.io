@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DGX Spark 与 Jetson Thor 实测：48 SM 与 20 SM，为什么有时接近、有时反转？ · 我的博客</title>
+  <title>DGX Spark 与 Jetson Thor 实测：48 SM 与 20 SM，为什么有时接近、有时反转？ · 繁星若尘</title>
   <meta name="description" content="从普通 FP32、低精度矩阵到 Q4 服务与视觉完整链，解释 Spark 和 Thor 的胜负为何随任务改变；附 TF32 内核追踪、特权 NCU、FP4 阶段计时及结论边界。" />
   <link rel="canonical" href="https://aosudh.github.io/posts/spark-vs-thor.html" />
   <meta property="og:title" content="DGX Spark 与 Jetson Thor 实测：48 SM 与 20 SM，为什么有时接近、有时反转？" />
@@ -13,6 +13,9 @@
   <meta property="og:image" content="https://aosudh.github.io/assets/img/spark-vs-thor/interpretation-precision.png" />
   <meta property="article:published_time" content="2026-09-28" />
   <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="icon" type="image/svg+xml" href="/assets/covers/favicon.svg" />
+  <link rel="stylesheet" href="/assets/css/post-v3.css" />
+  <script>(function(){try{var t=localStorage.getItem('site-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var h=localStorage.getItem('site-v3-hue');if(h!==null&&!isNaN(Number(h)))document.documentElement.style.setProperty('--hue',h);}catch(e){}})();</script>
   <style>
     .comparison .wrap { max-width: 980px; }
     .comparison .post-content h1 { font-size: clamp(1.7rem, 3.6vw, 2.3rem); line-height: 1.4; }
@@ -38,7 +41,7 @@
 <body class="comparison">
   <div class="wrap">
     <header class="site-header">
-      <a class="site-title" href="/">我的博客</a>
+      <a class="site-title" href="/">繁星若尘</a>
       <nav class="site-nav" aria-label="主导航"><a href="/">首页</a><a href="/about.html">关于</a></nav>
     </header>
     <main>
@@ -164,5 +167,6 @@
     </main>
     <footer class="site-footer"><span>© 2026 我的博客</span><span>由 <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a> 托管</span></footer>
   </div>
+  <script src="/assets/js/post-shell.js" defer></script>
 </body>
 </html>

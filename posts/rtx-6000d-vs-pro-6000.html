@@ -3,13 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RTX PRO 6000 vs RTX 6000D：阉割点实测与 profiling 接口验证报告 · 我的博客</title>
+  <title>RTX PRO 6000 vs RTX 6000D：阉割点实测与 profiling 接口验证报告 · 繁星若尘</title>
   <meta name="description" content="租两台 AutoDL 实例把满血 RTX PRO 6000 Server 与中国特供 RTX 6000D 摆在一起对称实测：DCGM tensor_active 计数器当场抓到 D 卡 tensor 发射占空比被硬锁 ~37%，TF32/FP16/BF16/FP8/INT8/NVFP4 一视同仁，cutlass 最优内核也拉不动；带宽比 0.875、CUDA core 比 0.83；逐项验证 profiling/DCGM 接口传闻（ncu 确被 SKU 白名单封锁、DCGM≥4.4.1 已修复、nvidia-smi/NVML 属讹传）；附限速器形状/强度响应曲线与 D 卡顺特性优化 playbook。" />
   <meta property="og:title" content="RTX PRO 6000 vs RTX 6000D：阉割点实测与 profiling 接口验证报告" />
   <meta property="og:description" content="DCGM 计数器抓限速器现行：6000D tensor 发射占空比硬锁 ~37%、全 MMA 精度一视同仁；profiling 接口传闻逐项验证；附 D 卡优化 playbook。" />
   <meta property="og:type" content="article" />
   <meta property="og:url" content="https://aosudh.github.io/posts/rtx-6000d-vs-pro-6000.html" />
   <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="icon" type="image/svg+xml" href="/assets/covers/favicon.svg" />
+  <link rel="stylesheet" href="/assets/css/post-v3.css" />
+  <script>(function(){try{var t=localStorage.getItem('site-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var h=localStorage.getItem('site-v3-hue');if(h!==null&&!isNaN(Number(h)))document.documentElement.style.setProperty('--hue',h);}catch(e){}})();</script>
   <style>
     /* 文章内表格样式——仅作用于本页。对比表列多（双卡数据 + DCGM 计数器），
        故用较小字号 + 横向滚动容器；6 列以上的宽表居中展开突破正文列宽。 */
@@ -36,7 +39,7 @@
 <body>
   <div class="wrap">
     <header class="site-header">
-      <a class="site-title" href="/">我的博客</a>
+      <a class="site-title" href="/">繁星若尘</a>
       <nav class="site-nav">
         <a href="/">首页</a>
         <a href="/about.html">关于</a>
@@ -617,5 +620,6 @@ get more information see https://developer.nvidia.com/ERR_NVGPUCTRPERM</code></p
       <span>由 <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a> 托管</span>
     </footer>
   </div>
+  <script src="/assets/js/post-shell.js" defer></script>
 </body>
 </html>

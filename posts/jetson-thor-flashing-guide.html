@@ -3,9 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Jetson Thor 刷写全流程：原生 Linux、系统配置、第三方载板与 WSL 复盘 · 我的博客</title>
+  <title>Jetson Thor 刷写全流程：原生 Linux、系统配置、第三方载板与 WSL 复盘 · 繁星若尘</title>
   <meta name="description" content="从 R38.2.1 官方包、目录与 CLI 调用链出发，逐项解释 BCT、设备树、分区与 UEFI，再记录 CES 第三方载板适配和 Windows/WSL 六轮刷写排错。" />
   <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="icon" type="image/svg+xml" href="/assets/covers/favicon.svg" />
+  <link rel="stylesheet" href="/assets/css/post-v3.css" />
+  <script>(function(){try{var t=localStorage.getItem('site-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);var h=localStorage.getItem('site-v3-hue');if(h!==null&&!isNaN(Number(h)))document.documentElement.style.setProperty('--hue',h);}catch(e){}})();</script>
   <link rel="canonical" href="https://aosudh.github.io/posts/jetson-thor-flashing-guide.html" />
   <meta property="og:title" content="Jetson Thor 刷写全流程：原生 Linux、系统配置、第三方载板与 WSL 复盘" />
   <meta property="og:description" content="从 R38.2.1 官方包、目录与 CLI 调用链出发，逐项解释 BCT、设备树、分区与 UEFI，再记录 CES 第三方载板适配和 Windows/WSL 六轮刷写排错。" />
@@ -16,7 +19,7 @@
 <body id="top">
   <div class="wrap">
     <header class="site-header">
-      <a class="site-title" href="/">我的博客</a>
+      <a class="site-title" href="/">繁星若尘</a>
       <nav class="site-nav">
         <a href="/">首页</a>
         <a href="/about.html">关于</a>
@@ -516,5 +519,6 @@ New-Item -ItemType Directory -Force -Path $out | Out-Null</code></pre>
       <span>由 <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a> 托管</span>
     </footer>
   </div>
+  <script src="/assets/js/post-shell.js" defer></script>
 </body>
 </html>
