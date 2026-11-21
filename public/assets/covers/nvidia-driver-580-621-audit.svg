@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" width="480" height="300" role="img" aria-label="NVIDIA 驱动 R580 至 621.35 全量法医级调查封面图">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b131e"/>
+      <stop offset="100%" stop-color="#132235"/>
+    </linearGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#34d399" stroke-opacity="0.06" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="480" height="300" fill="url(#g)"/>
+  <rect width="480" height="300" fill="url(#grid)"/>
+  <circle cx="395" cy="68" r="135" fill="#10b981" opacity="0.13"/>
+
+  <rect x="28" y="22" width="172" height="26" rx="6" fill="#10b981" fill-opacity="0.18" stroke="#34d399" stroke-opacity="0.5"/>
+  <text x="40" y="40" fill="#a7f3d0" font-family="Consolas,monospace" font-size="12.5" font-weight="700">RELEASE NOTES AUDIT</text>
+  <text x="452" y="40" text-anchor="end" fill="#34d399" font-family="Consolas,monospace" font-size="12.5" font-weight="700">R580 → 621.35</text>
+
+  <!-- Diff / Forensic Ledger Box -->
+  <rect x="28" y="62" width="424" height="148" rx="10" fill="#0d1826" stroke="#1e3a5f" stroke-opacity="0.85" stroke-width="1.4"/>
+  <rect x="28" y="62" width="424" height="26" rx="10" fill="#064e3b" fill-opacity="0.45"/>
+  <g font-family="Consolas,monospace" font-size="11.5">
+    <text x="42" y="80" fill="#6ee7b7" font-weight="700">TAG / ID</text>
+    <text x="148" y="80" fill="#6ee7b7" font-weight="700">ARTIFACT</text>
+    <text x="438" y="80" text-anchor="end" fill="#6ee7b7" font-weight="700">FORENSIC HIT</text>
+
+    <text x="42" y="108" fill="#34d399" font-weight="700">+ 10DE:3041</text>
+    <text x="148" y="108" fill="#e2e8f0">VR NVL72 · gsp_gr10x</text>
+    <text x="438" y="108" text-anchor="end" fill="#34d399">Rubin 偷跑</text>
+
+    <line x1="40" y1="118" x2="440" y2="118" stroke="#1e293b" stroke-opacity="0.9"/>
+    <text x="42" y="136" fill="#fbbf24" font-weight="700">± 10DE:2E03</text>
+    <text x="148" y="136" fill="#e2e8f0">RTX Spark N1X (ASUS)</text>
+    <text x="438" y="136" text-anchor="end" fill="#fbbf24">泄密→删表→恢复</text>
+
+    <line x1="40" y1="146" x2="440" y2="146" stroke="#1e293b" stroke-opacity="0.9"/>
+    <text x="42" y="164" fill="#f472b6" font-weight="700">! BSYNC/NOP</text>
+    <text x="148" y="164" fill="#e2e8f0">Blackwell 2-Lv Diverge</text>
+    <text x="438" y="164" text-anchor="end" fill="#f472b6">15s JIT 热补丁</text>
+
+    <line x1="40" y1="174" x2="440" y2="174" stroke="#1e293b" stroke-opacity="0.9"/>
+    <text x="42" y="192" fill="#38bdf8" font-weight="700">! [7116722]</text>
+    <text x="148" y="192" fill="#e2e8f0">nvlog.nvlgstg Loop</text>
+    <text x="438" y="192" text-anchor="end" fill="#38bdf8">30GB/h 写盘门</text>
+  </g>
+
+  <text x="28" y="248" fill="#f8fafc" font-family="system-ui,'Microsoft YaHei',sans-serif" font-size="22.5" font-weight="700">NVIDIA 驱动 Release Notes 全量调查</text>
+  <text x="28" y="275" fill="#94a3b8" font-family="Consolas,monospace" font-size="12.2">32 Win PDFs · 33 Linux Builds · 20 Tesla Logs</text>
+</svg>
